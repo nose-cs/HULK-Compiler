@@ -1,9 +1,11 @@
 from nfa import NFA
 
 class DFAState:
-    def __init__(self, final=False):
+    def __init__(self, index, final=False):
         self.final = final
         self.transitions = {}
+        self.properties = {}
+        self.index = index
 
     def add_transition(self, symbol, state):
         self.transitions[symbol] = state
@@ -50,13 +52,16 @@ class DFA:
     
     @staticmethod
     def fromNFA(nfa: NFA):
-        def back_track(dic, state: DFAState, nodes):
+        def back_track(dic, state: DFAState, nodes, states, gi):
             used = set()
 
             for node in nodes:
                 for char in node.transitions.keys():
                     if char not in used:
                         used.add(char)
+
+                        if char == 'T' and state.index == 0:
+                            pass
 
                         values = set()
 
@@ -67,24 +72,46 @@ class DFA:
                                 for nnnode in nnode.transitions[char]:
                                     nfa.get_epsilons(values, nnnode.epsilons)
 
-                        if tuple(sorted(values)) not in dic:
-                            dic[tuple(sorted(values))] = DFAState(any(stateNfa.final for stateNfa in values))
-                            back_track(dic, dic[tuple(sorted(values))], values)
+                        tsv = tuple(sorted(values, key = lambda nfaState: nfaState.index))
 
-                        state.add_transition(char, dic[tuple(sorted(values))])
-                                
+                        if tsv not in dic:
+                            new_state = DFAState(gi.get_global_index(), any(stateNfa.final for stateNfa in values))
+                            
+                            all_property_keys = set(key for nnode in values for key in nnode.properties)
+                            new_state.properties = {key: [nnode.properties[key] for nnode in values if key in nnode.properties] for key in all_property_keys}
+
+                            states.append(new_state)
+                            dic[tsv] = new_state
+                            state.add_transition(char, new_state)
+                            back_track(dic, new_state, values, states, gi)
+                        else:
+                            state.add_transition(char, dic[tsv])
+
+        class global_index:
+            global_index = 0
+
+            def get_global_index(self):
+                self.global_index += 1
+                return self.global_index - 1
 
         initial = {nfa.initial_state}
         nfa.get_epsilons(initial, nfa.initial_state.epsilons)
 
-        state = DFAState(any(nfaState.final for nfaState in initial))
+        gi = global_index()
+
+        state = DFAState(gi.get_global_index(), any(nfaState.final for nfaState in initial))
+
+        all_property_keys = set(key for node in initial for key in node.properties)
+        state.properties = {key: [node.properties[key] for node in initial if key in node.properties] for key in all_property_keys}
+
+        states = [state]
 
         dfa = DFA(state)
 
         dic = {}
-        dic[tuple(sorted(initial))] = state
+        dic[tuple(sorted(initial, key = lambda nfaState: nfaState.index))] = state
 
-        back_track(dic, state, initial)
+        back_track(dic, state, initial, states, gi)
 
-        return dfa
+        return dfa, states
                 

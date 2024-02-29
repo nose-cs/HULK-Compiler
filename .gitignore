@@ -1,2 +1,3 @@
-lexer/__pycache__
-lexer/test.ipynb
+src/lexer/__pycache__
+src/automaton/__pycache__
+src/parser/__pycache__

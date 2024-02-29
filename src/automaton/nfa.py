@@ -4,10 +4,12 @@ class NFAState:
         self.transitions = {}
         self.epsilons = set()
         self.index = index
+        self.properties = {}
 
     def add_transition(self, symbol, state):
         if symbol == '':
-            self.epsilons.add(state)
+            if state != self:
+                self.epsilons.add(state)
 
         elif symbol in self.transitions:
             self.transitions[symbol].add(state)
@@ -18,9 +20,9 @@ class NFAState:
         self.index < other.index
 
 class NFA:
-    def __init__(self, initial_state=None, final_state=None):
+    def __init__(self, initial_state=None, final_states=None):
         self.initial_state = initial_state
-        self.final_state = final_state
+        self.final_states = final_states
 
     def add_transition(self, origin, symbol, destiny):
         origin.add_transition(symbol, destiny)
@@ -51,8 +53,8 @@ class NFA:
             for state in current_states:
                 if char in state.transitions:
                     new_states.update(state.transitions[char])
-                    for new_estado in state.transitions[char]:
-                        self.get_epsilons(new_states, new_estado.epsilons)
+                    for new_state in state.transitions[char]:
+                        self.get_epsilons(new_states, new_state.epsilons)
 
             current_states = new_states
 
