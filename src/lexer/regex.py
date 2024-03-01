@@ -48,19 +48,22 @@ class Regex:
             
             match production:
                 case ('EE', 0):
-                    return lambda node: build.join_nfas(node.childs[2].evaluate(), node.childs[0].evaluate())
+                    return lambda node: build.join_nfas(node.childs[0].evaluate(), node.childs[2].evaluate())
                 case ('EE', 1): 
                     return lambda node: node.childs[0].evaluate()
                 case ('TT', 0): 
-                    return lambda node: build.concatenate_nfas(node.childs[1].evaluate(), node.childs[0].evaluate())
+                    return lambda node: build.concatenate_nfas(node.childs[0].evaluate(), node.childs[1].evaluate())
                 case ('TT', 1): 
                     return lambda node: node.childs[0].evaluate()
                 case ('FF', 0): 
-                    return lambda node: build.kleene_closure(node.childs[1].evaluate())
+                    return lambda node: build.kleene_closure(node.childs[0].evaluate())
                 case ('FF', 1): 
                     return lambda node: node.childs[0].evaluate()
                 case ('AA', 101):
                     return lambda node: node.childs[1].evaluate()
+
+            if production[1] >= 94 and production[1] <= 100:
+                return lambda node: build.build_basic_nfa(node.childs[1].text)
 
             if production[1] == 102:
                 values = ['c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 
@@ -90,7 +93,7 @@ class Regex:
 
         parser = ParserSLR1(productions, non_terminals, terminals, start_symbol, getProductionEvaluate)
 
-        root = parser.parse([regex[i] for i in range(len(regex))])
+        root = parser.parse([regex[i] for i in range(len(regex))] + ['$'])
 
         nfa = root.evaluate()
         dfa, states = DFA.fromNFA(nfa)

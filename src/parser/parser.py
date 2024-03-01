@@ -1,8 +1,10 @@
 import sys
 sys.path.insert(1, '..')
 
-from parser.utils import createAutomatonSLR1, create_SLR1_Table
-
+try:
+    from utils import createAutomatonSLR1, create_SLR1_Table
+except:
+    from parser.utils import createAutomatonSLR1, create_SLR1_Table
 class Node:
     def __init__(self, text, childs = [], evaluate = None) -> None:
         self.text = text
@@ -34,39 +36,28 @@ class ParserSLR1:
 
     def parse(self, tokens):
         stack = [0]
-        tokens = [token for token in tokens] + ['$']
+        tokens = [token for token in tokens]
+        pointer = 0
 
         applied_productions = []
 
-        while len(tokens) > 0:
-            if self.table[tokens[0]][stack[-1]]:
-                if self.table[tokens[0]][stack[-1]] == 'Accept!':
+        while pointer < len(tokens):
+            if self.table[tokens[pointer]][stack[-1]]:
+                if self.table[tokens[pointer]][stack[-1]] == 'Accept!':
                     break
 
-                elif isinstance(self.table[tokens[0]][stack[-1]], int):
-                    index_state = stack[-1]
-                    stack.append(tokens[0])
-                    stack.append(self.table[tokens[0]][index_state])
-
-                    tokens.pop(0)
+                elif isinstance(self.table[tokens[pointer]][stack[-1]], int):
+                    stack.append(self.table[tokens[pointer]][stack[-1]])
+                    pointer += 1
                 
                 else:
-                    applied_productions.append(self.table[tokens[0]][stack[-1]])
-                    head, index = self.table[tokens[0]][stack[-1]]
+                    applied_productions.append(self.table[tokens[pointer]][stack[-1]])
+                    head, index = self.table[tokens[pointer]][stack[-1]]
 
-                    cbody = [token for token in self.productions[head][index]]
+                    for i in range(len(self.productions[head][index])):
+                        stack.pop()
 
-                    while len(cbody) > 0:
-                        try:
-                            if cbody[-1] == stack.pop():
-                                cbody.pop()
-                        except:
-                            pass
-
-                    index_state = stack[-1]
-
-                    stack.append(head)
-                    stack.append(self.table[head][index_state])
+                    stack.append(self.table[head][stack[-1]])
 
             else:
                 raise Exception("Chain cannot be parsed")
@@ -83,6 +74,8 @@ class ParserSLR1:
                 for child in node.childs:
                     if child.text in non_terminals:
                         makeTree(child, applied_productions, non_terminals)
+
+                node.childs.reverse()
 
         root = Node(applied_productions[-1][0])
         makeTree(root, applied_productions, self.non_terminals)
