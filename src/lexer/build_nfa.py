@@ -1,7 +1,7 @@
 import sys
-sys.path.insert(1, '../automaton')
+sys.path.insert(1, '..')
 
-from nfa import NFA, NFAState
+from automaton.nfa import NFA, NFAState
 
 class BuildNFA:
     global_index = 0

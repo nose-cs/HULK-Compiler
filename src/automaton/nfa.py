@@ -31,7 +31,11 @@ class NFA:
         states.update(epsilons)
 
         for e in epsilons:
-            self.get_epsilons(states, e.epsilons)
+            before = len(states)
+            states.update(e.epsilons)
+            
+            if len(states) > before:
+                self.get_epsilons(states, e.epsilons)
 
     def execute(self, text):
         text += '$'

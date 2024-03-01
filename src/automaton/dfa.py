@@ -1,4 +1,7 @@
-from nfa import NFA
+import sys
+sys.path.insert(1, '..')
+
+from automaton.nfa import NFA
 
 class DFAState:
     def __init__(self, index, final=False):
