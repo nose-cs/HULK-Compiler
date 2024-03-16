@@ -27,7 +27,7 @@ kleene %= kleene + star, lambda _, s: regex_nodes.KleeneNode(s[1])
 
 kleene %= factor, lambda _, s: s[1]
 
-factor %= opar + regex + cpar, lambda _, s: s[1]
+factor %= opar + regex + cpar, lambda _, s: regex_nodes.RegexNode(s[2])
 
 factor %= char, lambda _, s: regex_nodes.CharNode(s[1])
 
