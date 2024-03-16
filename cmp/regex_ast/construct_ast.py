@@ -1,4 +1,4 @@
-from cmp.pycompiler import EOF
+from pycompiler import EOF
 from parsing import ShiftReduceParser
 
 def evaluate_reverse_parse(right_parse, operations, tokens):
