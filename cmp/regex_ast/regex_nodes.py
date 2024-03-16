@@ -1,4 +1,4 @@
-from lexer.build_nfa import BuildNFA
+import regex_operations_automata 
 
 class Node:
     def evaluate(self):
@@ -9,7 +9,7 @@ class CharNode(Node):
         self.token = token
         
     def evaluate(self):
-        return BuildNFA.build_basic_nfa(self.token)        
+        return regex_operations_automata.build_basic_nfa(self.token)        
     
 class RegexNode(Node):
     def __init__(self, concat) -> None:
@@ -36,14 +36,14 @@ class KleeneNode(Node):
 
     def evaluate(self):
         value = self.child.evaluate()
-        return BuildNFA.kleene_closure(value)
+        return regex_operations_automata.kleene_closure(value)
 
 class OrNode(BinaryNode):
     @staticmethod
     def operate(lvalue, rvalue):
-        return BuildNFA.join_nfas(lvalue, rvalue)
+        return regex_operations_automata.join_nfas(lvalue, rvalue)
     
 class ConcatNode(BinaryNode):
     @staticmethod
     def operate(lvalue, rvalue):
-        return BuildNFA.concatenate_nfas(lvalue, rvalue)
+        return regex_operations_automata.concatenate_nfas(lvalue, rvalue)
