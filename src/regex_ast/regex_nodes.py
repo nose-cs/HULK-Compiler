@@ -14,10 +14,10 @@ class RegexNode(Node):
 
 
 class KleeneNode(Node):
-    def __init__(self, child: Node) -> None:
+    def __init__(self, child) -> None:
         self.child = child
 
 
 class OrNode(Node):
-    def __init__(self, children: Node) -> None:
+    def __init__(self, children) -> None:
         self.children = children
