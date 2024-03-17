@@ -1,5 +1,5 @@
-from src.pycompiler import Grammar, Production, Item
 from src.automaton import State, multiline_formatter
+from src.pycompiler import Grammar, Production, Item
 from src.utils import ContainerSet
 
 
@@ -169,7 +169,7 @@ class ShiftReduceParser:
                 match action:
                     case ShiftReduceParser.OK:
                         return output
-                    
+
                     case ShiftReduceParser.SHIFT:
                         stack.append(tag)
                         cursor += 1
@@ -182,7 +182,8 @@ class ShiftReduceParser:
                             if not symbol.IsEpsilon:
                                 stack.pop()
 
-                        if (stack[-1], Left.Name) in self.action and self.action[(stack[-1], Left.Name)][0] == ShiftReduceParser.SHIFT:
+                        if (stack[-1], Left.Name) in self.action and self.action[(stack[-1], Left.Name)][
+                            0] == ShiftReduceParser.SHIFT:
                             stack.append(self.action[(stack[-1], Left.Name)][1])
                         else:
                             raise Exception("Chain cannot be parsed")
