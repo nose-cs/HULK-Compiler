@@ -30,7 +30,7 @@ while_loop = G.NonTerminal('<while>')
 
 #Adding basic terminals
 
-obracket , cbracket, semicolon, opar, cpar, arrow = G.Terminals('{ } ; ( ) =>')
+obracket , cbracket, semicolon, opar, cpar, arrow, comma = G.Terminals('{ } ; ( ) => ,')
 
 #Adding declaration terminals
 
@@ -66,8 +66,6 @@ declarations %= function_declaration
 #An expresion block is a sequence of expresions between brackets
 
 expresion_block %= obracket + expresion_list + cbracket
-
-expresion_list %= expresion + expresion_list
 
 expresion_list %= expresion + semicolon + expresion_list
 
@@ -113,7 +111,7 @@ powers %= number
 
 var_declaration %= let + asigments + _in + expresion
 
-asigments %= asigments + _id + equal + expresion
+asigments %= asigments + comma + _id + equal + expresion
 
 asigments %= _id + equal + expresion
 
@@ -141,7 +139,7 @@ function_declaration %= _type + _id + opar + arg_list + cpar + arrow + expresion
 
 function_declaration %= _type + _id + opar + arg_list + cpar + expresion_block
 
-arg_list %= arg_list + _type + _id
+arg_list %= arg_list + comma + _type + _id
 
 arg_list %= _type + _id
 
