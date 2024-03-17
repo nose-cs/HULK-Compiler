@@ -13,20 +13,11 @@ class RegexNode(Node):
         self.nodes = concat
 
 
-class BinaryNode(Node):
-    def __init__(self, left: Node, right: Node):
-        self.left = left
-        self.right = right
-
-
 class KleeneNode(Node):
     def __init__(self, child: Node) -> None:
         self.child = child
 
 
-class OrNode(BinaryNode):
-    pass
-
-
-class ConcatNode(BinaryNode):
-    pass
+class OrNode(Node):
+    def __init__(self, children: Node) -> None:
+        self.children = children

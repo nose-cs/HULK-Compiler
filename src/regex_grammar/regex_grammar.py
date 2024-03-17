@@ -7,7 +7,7 @@ origin = G.NonTerminal('<origin>', startSymbol=True)
 
 regex = G.NonTerminal('<regex>')
 
-disjunction, kleene, factor = G.NonTerminals('<conjunction> <factor>')
+disjunction, kleene, factor = G.NonTerminals('<disjunction> <kleene> <factor>')
 
 star, bar, opar, cpar = G.Terminals('* | ( )')
 
