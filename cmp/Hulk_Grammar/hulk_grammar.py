@@ -15,7 +15,7 @@ number = G.Terminal('number')
 
 #Adding boolean expressions symbols
 
-boolean_exp, disjunctive_component, neg, boolean = G.NonTerminals('<boolean_exp> <disjunctive_component> <neg> <boolean>')
+boolean_exp, conjuntive_component, neg, boolean = G.NonTerminals('<boolean_exp> <disjunctive_component> <neg> <boolean>')
 
 #Declarations NonTerminals
 declarations, function_declaration , var_declaration , asigments , arg_list = G.NonTerminals('<decs> <f_dec> <v_dec> <assigments> <arg_list>')
@@ -117,13 +117,13 @@ asigments %= _id + equal + expresion
 
 #A boolean expresion is a conjuntion of disjunctive components, wich are a disjunction of terms, wich are negated atoms or atoms. Atoms are booleans or expresions 
 
-boolean_exp %= boolean_exp + and_op + disjunctive_component
+boolean_exp %= boolean_exp + or_op + conjuntive_component
 
-boolean_exp %= disjunctive_component
+boolean_exp %= conjuntive_component
 
-disjunctive_component %= disjunctive_component + or_op + neg
+conjuntive_component %= conjuntive_component + and_op + neg
 
-disjunctive_component %= neg
+conjuntive_component %= neg
 
 neg %= not_op + neg
 
