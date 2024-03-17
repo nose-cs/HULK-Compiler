@@ -127,7 +127,7 @@ conjuntive_component %= neg
 
 neg %= not_op + neg
 
-neg %= bool_term
+neg %= boolean
 
 boolean %= opar + expresion + cpar
 
