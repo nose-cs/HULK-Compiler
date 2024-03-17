@@ -4,25 +4,25 @@ import src.automaton_operations as regex_operations_automata
 
 class AutomataBuilderVisitor(object):
     @visitor.on('node')
-    def visit(self, node, scope):
+    def visit(self, node: regex_nodes.Node, scope):
         pass
 
     @visitor.when(regex_nodes.RegexNode)
-    def visit(self, node):
-        acum = node.nodes[0]
+    def visit(self, node: regex_nodes.RegexNode):
+        acc = node.nodes[0]
         for i in range(1, len(node.nodes)):
-            acum = regex_operations_automata.concatenate_nfas(acum, node.nodes[i])
-        return acum
+            acc = regex_operations_automata.concatenate_nfas(acc, node.nodes[i])
+        return acc
     
     @visitor.when(regex_nodes.OrNode)
     def visit(self, node):
-        lvalue = node.left.evaluate()
-        rvalue = node.right.evaluate()
+        lvalue = self.visit(node.left)
+        rvalue = self.visit(node.right)
         return regex_operations_automata.join_nfas(lvalue, rvalue)
     
     @visitor.when(regex_nodes.KleeneNode)
     def visit(self, node):
-        value = node.child.evaluate()
+        value = self.visit(node.child)
         return regex_operations_automata.kleene_closure(value)
     
     @visit.when(regex_nodes.CharNode)
