@@ -1,4 +1,4 @@
-from cmp.automata import State
+from src.automaton import State
 
 def build_basic_nfa(symbol):
     initial = State(None)

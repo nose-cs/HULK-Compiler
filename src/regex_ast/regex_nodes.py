@@ -1,19 +1,20 @@
-import regex_operations_automata 
-
 class Node:
     def evaluate(self):
         raise NotImplementedError()
 
+
 class CharNode(Node):
     def __init__(self, token):
-        self.token = token      
-    
+        self.token = token
+
+
 class RegexNode(Node):
     def __init__(self, concat) -> None:
         self.nodes = concat
 
+
 class BinaryNode(Node):
-    def __init__(self, left:Node, right:Node):
+    def __init__(self, left: Node, right: Node):
         self.left = left
         self.right = right
 
@@ -25,6 +26,7 @@ class KleeneNode(Node):
 
 class OrNode(BinaryNode):
     pass
-    
+
+
 class ConcatNode(BinaryNode):
     pass

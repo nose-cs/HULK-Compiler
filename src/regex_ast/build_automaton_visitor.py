@@ -1,6 +1,6 @@
-import visitor
+import src.visitor as visitor
 import regex_nodes
-import regex_operations_automata
+import src.automaton_operations as regex_operations_automata
 
 class AutomataBuilderVisitor(object):
     @visitor.on('node')
@@ -10,8 +10,8 @@ class AutomataBuilderVisitor(object):
     @visitor.when(regex_nodes.RegexNode)
     def visit(self, node):
         acum = node.nodes[0]
-        for i in range(1, len(self.nodes)):
-            acum = regex_operations_automata.concatenate_nfas(acum, self.nodes[i])
+        for i in range(1, len(node.nodes)):
+            acum = regex_operations_automata.concatenate_nfas(acum, node.nodes[i])
         return acum
     
     @visitor.when(regex_nodes.OrNode)
