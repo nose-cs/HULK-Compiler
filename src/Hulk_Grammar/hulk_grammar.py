@@ -9,7 +9,7 @@ program = G.NonTerminal('<program>', startSymbol=True)
 expression_block, expression_list, expression = G.NonTerminals('<expression_block> <expression_list> <expression>')
 
 # Adding arithmetic expressions symbols
-arithmetic_exp, term, factor, signed, atom = G.NonTerminals('<arithmetic_exp> <term> <factor> <signed> <powers>')
+arithmetic_exp, term, factor, signed, atom = G.NonTerminals('<arithmetic_exp> <term> <factor> <signed> <atom>')
 number = G.Terminal('number')
 
 # Adding boolean expressions symbols
@@ -28,6 +28,7 @@ inequality, equality = G.NonTerminals('<inequality> <equality>')
 # Adding looping Non terminals
 
 while_loop = G.NonTerminal('<while>')
+for_loop = G.NonTerminals('<for>')
 
 # Adding basic terminals
 
@@ -80,6 +81,7 @@ expression_list %= expression
 expression %= expression_block
 expression %= conditional
 expression %= while_loop
+expression %= for_loop
 expression %= boolean_exp
 
 # A boolean expression is a disjunction of conjunctive components,
@@ -150,4 +152,5 @@ conditional_ending %= _elif + opar + expression + cpar + expression + conditiona
 conditional_ending %= _else + expression
 
 # Loop expression
-while_loop %= _while + expression + expression
+while_loop %= _while + opar + expression + cpar + expression
+for_loop %= _for + opar + expression + cpar + expression
