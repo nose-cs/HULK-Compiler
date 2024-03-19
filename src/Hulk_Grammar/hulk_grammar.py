@@ -22,8 +22,8 @@ boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
 string_expression = G.NonTerminals('<str_expr>')
 
 # Declarations NonTerminals
-declarations, function_declaration, var_declaration, assignments, arg_list = G.NonTerminals(
-    '<declarations> <func_declaration> <var_declaration> <assignments> <arg_list>')
+introducing_args, body, posible_body, type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list = G.NonTerminals(
+    '<introducing_args> <body> <posible_body> <type declaration> <declarations> <func_declaration> <var_declaration> <assignments> <arg_list>')
 destructive_assignment = G.NonTerminals("<destructive_ass>")
 
 # Adding conditional NonTerminals
@@ -37,7 +37,7 @@ while_loop, for_loop = G.NonTerminal('<while> <for>')
 obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('{ } ; ( ) => , :')
 
 # Adding declaration terminals
-let, _in, _type, _id, equal, dest_eq = G.Terminals('let in <type> <id> = :=')
+word_type, let, _in, inherits, _type, _id, equal, dest_eq = G.Terminals('let in inherits <type> <id> = :=')
 
 # Adding conditional terminals
 _if, _else, _elif = G.Terminals('if else elif')
@@ -68,8 +68,29 @@ program %= declarations + expression
 
 declarations %= declarations + function_declaration
 declarations %= function_declaration
+declarations %= declarations + type_declaration
+declarations %= type_declaration
+
+#A type declaration can inherit, recive params or both
+
+type_declaration %=  word_type + _id + posible_body
+type_declaration %= word_type + _id + opar + introducing_args + cpar + posible_body
+type_declaration %= word_type + _id + inherits + _id + posible_body
+type_declaration  %= word_type + _id + inherits + _id + opar + introducing_args + cpar + posible_body
+
+posible_body %= obracket + cbracket
+posible_body %= obracket + body + cbracket
+
+introducing_args %= _id
+introducing_args %= introducing_args + comma + _id
+
+body %= body + assignments
+body %= body + function_declaration
+body %= assignments
+body %= function_declaration
 
 # An expression block is a sequence of expressions between brackets
+
 expression_block %= obracket + expression_list + cbracket
 
 expression_list %= expression + semicolon + expression_list
