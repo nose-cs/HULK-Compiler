@@ -52,7 +52,7 @@ function = G.Terminals('function')
 plus, minus, star, div, power, mod, power2 = G.Terminals('+ - * / ^ % **')
 number = G.Terminal('<number>')
 
-eq, neq, leq, geq, gt, lt = G.Terminals('== != <= >= < >')
+eq, neq, leq, geq, lt, gt = G.Terminals('== != <= >= < >')
 
 # Adding boolean operators terminals
 and_op, or_op, not_op, bool_term = G.Terminals('& | ! <bool>')
