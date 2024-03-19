@@ -17,7 +17,7 @@ Regex_Terminal = [
     ("if", _if), ("else", _else), ("elif", _elif),
     ("while", _while), ("for", _for),
     ("function", function),
-    ("+", plus), ("-", minus), ("\\*", star), ("/", div), ("^", power), ("%", mod), ("**", power2),
+    ("+", plus), ("-", minus), ("\\*", star), ("/", div), ("^", power), ("%", mod), ("\\*\\*", power2),
     ("==", eq), ("!=", neq), ("<=", leq), (">=", geq), ("<", lt), (">", gt),
     ("&", and_op), ("\\|", or_op), ("!", not_op), ("(true)|(false)", bool_term),
     ("@", amper), ("@@", double_amp),
