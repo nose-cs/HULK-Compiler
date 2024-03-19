@@ -13,59 +13,52 @@ func_call, expr_list_comma_sep = G.NonTerminals('<func-call> <expr-list>')
 # Adding arithmetic expressions symbols
 arithmetic_exp, term, powers, factor, signed, atom = G.NonTerminals(
     '<arithmetic_exp> <term> <powers> <factor> <signed> <atom>')
-number = G.Terminal('number')
 
 # Adding boolean expressions symbols
 boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
     '<boolean_exp> <disjunctive_component> <neg> <boolean>')
-
-amper, double_amp = G.Terminals('@ @@')
 
 # Adding string expressions symbols
 string_expression = G.NonTerminals('<str_expr>')
 
 # Declarations NonTerminals
 declarations, function_declaration, var_declaration, assignments, arg_list = G.NonTerminals(
-    '<decs> <f_dec> <v_dec> <assignments> <arg_list>')
+    '<declarations> <func_declaration> <var_declaration> <assignments> <arg_list>')
+destructive_assignment = G.NonTerminals("<destructive_ass>")
 
 # Adding conditional NonTerminals
 conditional, conditional_ending = G.NonTerminals('<conditional> <conditional_ending>')
-
 inequality, equality = G.NonTerminals('<inequality> <equality>')
 
 # Adding looping Non terminals
-
-while_loop = G.NonTerminal('<while>')
-for_loop = G.NonTerminals('<for>')
+while_loop, for_loop = G.NonTerminal('<while> <for>')
 
 # Adding basic terminals
-
 obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('{ } ; ( ) => , :')
 
 # Adding declaration terminals
-
-let, _in, _type, _id, equal = G.Terminals('let in <type> <id> =')
+let, _in, _type, _id, equal, dest_eq = G.Terminals('let in <type> <id> = :=')
 
 # Adding conditional terminals
-
 _if, _else, _elif = G.Terminals('if else elif')
 
 # Adding looping terminals
-
 _while, _for = G.Terminals('while for')
 
 # Adding function terminals
-
 function = G.Terminals('function')
 
 # Adding arithmetic Terminals
-
 plus, minus, star, div, power, mod, power2 = G.Terminals('+ - * / ^ % **')
+number = G.Terminal('<number>')
 
 eq, neq, leq, geq, gt, lt = G.Terminals('== != <= >= < >')
 
 # Adding boolean operators terminals
 and_op, or_op, not_op, bool_term = G.Terminals('& | ! <bool>')
+
+# Adding string terminals
+amper, double_amp, str_term = G.Terminals('@ @@ <string>')
 
 # -------------------------------------------------------------------------------------------------------------------- #
 
@@ -90,6 +83,7 @@ expression %= conditional
 expression %= while_loop
 expression %= for_loop
 expression %= string_expression
+expression %= destructive_assignment
 
 # String expression
 string_expression %= string_expression + amper + boolean_exp
@@ -146,6 +140,7 @@ factor %= atom
 
 atom %= number
 atom %= bool_term
+atom %= str_term
 atom %= _id
 atom %= func_call
 
@@ -159,6 +154,9 @@ var_declaration %= let + assignments + _in + expression
 
 assignments %= assignments + comma + _id + equal + expression
 assignments %= _id + equal + expression
+
+# Destructive assigment
+destructive_assignment %= _id + dest_eq + expression
 
 # Functions can be declared using lambda notation or classic notation
 function_declaration %= function + _id + opar + arg_list + cpar + arrow + expression
