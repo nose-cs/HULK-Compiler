@@ -19,6 +19,11 @@ number = G.Terminal('number')
 boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
     '<boolean_exp> <disjunctive_component> <neg> <boolean>')
 
+amper, double_amp = G.Terminals('@ @@')
+
+# Adding string expressions symbols
+string_expression = G.NonTerminals('<str_expr>')
+
 # Declarations NonTerminals
 declarations, function_declaration, var_declaration, assignments, arg_list = G.NonTerminals(
     '<decs> <f_dec> <v_dec> <assignments> <arg_list>')
@@ -84,7 +89,12 @@ expression %= expression_block
 expression %= conditional
 expression %= while_loop
 expression %= for_loop
-expression %= boolean_exp
+expression %= string_expression
+
+# String expression
+string_expression %= string_expression + amper + boolean_exp
+string_expression %= string_expression + double_amp + boolean_exp
+string_expression %= boolean_exp
 
 # A boolean expression is a disjunction of conjunctive components,
 boolean_exp %= boolean_exp + or_op + conjunctive_component
