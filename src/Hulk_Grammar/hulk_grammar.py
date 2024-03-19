@@ -22,8 +22,8 @@ boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
 string_expression = G.NonTerminals('<str_expr>')
 
 # Declarations NonTerminals
-introducing_args, body, posible_body, type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list = G.NonTerminals(
-    '<introducing_args> <body> <posible_body> <type declaration> <declarations> <func_declaration> <var_declaration> <assignments> <arg_list>')
+protocol_definition, introducing_args, body, posible_body, type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list, decs = G.NonTerminals(
+    '<protocol_definition> <introducing_args> <body> <posible_body> <type declaration> <declarations> <func_declaration> <var_declaration> <assignments> <arg_list> <decs>')
 destructive_assignment = G.NonTerminals("<destructive_ass>")
 
 # Adding conditional NonTerminals
@@ -37,7 +37,7 @@ while_loop, for_loop = G.NonTerminal('<while> <for>')
 obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('{ } ; ( ) => , :')
 
 # Adding declaration terminals
-word_type, let, _in, inherits, _type, _id, equal, dest_eq = G.Terminals('let in inherits <type> <id> = :=')
+protocol, extends, word_type, let, _in, inherits, _type, _id, equal, dest_eq = G.Terminals('protocol extends let in inherits <type> <id> = :=')
 
 # Adding conditional terminals
 _if, _else, _elif = G.Terminals('if else elif')
@@ -200,4 +200,7 @@ for_loop %= _for + opar + expression + cpar + expression
 
 #Protocol declaration 
 
-
+protocol_definition %= protocol + _id + obracket + decs + cbracket
+protocol_definition %= protocol + _id + extends + _id + obracket + decs + cbracket
+decs %= decs + _id + opar + cpar
+decs %= _id + opar + cpar
