@@ -221,6 +221,8 @@ decs %= _id + opar + cpar
 #Vector initialization
 vector_initialization %= o_square_bracket + c_square_bracket
 vector_initialization %= o_square_bracket + elements + c_square_bracket
+elements %= elements + comma + expression
+elements %= expression
 
 #Print statement
 
