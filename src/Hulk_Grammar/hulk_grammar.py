@@ -39,6 +39,10 @@ obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('{ 
 # Adding declaration terminals
 protocol, extends, word_type, let, _in, inherits, _type, _id, equal, dest_eq = G.Terminals('protocol extends let in inherits <type> <id> = :=')
 
+#Adding print statement
+
+print_statement = G.NonTerminal('<print_statement>')
+
 # Adding conditional terminals
 _if, _else, _elif = G.Terminals('if else elif')
 
@@ -46,7 +50,7 @@ _if, _else, _elif = G.Terminals('if else elif')
 _while, _for = G.Terminals('while for')
 
 # Adding function terminals
-function = G.Terminals('function')
+_print, function = G.Terminals('print function')
 
 # Adding arithmetic Terminals
 plus, minus, star, div, power, mod, power2 = G.Terminals('+ - * / ^ % **')
@@ -105,6 +109,7 @@ expression %= while_loop
 expression %= for_loop
 expression %= string_expression
 expression %= destructive_assignment
+expression %= print_statement
 
 # String expression
 string_expression %= string_expression + amper + boolean_exp
@@ -202,5 +207,9 @@ for_loop %= _for + opar + expression + cpar + expression
 
 protocol_definition %= protocol + _id + obracket + decs + cbracket
 protocol_definition %= protocol + _id + extends + _id + obracket + decs + cbracket
+
 decs %= decs + _id + opar + cpar
 decs %= _id + opar + cpar
+
+
+print_statement %= _print + opar + expression + cpar
