@@ -30,11 +30,16 @@ destructive_assignment = G.NonTerminals("<destructive_ass>")
 conditional, conditional_ending = G.NonTerminals('<conditional> <conditional_ending>')
 inequality, equality = G.NonTerminals('<inequality> <equality>')
 
+#Adding vector NonTerminals
+
+vector_initialization, elements = G.NonTerminals('<vector_initialization> <elements>')
+
+
 # Adding looping Non terminals
 while_loop, for_loop = G.NonTerminal('<while> <for>')
 
 # Adding basic terminals
-obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('{ } ; ( ) => , :')
+o_square_bracket, c_square_bracket, obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('[ ] { } ; ( ) => , :')
 
 # Adding declaration terminals
 protocol, extends, word_type, let, _in, inherits, _type, _id, equal, dest_eq = G.Terminals('protocol extends let in inherits <type> <id> = :=')
@@ -213,5 +218,10 @@ protocol_definition %= protocol + _id + extends + _id + obracket + decs + cbrack
 decs %= decs + _id + opar + cpar
 decs %= _id + opar + cpar
 
+#Vector initialization
+vector_initialization %= o_square_bracket + c_square_bracket
+vector_initialization %= o_square_bracket + elements + c_square_bracket
+
+#Print statement
 
 print_statement %= _print + opar + expression + cpar
