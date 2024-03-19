@@ -1,4 +1,4 @@
-from cmp.Hulk_Grammar.hulk_grammar import obracket , cbracket, semicolon, opar, cpar, arrow, comma, \
+from src.Hulk_Grammar.hulk_grammar import obracket , cbracket, semicolon, opar, cpar, arrow, comma, \
                                         let, _type, _in, equal, \
                                         _if, _else, _elif, \
                                         _while, _for, \
