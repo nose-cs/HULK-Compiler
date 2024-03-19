@@ -8,8 +8,11 @@ program = G.NonTerminal('<program>', startSymbol=True)
 # Basic expression NonTerminals
 expression_block, expression_list, expression = G.NonTerminals('<expression_block> <expression_list> <expression>')
 
+func_call, expr_list_comma_sep = G.NonTerminals('<func-call> <expr-list>')
+
 # Adding arithmetic expressions symbols
-arithmetic_exp, term, factor, signed, atom = G.NonTerminals('<arithmetic_exp> <term> <factor> <signed> <atom>')
+arithmetic_exp, term, powers, factor, signed, atom = G.NonTerminals(
+    '<arithmetic_exp> <term> <powers> <factor> <signed> <atom>')
 number = G.Terminal('number')
 
 # Adding boolean expressions symbols
@@ -58,7 +61,6 @@ eq, neq, leq, geq, gt, lt = G.Terminals('== != <= >= < >')
 
 # Adding boolean operators terminals
 and_op, or_op, not_op, bool_term = G.Terminals('& | ! <bool>')
-
 
 # -------------------------------------------------------------------------------------------------------------------- #
 
@@ -119,18 +121,28 @@ term %= term + div + signed
 term %= term + mod + signed
 term %= signed
 
-signed %= plus + factor
-signed %= minus + factor
-signed %= factor
+signed %= plus + powers
+signed %= minus + powers
+signed %= powers
 
-factor %= atom + power + factor
-factor %= atom + power2 + factor
+powers %= factor + power + powers
+powers %= factor + power2 + powers
+powers %= factor
+
+# todo any issue if factor and atom are merged ?
+
+factor %= opar + expression + cpar
 factor %= atom
 
-# todo add function call to atom
-atom %= opar + expression + cpar
 atom %= number
 atom %= bool_term
+atom %= _id
+atom %= func_call
+
+func_call %= _id + opar + expr_list_comma_sep + cpar
+
+expr_list_comma_sep %= expression
+expr_list_comma_sep %= expression + comma + expression_list
 
 # Var declarations:
 var_declaration %= let + assignments + _in + expression
