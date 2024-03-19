@@ -74,6 +74,8 @@ declarations %= declarations + function_declaration
 declarations %= function_declaration
 declarations %= declarations + type_declaration
 declarations %= type_declaration
+declarations %= declarations + protocol_definition
+declarations %= protocol_definition
 
 #A type declaration can inherit, recive params or both
 
