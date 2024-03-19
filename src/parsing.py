@@ -75,11 +75,14 @@ def compute_local_first(G: Grammar, firsts, preview):
     lookahead = set()
 
     for symbol in preview:
-        if symbol.IsTerminal and not symbol.IsEpsilon:
+        if symbol.IsEpsilon:
+            continue
+
+        if symbol.IsTerminal:
             lookahead.add(symbol)
             return lookahead
 
-        elif symbol.IsNonTerminal:
+        else:
             lookahead.update(firsts[symbol] - {G.Epsilon})
 
             if G.Epsilon not in firsts[symbol]:
@@ -156,7 +159,8 @@ class ShiftReduceParser:
     def __call__(self, w):
         stack = [0]
         cursor = 0
-        output = []
+        output_parse = []
+        operations = []
 
         while cursor < len(w):
             state = stack[-1]
@@ -166,16 +170,18 @@ class ShiftReduceParser:
             if (state, lookahead) in self.action.keys():
                 action, tag = self.action[state, lookahead]
 
+                operations.append(action)
+
                 match action:
                     case ShiftReduceParser.OK:
-                        return output
+                        return output_parse, operations
 
                     case ShiftReduceParser.SHIFT:
                         stack.append(tag)
                         cursor += 1
 
                     case ShiftReduceParser.REDUCE:
-                        output.append(tag)
+                        output_parse.append(tag)
                         Left, Right = tag
 
                         for symbol in Right:
@@ -252,22 +258,16 @@ def expand(G: Grammar, item: Item, firsts):
 
     lookaheads = set()
 
-    while next_symbol and next_symbol.IsEpsilon:
-        item = item.NextItem()
-        next_symbol = item.NextSymbol
-
-    if not next_symbol:
-        return []
-
     for preview in item.Preview():
         lookaheads.update(compute_local_first(G, firsts, preview))
-
+    
     items = []
 
     for production in next_symbol.productions:
-        new_item = Item(production, 0, lookaheads)
-        items.append(new_item)
-        items.extend(expand(G, new_item, firsts))
+        if item.pos > 0 or production.Left != production.Right[0]:
+            new_item = Item(production, 0, lookaheads)
+            items.append(new_item)
+            items.extend(expand(G, new_item, firsts))
 
     return items
 
@@ -283,7 +283,7 @@ def compress(items):
             centers[center] = lookaheads = set()
         lookaheads.update(item.lookaheads)
 
-    return {Item(x.production, x.pos, set(lookahead)) for x, lookahead in centers.items()}
+    return {Item(x.production, x.pos, lookahead) for x, lookahead in centers.items()}
 
 
 def closure_lr1(G: Grammar, items, firsts):
@@ -381,7 +381,7 @@ class LR1Parser(ShiftReduceParser):
                     if item.IsReduceItem:
                         if item.production != G.startSymbol.productions[0]:
                             for terminal in item.lookaheads:
-                                if (states[state], terminal) not in self.action:
+                                if (states[state], terminal.Name) not in self.action:
                                     self.action[states[state], terminal.Name] = (
                                         ShiftReduceParser.REDUCE, item.production)
                                 else:

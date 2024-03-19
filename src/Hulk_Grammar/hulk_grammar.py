@@ -19,19 +19,19 @@ boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
     '<boolean_exp> <disjunctive_component> <neg> <boolean>')
 
 # Adding string expressions symbols
-string_expression = G.NonTerminals('<str_expr>')
+string_expression = G.NonTerminal('<str_expr>')
 
 # Declarations NonTerminals
 declarations, function_declaration, var_declaration, assignments, arg_list = G.NonTerminals(
     '<declarations> <func_declaration> <var_declaration> <assignments> <arg_list>')
-destructive_assignment = G.NonTerminals("<destructive_ass>")
+destructive_assignment = G.NonTerminal("<destructive_ass>")
 
 # Adding conditional NonTerminals
 conditional, conditional_ending = G.NonTerminals('<conditional> <conditional_ending>')
 inequality, equality = G.NonTerminals('<inequality> <equality>')
 
 # Adding looping Non terminals
-while_loop, for_loop = G.NonTerminal('<while> <for>')
+while_loop, for_loop = G.NonTerminals('<while> <for>')
 
 # Adding basic terminals
 obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('{ } ; ( ) => , :')
@@ -46,13 +46,13 @@ _if, _else, _elif = G.Terminals('if else elif')
 _while, _for = G.Terminals('while for')
 
 # Adding function terminals
-function = G.Terminals('function')
+function = G.Terminal('function')
 
 # Adding arithmetic Terminals
 plus, minus, star, div, power, mod, power2 = G.Terminals('+ - * / ^ % **')
 number = G.Terminal('<number>')
 
-eq, neq, leq, geq, gt, lt = G.Terminals('== != <= >= < >')
+eq, neq, leq, geq, lt, gt = G.Terminals('== != <= >= < >')
 
 # Adding boolean operators terminals
 and_op, or_op, not_op, bool_term = G.Terminals('& | ! <bool>')
