@@ -80,6 +80,7 @@ class State:
 
         return start
 
+
     @staticmethod
     def from_nfa(nfa, get_states=False):
         states = []

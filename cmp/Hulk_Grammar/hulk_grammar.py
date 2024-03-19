@@ -1,4 +1,4 @@
-from pycompiler import Grammar
+from src.pycompiler import Grammar
 
 G = Grammar()
 
@@ -34,7 +34,7 @@ obracket , cbracket, semicolon, opar, cpar, arrow, comma = G.Terminals('{ } ; ( 
 
 #Adding declaration terminals
 
-let, _type, _in, _id, equal = G.Terminals('let in <type> <id> =')
+let, _in, _type, _id, equal = G.Terminals('let in <type> <id> =')
 
 #Adding conditional terminals
 
