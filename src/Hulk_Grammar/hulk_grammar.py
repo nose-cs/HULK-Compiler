@@ -181,7 +181,9 @@ destructive_assignment %= _id + dest_eq + expression
 
 # Functions can be declared using lambda notation or classic notation
 function_declaration %= function + _id + opar + arg_list + cpar + arrow + expression
+function_declaration %= function + _id + opar + cpar + arrow + expression
 function_declaration %= function + _id + opar + arg_list + cpar + expression_block
+function_declaration %= function + _id + opar + cpar + expression_block
 
 arg_list %= arg_list + comma + _id
 arg_list %= _id
@@ -195,3 +197,7 @@ conditional_ending %= _else + expression
 # Loop expression
 while_loop %= _while + opar + expression + cpar + expression
 for_loop %= _for + opar + expression + cpar + expression
+
+#Protocol declaration 
+
+
