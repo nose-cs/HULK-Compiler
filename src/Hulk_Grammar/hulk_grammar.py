@@ -39,7 +39,8 @@ vector_initialization, elements = G.NonTerminals('<vector_initialization> <eleme
 while_loop, for_loop = G.NonTerminal('<while> <for>')
 
 # Adding basic terminals
-o_square_bracket, c_square_bracket, obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('[ ] { } ; ( ) => , :')
+double_bar, o_square_bracket, c_square_bracket, obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals(
+    '|| [ ] { } ; ( ) => , :')
 
 # Adding declaration terminals
 protocol, extends, word_type, let, _in, inherits, _type, _id, equal, dest_eq = G.Terminals('protocol extends let in inherits <type> <id> = :=')
@@ -222,6 +223,7 @@ decs %= _id + opar + cpar
 #Vector initialization
 vector_initialization %= o_square_bracket + c_square_bracket
 vector_initialization %= o_square_bracket + elements + c_square_bracket
+vector_initialization %= o_square_bracket + expression + double_bar + _id + _in + expression
 elements %= elements + comma + expression
 elements %= expression
 
