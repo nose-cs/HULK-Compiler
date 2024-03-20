@@ -262,7 +262,8 @@ class LogNode(BinaryExpressionNode):
 class RandNode(ExpressionNode):
     pass
 
-
+class PrintNode(UnaryExpressionNode):
+    pass
 # -------------------------------------------------------------------------------------------------------------------- #
 
 # Depth4
