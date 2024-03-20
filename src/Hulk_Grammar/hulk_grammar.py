@@ -22,8 +22,8 @@ boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
 string_expression = G.NonTerminal('<str_expr>')
 
 # Declarations NonTerminals
-protocol_definition, introducing_args, body, posible_body, type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list, decs = G.NonTerminals(
-    '<protocol_definition> <introducing_args> <body> <posible_body> <type declaration> <declarations> <func_declaration> <var_declaration> <assignments> <arg_list> <decs>')
+funcs, function_signature, args, protocol_definition, introducing_args, body, posible_body, type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list, decs = G.NonTerminals(
+    '<funcs> <function_signature> <args> <protocol_definition> <introducing_args> <body> <posible_body> <type declaration> <declarations> <func_declaration> <var_declaration> <assignments> <arg_list> <decs>')
 destructive_assignment = G.NonTerminal("<destructive_ass>")
 
 # Adding conditional NonTerminals
@@ -211,14 +211,18 @@ conditional_ending %= _else + expression
 # Loop expression
 while_loop %= _while + opar + expression + cpar + expression
 for_loop %= _for + opar + expression + cpar + expression
-
+for_loop %= _for + opar + _id + _in + expression + cpar + expression
 #Protocol declaration 
 
 protocol_definition %= protocol + _id + obracket + decs + cbracket
 protocol_definition %= protocol + _id + extends + _id + obracket + decs + cbracket
 
-decs %= decs + _id + opar + cpar
-decs %= _id + opar + cpar
+decs %= decs + funcs
+decs %= funcs
+function_signature %=_id + opar + cpar + semicolon
+function_signature %= _id + opar + args + cpar + semicolon
+args %= args + _id + colon + type
+args %= _id + colon +type
 
 #Vector initialization
 vector_initialization %= o_square_bracket + c_square_bracket
