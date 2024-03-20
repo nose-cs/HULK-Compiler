@@ -22,22 +22,32 @@ boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
 string_expression = G.NonTerminal('<str_expr>')
 
 # Declarations NonTerminals
-declarations, function_declaration, var_declaration, assignments, arg_list = G.NonTerminals(
-    '<declarations> <func_declaration> <var_declaration> <assignments> <arg_list>')
+protocol_definition, introducing_args, body, posible_body, type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list, decs = G.NonTerminals(
+    '<protocol_definition> <introducing_args> <body> <posible_body> <type declaration> <declarations> <func_declaration> <var_declaration> <assignments> <arg_list> <decs>')
 destructive_assignment = G.NonTerminal("<destructive_ass>")
 
 # Adding conditional NonTerminals
 conditional, conditional_ending = G.NonTerminals('<conditional> <conditional_ending>')
 inequality, equality = G.NonTerminals('<inequality> <equality>')
 
+#Adding vector NonTerminals
+
+vector_initialization, elements = G.NonTerminals('<vector_initialization> <elements>')
+
+
 # Adding looping Non terminals
 while_loop, for_loop = G.NonTerminals('<while> <for>')
 
 # Adding basic terminals
-obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals('{ } ; ( ) => , :')
+double_bar, o_square_bracket, c_square_bracket, obracket, cbracket, semicolon, opar, cpar, arrow, comma, colon = G.Terminals(
+    '|| [ ] { } ; ( ) => , :')
 
 # Adding declaration terminals
-let, _in, _type, _id, equal, dest_eq = G.Terminals('let in <type> <id> = :=')
+protocol, extends, word_type, let, _in, inherits, _type, _id, equal, dest_eq = G.Terminals('protocol extends let in inherits <type> <id> = :=')
+
+#Adding print statement
+
+print_statement = G.NonTerminal('<print_statement>')
 
 # Adding conditional terminals
 _if, _else, _elif = G.Terminals('if else elif')
@@ -46,7 +56,7 @@ _if, _else, _elif = G.Terminals('if else elif')
 _while, _for = G.Terminals('while for')
 
 # Adding function terminals
-function = G.Terminal('function')
+_print, function = G.Terminals('print function')
 
 # Adding arithmetic Terminals
 plus, minus, star, div, power, mod, power2 = G.Terminals('+ - * / ^ % **')
@@ -68,8 +78,31 @@ program %= declarations + expression
 
 declarations %= declarations + function_declaration
 declarations %= function_declaration
+declarations %= declarations + type_declaration
+declarations %= type_declaration
+declarations %= declarations + protocol_definition
+declarations %= protocol_definition
+
+#A type declaration can inherit, recive params or both
+
+type_declaration %=  word_type + _id + posible_body
+type_declaration %= word_type + _id + opar + introducing_args + cpar + posible_body
+type_declaration %= word_type + _id + inherits + _id + posible_body
+type_declaration  %= word_type + _id + inherits + _id + opar + introducing_args + cpar + posible_body
+
+posible_body %= obracket + cbracket
+posible_body %= obracket + body + cbracket
+
+introducing_args %= _id
+introducing_args %= introducing_args + comma + _id
+
+body %= body + assignments
+body %= body + function_declaration
+body %= assignments
+body %= function_declaration
 
 # An expression block is a sequence of expressions between brackets
+
 expression_block %= obracket + expression_list + cbracket
 
 expression_list %= expression + semicolon + expression_list
@@ -84,6 +117,8 @@ expression %= while_loop
 expression %= for_loop
 expression %= string_expression
 expression %= destructive_assignment
+expression %= print_statement
+expression %= vector_initialization
 
 # String expression
 string_expression %= string_expression + amper + boolean_exp
@@ -160,7 +195,9 @@ destructive_assignment %= _id + dest_eq + expression
 
 # Functions can be declared using lambda notation or classic notation
 function_declaration %= function + _id + opar + arg_list + cpar + arrow + expression
+function_declaration %= function + _id + opar + cpar + arrow + expression
 function_declaration %= function + _id + opar + arg_list + cpar + expression_block
+function_declaration %= function + _id + opar + cpar + expression_block
 
 arg_list %= arg_list + comma + _id
 arg_list %= _id
@@ -174,3 +211,22 @@ conditional_ending %= _else + expression
 # Loop expression
 while_loop %= _while + opar + expression + cpar + expression
 for_loop %= _for + opar + expression + cpar + expression
+
+#Protocol declaration 
+
+protocol_definition %= protocol + _id + obracket + decs + cbracket
+protocol_definition %= protocol + _id + extends + _id + obracket + decs + cbracket
+
+decs %= decs + _id + opar + cpar
+decs %= _id + opar + cpar
+
+#Vector initialization
+vector_initialization %= o_square_bracket + c_square_bracket
+vector_initialization %= o_square_bracket + elements + c_square_bracket
+vector_initialization %= o_square_bracket + expression + double_bar + _id + _in + expression
+elements %= elements + comma + expression
+elements %= expression
+
+#Print statement
+
+print_statement %= _print + opar + expression + cpar
