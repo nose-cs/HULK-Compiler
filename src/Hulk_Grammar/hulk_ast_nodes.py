@@ -50,9 +50,10 @@ class TypeDeclarationNode(StatementNode):
 
 
 class ProtocolDeclaration(StatementNode):
-    def __init__(self):
+    def __init__(self, methods, parent):
         super().__init__()
-        # todo add protocol declaration
+        self.methods = methods
+        self.parent = parent 
         pass
 
 
