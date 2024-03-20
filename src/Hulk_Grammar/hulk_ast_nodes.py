@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import List, Tuple
 
 
 # Depth 0
@@ -91,15 +92,14 @@ class UnaryExpressionNode(ExpressionNode):
 
 
 class ConditionalNode(ExpressionNode):
-    def __init__(self, conditions, expressions, default_expr):
+    def __init__(self, cond_expr: List[Tuple], default_expr):
         """
         :param conditions: list of conditions
         :param expressions: list of expressions, i-th expression is executed if i-th condition is true
         :param default_expr: default expression (else)
         """
         super().__init__()
-        self.conditions = conditions
-        self.expressions = expressions
+        self.cond_expr = cond_expr
         self.default_expr = default_expr
 
 
