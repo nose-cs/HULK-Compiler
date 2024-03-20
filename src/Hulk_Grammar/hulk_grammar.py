@@ -117,6 +117,7 @@ expression %= for_loop
 expression %= string_expression
 expression %= destructive_assignment
 expression %= print_statement
+expression %= vector_initialization
 
 # String expression
 string_expression %= string_expression + amper + boolean_exp
