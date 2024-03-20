@@ -4,13 +4,13 @@ from src.pycompiler import Terminal
 from src.regex.regex_automaton import get_regex_automaton
 
 def get_lexer(regexs: list[tuple[str, Terminal]]):
-    regexs.append(("  *", Terminal("<spaces>", None)))
-    
     inicial = State(None)
 
     for i, value in enumerate(regexs):
         regex, terminal = value
+        
         si, sf = get_regex_automaton(regex)
+        
         sf.state = (i, terminal)
 
         inicial.add_epsilon_transition(si)
@@ -51,10 +51,8 @@ def get_tokens(inicial : State, text : str):
                             max_pos = (max_pos[0], i, state.state[1])
                             priority = state.state[0]
 
-            if (len(current_states) == 0 or i + 1 == len(text)) and max_pos[1]:
-                if max_pos[2].Name != "<spaces>":
-                    tokens.append(Token(text[max_pos[0] : max_pos[1] + 1], max_pos[2]))
-                
+            if (len(current_states) == 0 or i + 1 == len(text)) and max_pos[1] is not None:
+                tokens.append(Token(text[max_pos[0] : max_pos[1] + 1], max_pos[2]))
                 i = max_pos[1]
                 max_pos = (max_pos[1] + 1, None)
                 current_states = inicial.epsilon_closure

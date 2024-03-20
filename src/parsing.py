@@ -251,7 +251,7 @@ class SLR1Parser(ShiftReduceParser):
         table[key] = value
 
 
-def expand(G: Grammar, item: Item, firsts):
+def expand(G: Grammar, item: Item, firsts, items: set[Item]):
     next_symbol = item.NextSymbol
     if next_symbol is None or not next_symbol.IsNonTerminal:
         return []
@@ -261,13 +261,12 @@ def expand(G: Grammar, item: Item, firsts):
     for preview in item.Preview():
         lookaheads.update(compute_local_first(G, firsts, preview))
     
-    items = []
-
     for production in next_symbol.productions:
-        if item.pos > 0 or production.Left != production.Right[0]:
-            new_item = Item(production, 0, lookaheads)
-            items.append(new_item)
-            items.extend(expand(G, new_item, firsts))
+        new_item = Item(production, 0, lookaheads)
+
+        if new_item not in items:
+            items.add(new_item)
+            expand(G, new_item, firsts, items)
 
     return items
 
@@ -289,17 +288,12 @@ def compress(items):
 def closure_lr1(G: Grammar, items, firsts):
     closure = ContainerSet(*items)
 
-    changed = True
-    while changed:
-        changed = False
+    new_items = ContainerSet()
 
-        new_items = ContainerSet()
+    for item in items:
+        new_items.set.update(expand(G, item, firsts, set()))
 
-        for item in items:
-            for new_item in expand(G, item, firsts):
-                new_items.add(new_item)
-
-        changed = closure.update(new_items)
+    closure.update(new_items)
 
     return compress(closure)
 
@@ -331,7 +325,7 @@ def build_LR1_automaton(G):
         current_state = visited[current]
 
         for symbol in G.terminals + G.nonTerminals:
-            closure = frozenset(goto_lr1(G, current_state.state, symbol, firsts))
+            closure = frozenset(goto_lr1(G, current, symbol, firsts))
 
             if len(closure) > 0:
                 if closure not in visited:
@@ -360,6 +354,7 @@ class LR1Parser(ShiftReduceParser):
             current = pending.pop()
 
             for symbol, list_state in current.transitions.items():
+                assert len(list_state) == 1
                 state = list_state[0]
 
                 if state not in states:
