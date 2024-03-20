@@ -211,7 +211,7 @@ conditional_ending %= _else + expression
 # Loop expression
 while_loop %= _while + opar + expression + cpar + expression
 for_loop %= _for + opar + expression + cpar + expression
-
+for_loop %= _for + opar + _id + _in + expression + cpar + expression
 #Protocol declaration 
 
 protocol_definition %= protocol + _id + obracket + decs + cbracket
