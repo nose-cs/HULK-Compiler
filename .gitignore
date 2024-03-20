@@ -1,1 +1,5 @@
 src/__pycache__
+cmp/__pycache__
+src/regex/__pycache__
+src/Hulk_Grammar/__pycache__
+src/lexer/__pycache__

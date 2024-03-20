@@ -26,6 +26,8 @@ def evaluate_reverse_parse(right_parse, operations, tokens):
                 stack[-len(body):] = [value]
             else:
                 stack.append(rule(None, None))
+        elif operation == ShiftReduceParser.OK:
+            break
         else:
             raise Exception('Invalid action!!!')
 
