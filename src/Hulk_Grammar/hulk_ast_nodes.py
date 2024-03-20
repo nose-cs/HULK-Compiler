@@ -54,7 +54,13 @@ class ProtocolDeclaration(StatementNode):
 
 
 # Expression
-class VarDeclarationNode(ExpressionNode):
+class ExpressionBlockNode(ExpressionNode):
+    def __init__(self, expressions):
+        super().__init__()
+        self.expressions = expressions
+
+
+class DestructiveAssignmentNode(ExpressionNode):
     def __init__(self, idx, expr):
         super().__init__()
         self.id = idx
@@ -106,6 +112,20 @@ class ForNode(ExpressionNode):
         self.var = var
         self.iterable = iterable
         self.expression = expression
+
+
+class VarDeclarationNode(ExpressionNode):
+    def __init__(self, idx, expr):
+        super().__init__()
+        self.id = idx
+        self.expr = expr
+
+
+class LetInNode(ExpressionNode):
+    def __init__(self, var_declarations, body):
+        super().__init__()
+        self.var_declarations = var_declarations
+        self.body = body
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -238,6 +258,8 @@ class LogNode(BinaryExpressionNode):
 class RandNode(ExpressionNode):
     pass
 
+
+# -------------------------------------------------------------------------------------------------------------------- #
 
 # Depth4
 
