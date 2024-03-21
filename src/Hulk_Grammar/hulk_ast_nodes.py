@@ -41,7 +41,7 @@ class FunctionDeclarationNode(StatementNode):
 
 
 class TypeDeclarationNode(StatementNode):
-    def __init__(self, atributes, methods, args = None, parent = None ):
+    def __init__(self, atributes, methods, args=None, parent=None):
         super().__init__()
         self.atributes = atributes
         self.methods = methods
@@ -54,7 +54,7 @@ class ProtocolDeclaration(StatementNode):
     def __init__(self, methods, parent):
         super().__init__()
         self.methods = methods
-        self.parent = parent 
+        self.parent = parent
         pass
 
 
@@ -262,8 +262,11 @@ class LogNode(BinaryExpressionNode):
 class RandNode(ExpressionNode):
     pass
 
+
 class PrintNode(UnaryExpressionNode):
     pass
+
+
 # -------------------------------------------------------------------------------------------------------------------- #
 
 # Depth4

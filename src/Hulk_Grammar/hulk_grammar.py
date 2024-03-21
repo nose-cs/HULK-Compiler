@@ -74,33 +74,15 @@ amper, double_amp, str_term = G.Terminals('@ @@ <string>')
 # -------------------------------------------------------------------------------------------------------------------- #
 
 # A program has the function declarations and then an expression or an expression block
-program %= expression, lambda h, s: hulk_ast_nodes.ProgramNode([], [s[1]])
-program %= declarations + expression, lambda h, s: hulk_ast_nodes.ProgramNode(s[1], [s[2]])
-
-declarations %= declarations + function_declaration, lambda h, s: s[1] + [s[2]]
-declarations %= function_declaration, lambda h, s: [s[1]]
-declarations %= declarations + type_declaration, lambda h, s: s[1] + [s[2]]
-declarations %= type_declaration, lambda h, s: [s[1]]
-declarations %= declarations + protocol_definition, lambda h, s: s[1] + [s[2]]
-declarations %= protocol_definition, lambda h, s: [s[1]]
-
-# A type declaration can inherit, receive params or both
-
-# type_declaration %= word_type + idx + possible_body
-# type_declaration %= word_type + idx + opar + introducing_args + cpar + possible_body
-# type_declaration %= word_type + idx + inherits + idx + possible_body
-# type_declaration %= word_type + idx + inherits + idx + opar + introducing_args + cpar + possible_body
+program %= expression, lambda h, s: hulk_ast_nodes.ProgramNode([], s[1])
+# program %= declarations + expression, lambda h, s: hulk_ast_nodes.ProgramNode(s[1], s[2])
 #
-# possible_body %= obracket + cbracket
-# possible_body %= obracket + body + cbracket
-#
-# introducing_args %= idx
-# introducing_args %= introducing_args + comma + idx
-#
-# body %= body + assignments
-# body %= body + function_declaration,
-# body %= assignments
-# body %= function_declaration
+# declarations %= declarations + function_declaration, lambda h, s: s[1] + [s[2]]
+# declarations %= function_declaration, lambda h, s: [s[1]]
+# declarations %= declarations + type_declaration, lambda h, s: s[1] + [s[2]]
+# declarations %= type_declaration, lambda h, s: [s[1]]
+# declarations %= declarations + protocol_definition, lambda h, s: s[1] + [s[2]]
+# declarations %= protocol_definition, lambda h, s: [s[1]]
 
 # An expression block is a sequence of expressions between brackets
 
@@ -220,6 +202,24 @@ while_loop %= while_ + opar + expression + cpar + expression, lambda h, s: hulk_
 
 for_loop %= for_ + opar + idx + in_ + expression + cpar + expression, lambda h, s: hulk_ast_nodes.ForNode(s[3], s[5],
                                                                                                           s[7])
+
+# # A type declaration can inherit, receive params or both
+#
+# type_declaration %= word_type + idx + possible_body
+# type_declaration %= word_type + idx + opar + introducing_args + cpar + possible_body
+# type_declaration %= word_type + idx + inherits + idx + possible_body
+# type_declaration %= word_type + idx + inherits + idx + opar + introducing_args + cpar + possible_body
+#
+# possible_body %= obracket + cbracket
+# possible_body %= obracket + body + cbracket
+#
+# introducing_args %= idx
+# introducing_args %= introducing_args + comma + idx
+#
+# body %= body + assignments
+# body %= body + function_declaration,
+# body %= assignments
+# body %= function_declaration
 #
 # # Protocol declaration
 # protocol_definition %= protocol + idx + obracket + decs + cbracket
