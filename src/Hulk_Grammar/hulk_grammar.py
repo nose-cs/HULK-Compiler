@@ -1,4 +1,4 @@
-import hulk_ast_nodes
+import src.Hulk_Grammar.hulk_ast_nodes as hulk_ast_nodes
 from src.pycompiler import Grammar
 
 G = Grammar()
@@ -23,8 +23,12 @@ boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
 string_expression = G.NonTerminal('<str_expr>')
 
 # Declarations NonTerminals
-funcs, function_signature, args, protocol_definition, introducing_args, body, posible_body, type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list, decs = G.NonTerminals(
-    '<funcs> <function_signature> <args> <protocol_definition> <introducing_args> <body> <posible_body> <type declaration> <declarations> <func_declaration> <var_declaration> <assignments> <arg_list> <decs>')
+funcs, function_signature, args, protocol_definition, introducing_args, body, possible_body = G.NonTerminals(
+    '<funcs> <function_signature> <args> <protocol_definition> <introducing_args> <body> <possible_body>')
+
+
+type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list, decs = G.NonTerminals(
+    '<type_declaration> <declarations> <function_declaration> <var_declaration> <assignments> <arg_list> <decs>')
 destructive_assignment = G.NonTerminal("<destructive_ass>")
 
 # Adding conditional NonTerminals
@@ -44,7 +48,7 @@ double_bar, o_square_bracket, c_square_bracket, obracket, cbracket, semicolon, o
 
 # Adding declaration terminals
 protocol, extends, word_type, let, in_, inherits, type_, idx, equal, dest_eq = G.Terminals(
-    'protocol extends let in inherits <type> <id> = :=')
+    'protocol extends type let in inherits <type> <id> = :=')
 
 # Adding conditional terminals
 if_, else_, elif_ = G.Terminals('if else elif')
@@ -82,21 +86,21 @@ declarations %= protocol_definition, lambda h, s: [s[1]]
 
 # A type declaration can inherit, receive params or both
 
-type_declaration %= word_type + idx + posible_body
-type_declaration %= word_type + idx + opar + introducing_args + cpar + posible_body
-type_declaration %= word_type + idx + inherits + idx + posible_body
-type_declaration %= word_type + idx + inherits + idx + opar + introducing_args + cpar + posible_body
-
-posible_body %= obracket + cbracket
-posible_body %= obracket + body + cbracket
-
-introducing_args %= idx
-introducing_args %= introducing_args + comma + idx
-
-body %= body + assignments
-body %= body + function_declaration,
-body %= assignments
-body %= function_declaration
+# type_declaration %= word_type + idx + possible_body
+# type_declaration %= word_type + idx + opar + introducing_args + cpar + possible_body
+# type_declaration %= word_type + idx + inherits + idx + possible_body
+# type_declaration %= word_type + idx + inherits + idx + opar + introducing_args + cpar + possible_body
+#
+# possible_body %= obracket + cbracket
+# possible_body %= obracket + body + cbracket
+#
+# introducing_args %= idx
+# introducing_args %= introducing_args + comma + idx
+#
+# body %= body + assignments
+# body %= body + function_declaration,
+# body %= assignments
+# body %= function_declaration
 
 # An expression block is a sequence of expressions between brackets
 
@@ -216,21 +220,21 @@ while_loop %= while_ + opar + expression + cpar + expression, lambda h, s: hulk_
 
 for_loop %= for_ + opar + idx + in_ + expression + cpar + expression, lambda h, s: hulk_ast_nodes.ForNode(s[3], s[5],
                                                                                                           s[7])
-
-# Protocol declaration
-protocol_definition %= protocol + idx + obracket + decs + cbracket
-protocol_definition %= protocol + idx + extends + idx + obracket + decs + cbracket
-
-decs %= decs + funcs
-decs %= funcs
-function_signature %= idx + opar + cpar + semicolon
-function_signature %= idx + opar + args + cpar + semicolon
-args %= args + idx + colon + type_
-args %= idx + colon + type_
-
-# Vector initialization
-vector_initialization %= o_square_bracket + c_square_bracket
-vector_initialization %= o_square_bracket + elements + c_square_bracket
-vector_initialization %= o_square_bracket + expression + double_bar + idx + in_ + expression
-elements %= elements + comma + expression
-elements %= expression
+#
+# # Protocol declaration
+# protocol_definition %= protocol + idx + obracket + decs + cbracket
+# protocol_definition %= protocol + idx + extends + idx + obracket + decs + cbracket
+#
+# decs %= decs + funcs
+# decs %= funcs
+# function_signature %= idx + opar + cpar + semicolon
+# function_signature %= idx + opar + args + cpar + semicolon
+# args %= args + idx + colon + type_
+# args %= idx + colon + type_
+#
+# # Vector initialization
+# vector_initialization %= o_square_bracket + c_square_bracket
+# vector_initialization %= o_square_bracket + elements + c_square_bracket
+# vector_initialization %= o_square_bracket + expression + double_bar + idx + in_ + expression
+# elements %= elements + comma + expression
+# elements %= expression
