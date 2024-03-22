@@ -111,6 +111,7 @@ expression_list %= expression, lambda h, s: [s[1]]
 # todo see https://github.com/matcom/hulk/blob/master/docs/guide/functions.md
 expression %= expression_block, lambda h, s: s[1]
 expression %= conditional, lambda h, s: s[1]
+expression %= let_in, lambda h, s: s[1]
 expression %= while_loop, lambda h, s: s[1]
 expression %= for_loop, lambda h, s: s[1]
 expression %= string_expression, lambda h, s: s[1]
@@ -269,9 +270,9 @@ method_declaration %= (idx + opar + params_list + cpar + colon + idx + arrow + e
 method_declaration %= (idx + opar + params_list + cpar + colon + idx + expression_block,
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[7], s[5]))
 
-attribute %= idx + equal + expression + semicolon, lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[3])
+attribute %= idx + equal + expression + semicolon, lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[3])
 attribute %= (idx + colon + idx + equal + expression + semicolon,
-              lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[5], s[3]))
+              lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[5], s[3]))
 
 is_operation %= expression + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(expression, idx)
 
@@ -288,22 +289,22 @@ attribute_call %= idx + dot + idx, lambda h, s: hulk_ast_nodes.AttributeCallNode
 
 # Protocol declaration
 protocol_definition %= (protocol + idx + obracket + protocol_body + cbracket,
-                        lambda h, s: hulk_ast_nodes.ProtocolDeclaration(s[2], s[4], None))
+                        lambda h, s: hulk_ast_nodes.ProtocolDeclarationNode(s[2], s[4], None))
 protocol_definition %= (protocol + idx + extends + idx + obracket + protocol_body + cbracket,
-                        lambda h, s: hulk_ast_nodes.ProtocolDeclaration(s[2], s[6], s[4]))
+                        lambda h, s: hulk_ast_nodes.ProtocolDeclarationNode(s[2], s[6], s[4]))
 
 protocol_body %= protocol_body + method_signature, lambda h, s: s[1] + [s[2]]
 protocol_body %= method_signature, lambda h, s: [s[1]]
 
 method_signature %= (idx + opar + typed_params + cpar + colon + idx + semicolon,
-                     lambda h, s: hulk_ast_nodes.MethodSignature(s[1], s[3], s[6]))
+                     lambda h, s: hulk_ast_nodes.MethodSignatureNode(s[1], s[3], s[6]))
 
 typed_params %= typed_params + comma + idx + colon + idx, lambda h, s: s[1] + [hulk_ast_nodes.ParamNode(s[3], s[5])]
 typed_params %= idx + colon + idx, lambda h, s: [hulk_ast_nodes.ParamNode(s[1], s[3])]
 
 # Vector initialization
-vector_initialization %= o_square_bracket + c_square_bracket, lambda h, s: hulk_ast_nodes.VectorInitialization([])
+vector_initialization %= o_square_bracket + c_square_bracket, lambda h, s: hulk_ast_nodes.VectorInitializationNode([])
 vector_initialization %= (o_square_bracket + expr_list_comma_sep_or_empty + c_square_bracket,
-                          lambda h, s: hulk_ast_nodes.VectorInitialization(s[2]))
+                          lambda h, s: hulk_ast_nodes.VectorInitializationNode(s[2]))
 vector_initialization %= (o_square_bracket + expression + double_bar + idx + in_ + expression,
-                          lambda h, s: hulk_ast_nodes.VectorComprehension(s[2], s[4], s[6]))
+                          lambda h, s: hulk_ast_nodes.VectorComprehensionNode(s[2], s[4], s[6]))

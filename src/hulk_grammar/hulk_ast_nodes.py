@@ -49,7 +49,7 @@ class TypeDeclarationNode(StatementNode):
         self.parent_params = parent_params
 
 
-class ProtocolDeclaration(StatementNode):
+class ProtocolDeclarationNode(StatementNode):
     def __init__(self, idx, methods_signature, parent):
         super().__init__()
         self.idx = idx
@@ -66,7 +66,7 @@ class MethodDeclarationNode(StatementNode):
         self.return_type = return_type
 
 
-class MethodSignature(StatementNode):
+class MethodSignatureNode(StatementNode):
     def __init__(self, idx, params, return_type):
         super().__init__()
         self.id = idx
@@ -74,7 +74,7 @@ class MethodSignature(StatementNode):
         self.return_type = return_type
 
 
-class AttributeStatement(StatementNode):
+class AttributeStatementNode(StatementNode):
     def __init__(self, idx, expr, attribute_type=None):
         super().__init__()
         self.id = idx
@@ -94,7 +94,7 @@ class TypeInstantiationNode(ExpressionNode):
     def __init__(self, idx, args):
         super().__init__()
         self.idx = idx
-        self.params = args
+        self.args = args
 
 
 class ExpressionBlockNode(ExpressionNode):
@@ -166,13 +166,13 @@ class LetInNode(ExpressionNode):
         self.body = body
 
 
-class VectorInitialization(ExpressionNode):
+class VectorInitializationNode(ExpressionNode):
     def __init__(self, elements):
         super().__init__()
         self.elements = elements
 
 
-class VectorComprehension(ExpressionNode):
+class VectorComprehensionNode(ExpressionNode):
     def __init__(self, selector, var, iterable):
         super().__init__()
         self.selector = selector
