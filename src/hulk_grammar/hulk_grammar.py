@@ -31,10 +31,10 @@ funcs, typed_params, protocol_definition, params_for_type, type_body = G.NonTerm
 type_declaration, declarations, function_declaration, let_in, assignments, params_list, protocol_body = G.NonTerminals(
     '<type_declaration> <declarations> <function_declaration> <let_in> <assignments> <params_list> <protocol_body>')
 
-method_declaration, method_signature, attribute, inheritance, params = G.NonTerminals(
-    '<method_declaration> <method_signature> <attribute> <inheritance> <params>')
+method_declaration, method_signature, attribute, inheritance, params, type_instantiation, method_call, attribute_call = G.NonTerminals(
+    '<method_declaration> <method_signature> <attribute> <inheritance> <params> <type_instantiation>, <method_call> <attribute_call>')
 
-destructive_assignment = G.NonTerminal("<destructive_ass>")
+destructive_assignment, is_operation, as_operation = G.NonTerminals("<destructive_ass> <is_operation> <as_operation>")
 
 # Adding conditional NonTerminals
 conditional, conditional_ending = G.NonTerminals('<conditional> <conditional_ending>')
@@ -42,7 +42,8 @@ inequality, equality = G.NonTerminals('<inequality> <equality>')
 
 # Adding vector NonTerminals
 
-vector_initialization, elements = G.NonTerminals('<vector_initialization> <elements>')
+vector_initialization, expr_list_comma_sep_or_empty = G.NonTerminals(
+    '<vector_initialization> <expr_list_comma_sep_or_empty>')
 
 # Adding looping Non terminals
 while_loop, for_loop = G.NonTerminals('<while> <for>')
@@ -55,7 +56,7 @@ optional_typing_var, optional_typing_param, optional_typing_return = G.NonTermin
 # Adding basic terminals
 double_bar, o_square_bracket, c_square_bracket, obracket, cbracket = G.Terminals('|| [ ] { }')
 
-semicolon, opar, cpar, arrow, comma, colon = G.Terminals('; ( ) => , :')
+semicolon, opar, cpar, arrow, comma, colon, dot = G.Terminals('; ( ) => , : .')
 
 # Adding declaration terminals
 protocol, extends, word_type, inherits, idx, new, is_, as_ = G.Terminals(
@@ -116,10 +117,17 @@ expression %= string_expression, lambda h, s: s[1]
 expression %= destructive_assignment, lambda h, s: s[1]
 expression %= vector_initialization, lambda h, s: s[1]
 
+# todo check type instantiation, is and as priority
+expression %= type_instantiation, lambda h, s: s[1]
+expression %= is_operation, lambda h, s: s[1]
+expression %= as_operation, lambda h, s: s[1]
+
 # String expression
 string_expression %= string_expression + amper + boolean_exp, lambda h, s: hulk_ast_nodes.ConcatNode(s[1], s[3])
+
 string_expression %= (string_expression + double_amp + boolean_exp,
-                      lambda h, s: hulk_ast_nodes.ConcatWithSpaceBetweenNode(s[1], s[3]))
+                      lambda h, s: hulk_ast_nodes.ConcatNode(s[1], hulk_ast_nodes.ConstantStringNode(" ")
+                                                             ).concat_with(s[3]))
 string_expression %= boolean_exp, lambda h, s: s[1]
 
 # A boolean expression is a disjunction of conjunctive components,
@@ -175,8 +183,13 @@ atom %= bool_term, lambda h, s: hulk_ast_nodes.ConstantBoolNode(s[1])
 atom %= str_term, lambda h, s: hulk_ast_nodes.ConstantStringNode(s[1])
 atom %= idx, lambda h, s: hulk_ast_nodes.VariableNode(s[1])
 atom %= func_call, lambda h, s: s[1]
+atom %= method_call, lambda h, s: s[1]
+atom %= attribute_call, lambda h, s: s[1]
 
-func_call %= idx + opar + expr_list_comma_sep + cpar, lambda h, s: hulk_ast_nodes.CallNode(s[1], s[3])
+func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.CallNode(s[1], s[3])
+
+expr_list_comma_sep_or_empty %= G.EOF, lambda h, s: []
+expr_list_comma_sep_or_empty %= expr_list_comma_sep, lambda h, s: s[1]
 
 expr_list_comma_sep %= expression, lambda h, s: [s[1]]
 expr_list_comma_sep %= expression + comma + expression_list, lambda h, s: [s[1]] + s[3]
@@ -218,17 +231,21 @@ conditional_ending %= G.Epsilon, lambda h, s: []
 # Loop expression
 while_loop %= while_ + opar + expression + cpar + expression, lambda h, s: hulk_ast_nodes.WhileNode(s[3], s[5])
 
-for_loop %= for_ + opar + idx + in_ + expression + cpar + expression, lambda h, s: hulk_ast_nodes.ForNode(s[3], s[5],
-                                                                                                          s[7])
+for_loop %= (for_ + opar + idx + in_ + expression + cpar + expression,
+             lambda h, s: hulk_ast_nodes.ForNode(s[3], s[5], s[7]))
 
-# A type declaration can inherit, receive params or both
-type_declaration %= (word_type + idx + inheritance + params_for_type + obracket + type_body + cbracket,
-                     lambda h, s: hulk_ast_nodes.TypeDeclarationNode(s[2], s[4], s[3], s[6]))
+# Type declaration
+type_declaration %= (word_type + idx + params_for_type + inheritance + obracket + type_body + cbracket,
+                     lambda h, s: hulk_ast_nodes.TypeDeclarationNode(s[2], s[3], s[6], s[4]))
+type_declaration %= (
+    word_type + idx + params_for_type + inherits + idx + opar + expr_list_comma_sep_or_empty + obracket + type_body + cbracket,
+    lambda h, s: hulk_ast_nodes.TypeDeclarationNode(s[2], s[3], s[9], s[5], s[7]))
 
 inheritance %= inherits + idx, lambda h, s: s[2]
 inheritance %= G.Epsilon, lambda h, s: None
 
 params_for_type %= opar + params + cpar, lambda h, s: s[2]
+params_for_type %= opar + cpar, lambda h, s: []
 params_for_type %= G.Epsilon, lambda h, s: []
 
 params %= optional_typing_param, lambda h, s: [s[1]]
@@ -256,11 +273,18 @@ attribute %= idx + equal + expression + semicolon, lambda h, s: hulk_ast_nodes.A
 attribute %= (idx + colon + idx + equal + expression + semicolon,
               lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[5], s[3]))
 
-# todo add methods and attribute call, and class instantiation
-# todo as and is https://matcom.in/hulk/guide/typing
+is_operation %= expression + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(expression, idx)
+
+as_operation %= expression + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(expression, idx)
 
 # types instantiation
+type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
+                       lambda h, s: hulk_ast_nodes.TypeInstantiationNode(s[2], s[4]))
 
+method_call %= (idx + dot + idx + opar + expr_list_comma_sep_or_empty + cpar,
+                lambda h, s: hulk_ast_nodes.MethodCallNode(s[1], s[3], s[5]))
+
+attribute_call %= idx + dot + idx, lambda h, s: hulk_ast_nodes.AttributeCallNode(s[1], s[3])
 
 # Protocol declaration
 protocol_definition %= (protocol + idx + obracket + protocol_body + cbracket,
@@ -279,10 +303,7 @@ typed_params %= idx + colon + idx, lambda h, s: [hulk_ast_nodes.ParamNode(s[1], 
 
 # Vector initialization
 vector_initialization %= o_square_bracket + c_square_bracket, lambda h, s: hulk_ast_nodes.VectorInitialization([])
-vector_initialization %= (o_square_bracket + elements + c_square_bracket,
+vector_initialization %= (o_square_bracket + expr_list_comma_sep_or_empty + c_square_bracket,
                           lambda h, s: hulk_ast_nodes.VectorInitialization(s[2]))
 vector_initialization %= (o_square_bracket + expression + double_bar + idx + in_ + expression,
                           lambda h, s: hulk_ast_nodes.VectorComprehension(s[2], s[4], s[6]))
-
-elements %= elements + comma + expression, lambda h, s: s[1] + [s[3]]
-elements %= expression, lambda h, s: s[1]
