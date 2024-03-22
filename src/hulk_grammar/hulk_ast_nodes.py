@@ -2,14 +2,12 @@ from abc import ABC
 from typing import List, Tuple
 
 
-# Depth 0
+# ---------------------------------------------------Depth 0---------------------------------------------------------- #
 class Node(ABC):
     pass
 
 
-# -------------------------------------------------------------------------------------------------------------------- #
-
-# Depth 1
+# ---------------------------------------------------Depth 1---------------------------------------------------------- #
 
 class ProgramNode(Node):
     def __init__(self, declarations, expression):
@@ -27,26 +25,24 @@ class StatementNode(Node):
         pass
 
 
-# -------------------------------------------------------------------------------------------------------------------- #
-
-# Depth 2
+# ---------------------------------------------------Depth 2---------------------------------------------------------- #
 
 # Statements
 class FunctionDeclarationNode(StatementNode):
-    def __init__(self, idx, args, expr, return_type=None):
+    def __init__(self, idx, params, expr, return_type=None):
         super().__init__()
         self.id = idx
-        self.args = args
+        self.params = params
         self.expr = expr
         self.return_type = return_type
 
 
 class TypeDeclarationNode(StatementNode):
-    def __init__(self, idx, args, parent, body):
+    def __init__(self, idx, params, parent, body):
         super().__init__()
         self.idx = idx
         self.body = body
-        self.args = args
+        self.params = params
         self.parent = parent
 
 
@@ -59,26 +55,20 @@ class ProtocolDeclaration(StatementNode):
 
 
 class MethodDeclarationNode(StatementNode):
-    def __init__(self, idx, args, expr, return_type=None):
+    def __init__(self, idx, params, expr, return_type=None):
         super().__init__()
         self.id = idx
-        self.args = args
+        self.params = params
         self.expr = expr
         self.return_type = return_type
 
 
 class MethodSignature(StatementNode):
-    def __init__(self, idx, args):
+    def __init__(self, idx, params, return_type):
         super().__init__()
         self.id = idx
-        self.args = args
-
-
-class ArgumentNode(ExpressionNode):
-    def __init__(self, idx, arg_type=None):
-        super().__init__()
-        self.id = idx
-        self.var_type = arg_type
+        self.params = params
+        self.return_type = return_type
 
 
 class AttributeStatement(StatementNode):
@@ -89,7 +79,14 @@ class AttributeStatement(StatementNode):
         self.attribute_type = attribute_type
 
 
-# Expression
+# Expressions
+class ParamNode(ExpressionNode):
+    def __init__(self, idx, param_type=None):
+        super().__init__()
+        self.id = idx
+        self.var_type = param_type
+
+
 class ExpressionBlockNode(ExpressionNode):
     def __init__(self, expressions):
         super().__init__()
@@ -173,9 +170,7 @@ class VectorComprehension(ExpressionNode):
         self.iterable = iterable
 
 
-# -------------------------------------------------------------------------------------------------------------------- #
-
-# Depth 3
+# ---------------------------------------------------Depth 3---------------------------------------------------------- #
 
 # Atomic
 class ConstantNumNode(AtomicNode):
