@@ -1,4 +1,4 @@
-from src.Hulk_Grammar.hulk_grammar import obracket, cbracket, semicolon, opar, cpar, arrow, comma, type_, in_, equal, \
+from src.hulk_grammar.hulk_grammar import obracket, cbracket, semicolon, opar, cpar, arrow, comma, in_, equal, \
     dest_eq, \
     if_, else_, elif_, \
     while_, for_, \
@@ -19,7 +19,7 @@ strings_ascii_symbols = '|'.join(chr(n) for n in range(32, 257) if chr(n) not in
 
 Regex_Terminal = [
     ("{", obracket), ("}", cbracket), (";", semicolon), ("\\(", opar), ("\\)", cpar), ("=>", arrow), (",", comma),
-    ("let", let), ("(class)|(def)", type_), ("in", in_), ("=", equal), (":=", dest_eq),
+    ("let", let), ("in", in_), ("=", equal), (":=", dest_eq),
     ("if", if_), ("else", else_), ("elif", elif_),
     ("while", while_), ("for", for_),
     ("function", function),

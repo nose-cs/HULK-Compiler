@@ -1,4 +1,4 @@
-import src.Hulk_Grammar.hulk_ast_nodes as hulk_ast_nodes
+import src.hulk_grammar.hulk_ast_nodes as hulk_ast_nodes
 from src.pycompiler import Grammar
 
 G = Grammar()
