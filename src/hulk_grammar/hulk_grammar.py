@@ -234,25 +234,27 @@ arguments %= arguments + comma + optional_typing_arg, lambda h, s: s[1] + [s[3]]
 optional_typing_arg %= idx, lambda h, s: hulk_ast_nodes.ArgumentNode(s[1])
 optional_typing_arg %= idx + colon + idx, lambda h, s: hulk_ast_nodes.ArgumentNode(s[1], s[3])
 
-type_body %= type_body + attribute + semicolon, lambda h, s: s[1] + [s[2]]
-type_body %= type_body + method_declaration + semicolon, lambda h, s: s[1] + [s[2]]
-type_body %= attribute + semicolon, lambda h, s: [s[1]]
-type_body %= method_declaration + semicolon, lambda h, s: [s[1]]
+type_body %= type_body + attribute, lambda h, s: s[1] + [s[2]]
+type_body %= type_body + method_declaration, lambda h, s: s[1] + [s[2]]
+type_body %= attribute, lambda h, s: [s[1]]
+type_body %= method_declaration, lambda h, s: [s[1]]
 
-method_declaration %= (idx + opar + arg_list + cpar + arrow + expression,
+method_declaration %= (idx + opar + arg_list + cpar + arrow + expression + semicolon,
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[6]))
 method_declaration %= (idx + opar + arg_list + cpar + expression_block,
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[5]))
 # specifying return type
-method_declaration %= (idx + opar + arg_list + cpar + colon + idx + arrow + expression,
+method_declaration %= (idx + opar + arg_list + cpar + colon + idx + arrow + expression + semicolon,
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[8], s[6]))
 method_declaration %= (idx + opar + arg_list + cpar + colon + idx + expression_block,
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[7], s[5]))
 
-attribute %= idx + equal + expression, lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[3])
-attribute %= idx + colon + idx + equal + expression, lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[5], s[3])
+attribute %= idx + equal + expression + semicolon, lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[3])
+attribute %= (idx + colon + idx + equal + expression + semicolon,
+              lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[5], s[3]))
 
 # todo add methods and attribute call, and class instantiation
+# todo as and is https://matcom.in/hulk/guide/typing
 
 # Protocol declaration
 protocol_definition %= (protocol + idx + obracket + protocol_body + cbracket,
