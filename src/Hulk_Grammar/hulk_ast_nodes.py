@@ -148,6 +148,20 @@ class LetInNode(ExpressionNode):
         self.body = body
 
 
+class VectorInitialization(ExpressionNode):
+    def __init__(self, elements):
+        super().__init__()
+        self.elements = elements
+
+
+class VectorComprehension(ExpressionNode):
+    def __init__(self, selector, var, iterable):
+        super().__init__()
+        self.selector = selector
+        self.var = var
+        self.iterable = iterable
+
+
 # -------------------------------------------------------------------------------------------------------------------- #
 
 # Depth 3

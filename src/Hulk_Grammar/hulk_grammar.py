@@ -50,8 +50,8 @@ double_bar, o_square_bracket, c_square_bracket, obracket, cbracket, semicolon, o
     '|| [ ] { } ; ( ) => , :')
 
 # Adding declaration terminals
-protocol, extends, word_type, let, in_, inherits, type_, idx, equal, dest_eq = G.Terminals(
-    'protocol extends type let in inherits <type> <id> = :=')
+protocol, extends, word_type, let, in_, inherits, idx, equal, dest_eq = G.Terminals(
+    'protocol extends type let in inherits <id> = :=')
 
 # Adding conditional terminals
 if_, else_, elif_ = G.Terminals('if else elif')
@@ -230,7 +230,7 @@ attribute %= idx + equal + expression, lambda h, s: hulk_ast_nodes.AttributeStat
 
 # todo add methods and attribute call, and class instantiation
 
-# # Protocol declaration
+# Protocol declaration
 protocol_definition %= (protocol + idx + obracket + decs + cbracket,
                         lambda h, s: hulk_ast_nodes.ProtocolDeclaration(s[2], s[4], None))
 protocol_definition %= (protocol + idx + extends + idx + obracket + decs + cbracket,
@@ -239,12 +239,15 @@ protocol_definition %= (protocol + idx + extends + idx + obracket + decs + cbrac
 decs %= decs + function_signature, lambda h, s: s[1] + [s[2]]
 decs %= function_signature, lambda h, s: [s[1]]
 function_signature %= idx + opar + args + cpar + semicolon, lambda h, s: hulk_ast_nodes.MethodSignature(s[1], s[3])
-args %= args + idx + colon + type_, lambda h, s: s[1] + [(s[2], s[4])]
+args %= args + idx + colon + idx, lambda h, s: s[1] + [(s[2], s[4])]
 args %= G.Epsilon, lambda h, s: []
 
-# # Vector initialization
-# vector_initialization %= o_square_bracket + c_square_bracket
-# vector_initialization %= o_square_bracket + elements + c_square_bracket
-# vector_initialization %= o_square_bracket + expression + double_bar + idx + in_ + expression
-# elements %= elements + comma + expression
-# elements %= expression
+# Vector initialization
+vector_initialization %= o_square_bracket + c_square_bracket, lambda h, s: hulk_ast_nodes.VectorInitialization([])
+vector_initialization %= (o_square_bracket + elements + c_square_bracket,
+                          lambda h, s: hulk_ast_nodes.VectorInitialization(s[2]))
+vector_initialization %= (o_square_bracket + expression + double_bar + idx + in_ + expression,
+                          lambda h, s: hulk_ast_nodes.VectorComprehension(s[2], s[4], s[6]))
+
+elements %= elements + comma + expression, lambda h, s: s[1] + [s[3]]
+elements %= expression, lambda h, s: s[1]
