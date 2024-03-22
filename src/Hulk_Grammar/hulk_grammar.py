@@ -84,8 +84,8 @@ declarations %= declarations + function_declaration, lambda h, s: s[1] + [s[2]]
 declarations %= function_declaration, lambda h, s: [s[1]]
 declarations %= declarations + type_declaration, lambda h, s: s[1] + [s[2]]
 declarations %= type_declaration, lambda h, s: [s[1]]
-# declarations %= declarations + protocol_definition, lambda h, s: s[1] + [s[2]]
-# declarations %= protocol_definition, lambda h, s: [s[1]]
+declarations %= declarations + protocol_definition, lambda h, s: s[1] + [s[2]]
+declarations %= protocol_definition, lambda h, s: [s[1]]
 
 # An expression block is a sequence of expressions between brackets
 
@@ -181,8 +181,8 @@ assignments %= idx + equal + expression, lambda h, s: hulk_ast_nodes.VarDeclarat
 destructive_assignment %= idx + dest_eq + expression, lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3])
 
 # Functions can be declared using lambda notation or classic notation
-# function_declaration %= (function + idx + opar + arg_list + cpar + arrow + expression,
-#                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7]))
+function_declaration %= (function + idx + opar + arg_list + cpar + arrow + expression + semicolon,
+                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7]))
 function_declaration %= (function + idx + opar + arg_list + cpar + expression_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[6]))
 
@@ -231,16 +231,17 @@ attribute %= idx + equal + expression, lambda h, s: hulk_ast_nodes.AttributeStat
 # todo add methods and attribute call, and class instantiation
 
 # # Protocol declaration
-# protocol_definition %= protocol + idx + obracket + decs + cbracket
-# protocol_definition %= protocol + idx + extends + idx + obracket + decs + cbracket
-#
-# decs %= decs + funcs
-# decs %= funcs
-# function_signature %= idx + opar + cpar + semicolon
-# function_signature %= idx + opar + args + cpar + semicolon
-# args %= args + idx + colon + type_
-# args %= idx + colon + type_
-#
+protocol_definition %= (protocol + idx + obracket + decs + cbracket,
+                        lambda h, s: hulk_ast_nodes.ProtocolDeclaration(s[2], s[4], None))
+protocol_definition %= (protocol + idx + extends + idx + obracket + decs + cbracket,
+                        lambda h, s: hulk_ast_nodes.ProtocolDeclaration(s[2], s[6], s[4]))
+
+decs %= decs + function_signature, lambda h, s: s[1] + [s[2]]
+decs %= function_signature, lambda h, s: [s[1]]
+function_signature %= idx + opar + args + cpar + semicolon, lambda h, s: hulk_ast_nodes.MethodSignature(s[1], s[3])
+args %= args + idx + colon + type_, lambda h, s: s[1] + [(s[2], s[4])]
+args %= G.Epsilon, lambda h, s: []
+
 # # Vector initialization
 # vector_initialization %= o_square_bracket + c_square_bracket
 # vector_initialization %= o_square_bracket + elements + c_square_bracket

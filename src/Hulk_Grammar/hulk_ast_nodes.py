@@ -50,8 +50,9 @@ class TypeDeclarationNode(StatementNode):
 
 
 class ProtocolDeclaration(StatementNode):
-    def __init__(self, methods_signature, parent):
+    def __init__(self, idx, methods_signature, parent):
         super().__init__()
+        self.idx = idx
         self.methods_signature = methods_signature
         self.parent = parent
 
@@ -62,6 +63,13 @@ class MethodDeclarationNode(StatementNode):
         self.id = idx
         self.args = args
         self.expr = expr
+
+
+class MethodSignature(StatementNode):
+    def __init__(self, idx, args):
+        super().__init__()
+        self.id = idx
+        self.args = args
 
 
 class AttributeStatement(StatementNode):
@@ -106,11 +114,6 @@ class UnaryExpressionNode(ExpressionNode):
 
 class ConditionalNode(ExpressionNode):
     def __init__(self, cond_expr: List[Tuple], default_expr):
-        """
-        :param conditions: list of conditions
-        :param expressions: list of expressions, i-th expression is executed if i-th condition is true
-        :param default_expr: default expression (else)
-        """
         super().__init__()
         self.cond_expr = cond_expr
         self.default_expr = default_expr
@@ -248,48 +251,3 @@ class PowNode(BinaryExpressionNode):
 
 class NegNode(UnaryExpressionNode):
     pass
-
-
-# built-in arithmetic functions
-
-class SqrtNode(UnaryExpressionNode):
-    pass
-
-
-class SinNode(UnaryExpressionNode):
-    pass
-
-
-class CosNode(UnaryExpressionNode):
-    pass
-
-
-class ExpNode(UnaryExpressionNode):
-    pass
-
-
-class LogNode(BinaryExpressionNode):
-    pass
-
-
-class RandNode(ExpressionNode):
-    pass
-
-
-class PrintNode(UnaryExpressionNode):
-    pass
-
-
-# -------------------------------------------------------------------------------------------------------------------- #
-
-# Depth4
-
-# Constants
-class PiConstantNode(ConstantNumNode):
-    def __init__(self):
-        super().__init__('PI')
-
-
-class EConstantNode(ConstantNumNode):
-    def __init__(self):
-        super().__init__('E')
