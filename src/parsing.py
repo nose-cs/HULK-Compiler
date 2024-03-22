@@ -260,7 +260,7 @@ def expand(G: Grammar, item: Item, firsts, items: set[Item]):
 
     for preview in item.Preview():
         lookaheads.update(compute_local_first(G, firsts, preview))
-    
+
     for production in next_symbol.productions:
         new_item = Item(production, 0, lookaheads)
 
@@ -380,7 +380,8 @@ class LR1Parser(ShiftReduceParser):
                                     self.action[states[state], terminal.Name] = (
                                         ShiftReduceParser.REDUCE, item.production)
                                 else:
-                                    raise Exception("Bad Grammar")
+                                    raise Exception(
+                                        f"Grammar is not LR(1). A conflict had happened at {states[state], terminal.Name}: table[{states[state]},{terminal.Name}] = {self.action[states[state], terminal.Name]} and tried to {ShiftReduceParser.REDUCE, item.production}")
 
     @staticmethod
     def _register(table, key, value):

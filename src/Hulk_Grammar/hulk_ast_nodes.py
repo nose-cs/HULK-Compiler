@@ -41,21 +41,34 @@ class FunctionDeclarationNode(StatementNode):
 
 
 class TypeDeclarationNode(StatementNode):
-    def __init__(self, atributes, methods, args=None, parent=None):
+    def __init__(self, idx, args, parent, body):
         super().__init__()
-        self.atributes = atributes
-        self.methods = methods
+        self.idx = idx
+        self.body = body
         self.args = args
         self.parent = parent
-        pass
 
 
 class ProtocolDeclaration(StatementNode):
-    def __init__(self, methods, parent):
+    def __init__(self, methods_signature, parent):
         super().__init__()
-        self.methods = methods
+        self.methods_signature = methods_signature
         self.parent = parent
-        pass
+
+
+class MethodDeclarationNode(StatementNode):
+    def __init__(self, idx, args, expr):
+        super().__init__()
+        self.id = idx
+        self.args = args
+        self.expr = expr
+
+
+class AttributeStatement(StatementNode):
+    def __init__(self, idx, expr):
+        super().__init__()
+        self.id = idx
+        self.expr = expr
 
 
 # Expression
