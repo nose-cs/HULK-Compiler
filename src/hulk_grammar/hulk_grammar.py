@@ -47,8 +47,8 @@ vector_initialization, elements = G.NonTerminals('<vector_initialization> <eleme
 # Adding looping Non terminals
 while_loop, for_loop = G.NonTerminals('<while> <for>')
 
-optional_typing_var, optional_typing_arg, optional_typing_return = G.NonTerminals(
-    '<optional_typing_var> <optional_typing_arg> <optional_typing_return>')
+optional_typing_var, optional_typing_param, optional_typing_return = G.NonTerminals(
+    '<optional_typing_var> <optional_typing_param> <optional_typing_return>')
 
 # ----------------------------------------------Terminals------------------------------------------------------------- #
 
@@ -58,21 +58,24 @@ double_bar, o_square_bracket, c_square_bracket, obracket, cbracket = G.Terminals
 semicolon, opar, cpar, arrow, comma, colon = G.Terminals('; ( ) => , :')
 
 # Adding declaration terminals
-protocol, extends, word_type, let, in_, inherits, idx, equal, dest_eq = G.Terminals(
-    'protocol extends type let in inherits <id> = :=')
+protocol, extends, word_type, inherits, idx, new, is_, as_ = G.Terminals(
+    'protocol extends type inherits <id> new is as')
+
+equal, dest_eq = G.Terminals('= :=')
 
 # Adding conditional terminals
 if_, else_, elif_ = G.Terminals('if else elif')
+
+let, in_, = G.Terminals('let in')
 
 # Adding looping terminals
 while_, for_ = G.Terminals('while for')
 
 # Adding function terminals
-print_, function = G.Terminals('print function')
+function = G.Terminal('function')
 
 # Adding arithmetic Terminals
-plus, minus, star, div, power, mod, power2 = G.Terminals('+ - * / ^ % **')
-number = G.Terminal('<number>')
+plus, minus, star, div, power, mod, power2, number = G.Terminals('+ - * / ^ % ** <number>')
 
 eq, neq, leq, geq, lt, gt = G.Terminals('== != <= >= < >')
 
@@ -228,11 +231,11 @@ inheritance %= G.Epsilon, lambda h, s: None
 params_for_type %= opar + params + cpar, lambda h, s: s[2]
 params_for_type %= G.Epsilon, lambda h, s: []
 
-params %= optional_typing_arg, lambda h, s: [s[1]]
-params %= params + comma + optional_typing_arg, lambda h, s: s[1] + [s[3]]
+params %= optional_typing_param, lambda h, s: [s[1]]
+params %= params + comma + optional_typing_param, lambda h, s: s[1] + [s[3]]
 
-optional_typing_arg %= idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1])
-optional_typing_arg %= idx + colon + idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1], s[3])
+optional_typing_param %= idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1])
+optional_typing_param %= idx + colon + idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1], s[3])
 
 type_body %= type_body + attribute, lambda h, s: s[1] + [s[2]]
 type_body %= type_body + method_declaration, lambda h, s: s[1] + [s[2]]
@@ -255,6 +258,9 @@ attribute %= (idx + colon + idx + equal + expression + semicolon,
 
 # todo add methods and attribute call, and class instantiation
 # todo as and is https://matcom.in/hulk/guide/typing
+
+# types instantiation
+
 
 # Protocol declaration
 protocol_definition %= (protocol + idx + obracket + protocol_body + cbracket,
