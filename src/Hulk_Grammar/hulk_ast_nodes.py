@@ -72,6 +72,13 @@ class MethodSignature(StatementNode):
         self.args = args
 
 
+class ArgumentNode(ExpressionNode):
+    def __init__(self, idx, var_type=None):
+        super().__init__()
+        self.id = idx
+        self.var_type = var_type
+
+
 class AttributeStatement(StatementNode):
     def __init__(self, idx, expr):
         super().__init__()
@@ -135,10 +142,11 @@ class ForNode(ExpressionNode):
 
 
 class VarDeclarationNode(ExpressionNode):
-    def __init__(self, idx, expr):
+    def __init__(self, idx, expr, var_type=None):
         super().__init__()
         self.id = idx
         self.expr = expr
+        self.var_type = var_type
 
 
 class LetInNode(ExpressionNode):
