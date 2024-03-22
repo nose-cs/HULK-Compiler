@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import List, Tuple
 
 
 # Depth 0
@@ -40,21 +41,42 @@ class FunctionDeclarationNode(StatementNode):
 
 
 class TypeDeclarationNode(StatementNode):
-    def __init__(self, atributes, methods, args = None, parent = None ):
+    def __init__(self, idx, args, parent, body):
         super().__init__()
-        self.atributes = atributes
-        self.methods = methods
+        self.idx = idx
+        self.body = body
         self.args = args
         self.parent = parent
-        pass
 
 
 class ProtocolDeclaration(StatementNode):
-    def __init__(self, methods, parent):
+    def __init__(self, idx, methods_signature, parent):
         super().__init__()
-        self.methods = methods
-        self.parent = parent 
-        pass
+        self.idx = idx
+        self.methods_signature = methods_signature
+        self.parent = parent
+
+
+class MethodDeclarationNode(StatementNode):
+    def __init__(self, idx, args, expr):
+        super().__init__()
+        self.id = idx
+        self.args = args
+        self.expr = expr
+
+
+class MethodSignature(StatementNode):
+    def __init__(self, idx, args):
+        super().__init__()
+        self.id = idx
+        self.args = args
+
+
+class AttributeStatement(StatementNode):
+    def __init__(self, idx, expr):
+        super().__init__()
+        self.id = idx
+        self.expr = expr
 
 
 # Expression
@@ -91,15 +113,9 @@ class UnaryExpressionNode(ExpressionNode):
 
 
 class ConditionalNode(ExpressionNode):
-    def __init__(self, conditions, expressions, default_expr):
-        """
-        :param conditions: list of conditions
-        :param expressions: list of expressions, i-th expression is executed if i-th condition is true
-        :param default_expr: default expression (else)
-        """
+    def __init__(self, cond_expr: List[Tuple], default_expr):
         super().__init__()
-        self.conditions = conditions
-        self.expressions = expressions
+        self.cond_expr = cond_expr
         self.default_expr = default_expr
 
 
@@ -130,6 +146,20 @@ class LetInNode(ExpressionNode):
         super().__init__()
         self.var_declarations = var_declarations
         self.body = body
+
+
+class VectorInitialization(ExpressionNode):
+    def __init__(self, elements):
+        super().__init__()
+        self.elements = elements
+
+
+class VectorComprehension(ExpressionNode):
+    def __init__(self, selector, var, iterable):
+        super().__init__()
+        self.selector = selector
+        self.var = var
+        self.iterable = iterable
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -235,45 +265,3 @@ class PowNode(BinaryExpressionNode):
 
 class NegNode(UnaryExpressionNode):
     pass
-
-
-# built-in arithmetic functions
-
-class SqrtNode(UnaryExpressionNode):
-    pass
-
-
-class SinNode(UnaryExpressionNode):
-    pass
-
-
-class CosNode(UnaryExpressionNode):
-    pass
-
-
-class ExpNode(UnaryExpressionNode):
-    pass
-
-
-class LogNode(BinaryExpressionNode):
-    pass
-
-
-class RandNode(ExpressionNode):
-    pass
-
-class PrintNode(UnaryExpressionNode):
-    pass
-# -------------------------------------------------------------------------------------------------------------------- #
-
-# Depth4
-
-# Constants
-class PiConstantNode(ConstantNumNode):
-    def __init__(self):
-        super().__init__('PI')
-
-
-class EConstantNode(ConstantNumNode):
-    def __init__(self):
-        super().__init__('E')
