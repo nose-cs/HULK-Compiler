@@ -1,7 +1,8 @@
 from src.pycompiler import Grammar
 from src.regex import regex_nodes
 
-def getRegexGrammar():
+
+def get_regex_grammar():
     G = Grammar()
 
     origin = G.NonTerminal('<origin>', startSymbol=True)

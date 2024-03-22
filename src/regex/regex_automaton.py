@@ -1,13 +1,14 @@
-from src.parsing import SLR1Parser
-from src.regex.regex_grammar import getRegexGrammar
-from src.utils import Token
 from src.evaluation import evaluate_reverse_parse
+from src.parsing import SLR1Parser
 from src.regex.build_automaton_visitor import AutomataBuilderVisitor
+from src.regex.regex_grammar import get_regex_grammar
+from src.utils import Token
 
-def get_regex_automaton(regex : str):
-    G, star, bar, opar, cpar, char = getRegexGrammar()
 
-    def getRegexTerminalToken(charrr, force_char):
+def get_regex_automaton(regex: str):
+    G, star, bar, opar, cpar, char = get_regex_grammar()
+
+    def get_regex_terminal_token(charrr, force_char):
         if not force_char:
             match charrr:
                 case star.Name:
@@ -29,7 +30,7 @@ def get_regex_automaton(regex : str):
 
     for charrr in regex:
         if charrr != '\\' or force_char:
-            terminal, token = getRegexTerminalToken(charrr, force_char)
+            terminal, token = get_regex_terminal_token(charrr, force_char)
             terminals.append(terminal)
             tokens.append(token)
             force_char = False
