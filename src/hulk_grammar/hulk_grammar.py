@@ -28,8 +28,8 @@ string_expression = G.NonTerminal('<str_expr>')
 funcs, args, protocol_definition, introducing_args, type_body = G.NonTerminals(
     '<funcs> <args> <protocol_definition> <introducing_args> <type_body>')
 
-type_declaration, declarations, function_declaration, var_declaration, assignments, arg_list, protocol_body = G.NonTerminals(
-    '<type_declaration> <declarations> <function_declaration> <var_declaration> <assignments> <arg_list> <protocol_body>')
+type_declaration, declarations, function_declaration, let_in, assignments, arg_list, protocol_body = G.NonTerminals(
+    '<type_declaration> <declarations> <function_declaration> <let_in> <assignments> <arg_list> <protocol_body>')
 
 method_declaration, method_signature, attribute, inheritance, arguments = G.NonTerminals(
     '<method_declaration> <method_signature> <attribute> <inheritance> <arguments>')
@@ -46,6 +46,9 @@ vector_initialization, elements = G.NonTerminals('<vector_initialization> <eleme
 
 # Adding looping Non terminals
 while_loop, for_loop = G.NonTerminals('<while> <for>')
+
+optional_typing_var, optional_typing_arg, optional_typing_return = G.NonTerminals(
+    '<optional_typing_var> <optional_typing_arg> <optional_typing_return>')
 
 # ----------------------------------------------Terminals------------------------------------------------------------- #
 
@@ -79,7 +82,7 @@ and_op, or_op, not_op, bool_term = G.Terminals('& | ! <bool>')
 # Adding string terminals
 amper, double_amp, str_term = G.Terminals('@ @@ <string>')
 
-# -------------------------------------------------------------------------------------------------------------------- #
+# -----------------------------------------------Productions---------------------------------------------------------- #
 
 # A program has the function declarations and then an expression or an expression block
 program %= expression, lambda h, s: hulk_ast_nodes.ProgramNode([], s[1])
@@ -176,15 +179,14 @@ expr_list_comma_sep %= expression, lambda h, s: [s[1]]
 expr_list_comma_sep %= expression + comma + expression_list, lambda h, s: [s[1]] + s[3]
 
 # Var declarations:
-var_declaration %= let + assignments + in_ + expression, lambda h, s: hulk_ast_nodes.LetInNode(s[2], s[4])
+let_in %= let + assignments + in_ + expression, lambda h, s: hulk_ast_nodes.LetInNode(s[2], s[4])
 
-assignments %= (assignments + comma + idx + equal + expression,
-                lambda h, s: s[1] + [hulk_ast_nodes.VarDeclarationNode(s[3], s[5])])
-assignments %= (assignments + comma + idx + colon + idx + equal + expression,
-                lambda h, s: s[1] + [hulk_ast_nodes.VarDeclarationNode(s[3], s[7], s[5])])
-assignments %= idx + equal + expression, lambda h, s: [hulk_ast_nodes.VarDeclarationNode(s[1], s[3])]
-assignments %= (idx + colon + idx + equal + expression,
-                lambda h, s: [hulk_ast_nodes.VarDeclarationNode(s[1], s[5], s[3])])
+assignments %= assignments + comma + optional_typing_var, lambda h, s: s[1] + [s[3]]
+assignments %= optional_typing_var, lambda h, s: [s[1]]
+
+optional_typing_var %= idx + equal + expression, lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[3])
+optional_typing_var %= (idx + colon + idx + equal + expression,
+                        lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[5], s[3]))
 
 # Destructive assigment
 destructive_assignment %= idx + dest_eq + expression, lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3])
@@ -194,6 +196,11 @@ function_declaration %= (function + idx + opar + arguments + cpar + arrow + expr
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7]))
 function_declaration %= (function + idx + opar + arguments + cpar + expression_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[6]))
+# specifying return type
+function_declaration %= (function + idx + opar + arguments + cpar + colon + idx + arrow + expression + semicolon,
+                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[10], s[7]))
+function_declaration %= (function + idx + opar + arguments + cpar + colon + idx + expression_block,
+                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[6]))
 
 arg_list %= arguments, lambda h, s: s[1]
 arg_list %= G.Epsilon, lambda h, s: []
@@ -221,10 +228,11 @@ inheritance %= G.Epsilon, lambda h, s: None
 introducing_args %= opar + arguments + cpar, lambda h, s: s[2]
 introducing_args %= G.Epsilon, lambda h, s: []
 
-arguments %= idx, lambda h, s: [hulk_ast_nodes.ArgumentNode(s[1])]
-arguments %= idx + colon + idx, lambda h, s: [hulk_ast_nodes.ArgumentNode(s[1], s[3])]
-arguments %= arguments + comma + idx, lambda h, s: s[1] + [hulk_ast_nodes.ArgumentNode(s[3])]
-arguments %= arguments + comma + idx + colon + idx, lambda h, s: s[1] + [hulk_ast_nodes.ArgumentNode(s[3], s[5])]
+arguments %= optional_typing_arg, lambda h, s: [s[1]]
+arguments %= arguments + comma + optional_typing_arg, lambda h, s: s[1] + [s[3]]
+
+optional_typing_arg %= idx, lambda h, s: hulk_ast_nodes.ArgumentNode(s[1])
+optional_typing_arg %= idx + colon + idx, lambda h, s: hulk_ast_nodes.ArgumentNode(s[1], s[3])
 
 type_body %= type_body + attribute + semicolon, lambda h, s: s[1] + [s[2]]
 type_body %= type_body + method_declaration + semicolon, lambda h, s: s[1] + [s[2]]
@@ -233,10 +241,16 @@ type_body %= method_declaration + semicolon, lambda h, s: [s[1]]
 
 method_declaration %= (idx + opar + arg_list + cpar + arrow + expression,
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[6]))
-method_declaration %= (idx + opar + arg_list + cpar + expression,
+method_declaration %= (idx + opar + arg_list + cpar + expression_block,
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[5]))
+# specifying return type
+method_declaration %= (idx + opar + arg_list + cpar + colon + idx + arrow + expression,
+                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[8], s[6]))
+method_declaration %= (idx + opar + arg_list + cpar + colon + idx + expression_block,
+                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[7], s[5]))
 
 attribute %= idx + equal + expression, lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[3])
+attribute %= idx + colon + idx + equal + expression, lambda h, s: hulk_ast_nodes.AttributeStatement(s[1], s[5], s[3])
 
 # todo add methods and attribute call, and class instantiation
 

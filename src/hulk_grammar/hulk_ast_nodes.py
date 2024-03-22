@@ -33,11 +33,12 @@ class StatementNode(Node):
 
 # Statements
 class FunctionDeclarationNode(StatementNode):
-    def __init__(self, idx, args, expr):
+    def __init__(self, idx, args, expr, return_type=None):
         super().__init__()
         self.id = idx
         self.args = args
         self.expr = expr
+        self.return_type = return_type
 
 
 class TypeDeclarationNode(StatementNode):
@@ -58,11 +59,12 @@ class ProtocolDeclaration(StatementNode):
 
 
 class MethodDeclarationNode(StatementNode):
-    def __init__(self, idx, args, expr):
+    def __init__(self, idx, args, expr, return_type=None):
         super().__init__()
         self.id = idx
         self.args = args
         self.expr = expr
+        self.return_type = return_type
 
 
 class MethodSignature(StatementNode):
@@ -73,17 +75,18 @@ class MethodSignature(StatementNode):
 
 
 class ArgumentNode(ExpressionNode):
-    def __init__(self, idx, var_type=None):
+    def __init__(self, idx, arg_type=None):
         super().__init__()
         self.id = idx
-        self.var_type = var_type
+        self.var_type = arg_type
 
 
 class AttributeStatement(StatementNode):
-    def __init__(self, idx, expr):
+    def __init__(self, idx, expr, attribute_type=None):
         super().__init__()
         self.id = idx
         self.expr = expr
+        self.attribute_type = attribute_type
 
 
 # Expression
