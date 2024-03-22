@@ -1,7 +1,7 @@
 from src.parsing import SLR1Parser
 from src.regex.regex_grammar import getRegexGrammar
 from src.utils import Token
-from src.regex.evaluation import evaluate_reverse_parse
+from src.evaluation import evaluate_reverse_parse
 from src.regex.build_automaton_visitor import AutomataBuilderVisitor
 
 def get_regex_automaton(regex : str):

@@ -1,4 +1,4 @@
-import src.Hulk_Grammar.hulk_ast_nodes as hulk_nodes
+import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 
 
@@ -12,7 +12,7 @@ class FormatVisitor(object):
         ans = '\t' * tabs + f'\\__ProgramNode [<stat>; ... <stat>;]'
         declarations = '\n'.join(self.visit(decl, tabs + 1) for decl in node.declarations)
         expression = self.visit(node.expression, tabs + 1)
-        return f'{ans}\n{expression}'
+        return f'{ans}\n{declarations}\n{expression}'
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, tabs=0):
