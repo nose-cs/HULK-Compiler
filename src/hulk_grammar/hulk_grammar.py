@@ -101,15 +101,15 @@ declarations %= protocol_definition, lambda h, s: [s[1]]
 
 # An expression block is a sequence of expressions between brackets
 
-expression_block %= obracket + expression_list + cbracket, lambda h, s: hulk_ast_nodes.ExpressionBlockNode(s[2])
-
-expression_list %= expression + semicolon + expression_list, lambda h, s: [s[1]] + s[3]
-expression_list %= expression + semicolon, lambda h, s: [s[1]]
-expression_list %= expression, lambda h, s: [s[1]]
+# expression_block %= obracket + expression_list + cbracket, lambda h, s: hulk_ast_nodes.ExpressionBlockNode(s[2])
+#
+# expression_list %= expression + semicolon + expression_list, lambda h, s: [s[1]] + s[3]
+# expression_list %= expression + semicolon, lambda h, s: [s[1]]
+# expression_list %= expression, lambda h, s: [s[1]]
 
 # An expression is ...
 # todo see https://github.com/matcom/hulk/blob/master/docs/guide/functions.md
-expression %= expression_block, lambda h, s: s[1]
+# expression %= expression_block, lambda h, s: s[1]
 expression %= conditional, lambda h, s: s[1]
 expression %= let_in, lambda h, s: s[1]
 expression %= while_loop, lambda h, s: s[1]
@@ -120,8 +120,8 @@ expression %= vector_initialization, lambda h, s: s[1]
 
 # todo check type instantiation, is and as priority
 expression %= type_instantiation, lambda h, s: s[1]
-expression %= is_operation, lambda h, s: s[1]
-expression %= as_operation, lambda h, s: s[1]
+# expression %= is_operation, lambda h, s: s[1]
+# expression %= as_operation, lambda h, s: s[1]
 
 # String expression
 string_expression %= string_expression + amper + boolean_exp, lambda h, s: hulk_ast_nodes.ConcatNode(s[1], s[3])
@@ -209,14 +209,14 @@ optional_typing_var %= (idx + colon + idx + equal + expression,
 destructive_assignment %= idx + dest_eq + expression, lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3])
 
 # Functions can be declared using lambda notation or classic notation
-function_declaration %= (function + idx + opar + params_list + cpar + arrow + expression + semicolon,
+function_declaration %= (function + idx + opar + params + cpar + arrow + expression + semicolon,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7]))
-function_declaration %= (function + idx + opar + params_list + cpar + expression_block,
+function_declaration %= (function + idx + opar + params + cpar + expression_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[6]))
 # specifying return type
-function_declaration %= (function + idx + opar + params_list + cpar + colon + idx + arrow + expression + semicolon,
+function_declaration %= (function + idx + opar + params + cpar + colon + idx + arrow + expression + semicolon,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[10], s[7]))
-function_declaration %= (function + idx + opar + params_list + cpar + colon + idx + expression_block,
+function_declaration %= (function + idx + opar + params + cpar + colon + idx + expression_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[6]))
 
 params_list %= params, lambda h, s: s[1]
