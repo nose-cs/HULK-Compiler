@@ -51,6 +51,8 @@ while_loop, for_loop = G.NonTerminals('<while> <for>')
 optional_typing_var, optional_typing_param, optional_typing_return = G.NonTerminals(
     '<optional_typing_var> <optional_typing_param> <optional_typing_return>')
 
+obj_method_or_attribute_call = G.NonTerminal('<object_method_or_attribute_call>')
+
 # ----------------------------------------------Terminals------------------------------------------------------------- #
 
 # Adding basic terminals
@@ -127,8 +129,9 @@ as_operation %= string_expression, lambda h, s: s[1]
 string_expression %= string_expression + amper + boolean_exp, lambda h, s: hulk_ast_nodes.ConcatNode(s[1], s[3])
 
 string_expression %= (string_expression + double_amp + boolean_exp,
-                      lambda h, s: hulk_ast_nodes.ConcatNode(s[1], hulk_ast_nodes.ConstantStringNode(" ")
-                                                             ).concat_with(s[3]))
+                      lambda h, s: hulk_ast_nodes.ConcatNode(
+                          hulk_ast_nodes.ConcatNode(s[1], hulk_ast_nodes.ConstantStringNode(" ")),
+                          s[3]))
 string_expression %= boolean_exp, lambda h, s: s[1]
 
 # A boolean expression is a disjunction of conjunctive components,
@@ -173,9 +176,15 @@ signed %= plus + powers, lambda h, s: s[2]
 signed %= minus + powers, lambda h, s: hulk_ast_nodes.NegNode(s[2])
 signed %= powers, lambda h, s: s[1]
 
-powers %= factor + power + powers, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
-powers %= factor + power2 + powers, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
-powers %= factor, lambda h, s: s[1]
+powers %= obj_method_or_attribute_call + power + powers, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
+powers %= obj_method_or_attribute_call + power2 + powers, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
+powers %= obj_method_or_attribute_call, lambda h, s: s[1]
+
+obj_method_or_attribute_call %= (obj_method_or_attribute_call + dot + idx + opar + expr_list_comma_sep_or_empty + cpar,
+                                 lambda h, s: hulk_ast_nodes.MethodCallNode(s[1], s[3], s[5]))
+obj_method_or_attribute_call %= (obj_method_or_attribute_call + dot + idx,
+                                 lambda h, s: hulk_ast_nodes.AttributeCallNode(s[1], s[3]))
+obj_method_or_attribute_call %= factor, lambda h, s: s[1]
 
 # todo any issue if factor and atom are merged ?
 
@@ -187,8 +196,6 @@ atom %= bool_term, lambda h, s: hulk_ast_nodes.ConstantBoolNode(s[1])
 atom %= str_term, lambda h, s: hulk_ast_nodes.ConstantStringNode(s[1])
 atom %= idx, lambda h, s: hulk_ast_nodes.VariableNode(s[1])
 atom %= func_call, lambda h, s: s[1]
-atom %= method_call, lambda h, s: s[1]
-atom %= attribute_call, lambda h, s: s[1]
 
 func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.CallNode(s[1], s[3])
 
@@ -279,11 +286,6 @@ attribute %= (idx + colon + idx + equal + expression + semicolon,
 # types instantiation
 type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
                        lambda h, s: hulk_ast_nodes.TypeInstantiationNode(s[2], s[4]))
-
-method_call %= (idx + dot + idx + opar + expr_list_comma_sep_or_empty + cpar,
-                lambda h, s: hulk_ast_nodes.MethodCallNode(s[1], s[3], s[5]))
-
-attribute_call %= idx + dot + idx, lambda h, s: hulk_ast_nodes.AttributeCallNode(s[1], s[3])
 
 # Protocol declaration
 protocol_definition %= (protocol + idx + obracket + protocol_body + cbracket,

@@ -238,9 +238,6 @@ class MethodCallNode(AtomicNode):
 class ConcatNode(BinaryExpressionNode):
     pass
 
-    def concat_with(self, other):
-        return ConcatNode(self, other)
-
 
 # Boolean
 class OrNode(BinaryExpressionNode):
