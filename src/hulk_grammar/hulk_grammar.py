@@ -209,14 +209,14 @@ optional_typing_var %= (idx + colon + idx + equal + expression,
 destructive_assignment %= idx + dest_eq + expression, lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3])
 
 # Functions can be declared using lambda notation or classic notation
-function_declaration %= (function + idx + opar + params + cpar + arrow + expression + semicolon,
+function_declaration %= (function + idx + opar + params_list + cpar + arrow + expression + semicolon,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7]))
-function_declaration %= (function + idx + opar + params + cpar + expression_block,
+function_declaration %= (function + idx + opar + params_list + cpar + expression_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[6]))
 # specifying return type
-function_declaration %= (function + idx + opar + params + cpar + colon + idx + arrow + expression + semicolon,
+function_declaration %= (function + idx + opar + params_list + cpar + colon + idx + arrow + expression + semicolon,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[10], s[7]))
-function_declaration %= (function + idx + opar + params + cpar + colon + idx + expression_block,
+function_declaration %= (function + idx + opar + params_list + cpar + colon + idx + expression_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[6]))
 
 params_list %= params, lambda h, s: s[1]

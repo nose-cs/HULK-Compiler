@@ -16,7 +16,7 @@ class FormatVisitor(object):
 
     @visitor.when(hulk_nodes.FunctionDeclarationNode)
     def visit(self, node: hulk_nodes.FunctionDeclarationNode, tabs=0):
-        params = ', '.join(node.params)
+        params = ', '.join(self.visit(node.params))
         ans = '\t' * tabs + f'\\__ FuncDeclarationNode: def {node.id}({params}) -> <expr>'
         body = self.visit(node.expr, tabs + 1)
         return f'{ans}\n{body}'
