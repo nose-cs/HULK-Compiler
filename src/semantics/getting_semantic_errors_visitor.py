@@ -19,7 +19,7 @@ class SemanticErrorVisitor(object):
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope:Scope, types, functions):
         if scope.IsDefined(node.id):
-            return [f'The variable {node.id} is alredy declarated']
+            return [f'The variable {node.id} is alredy declarated :(']
         scope.define(node.id)
         return []
     
@@ -33,4 +33,8 @@ class SemanticErrorVisitor(object):
         errors.append(self.visit(declaration, newScope, types, functions)) 
         return errors
 
+    @visitor.when(hulk_nodes.DestructiveAssignmentNode)
+    def visit(self, node: hulk_nodes.DestructiveAssignmentNode, scope:Scope, types, functions):
+        return [] if scope.isDefined(node.id) else [f'The variable {node.id} is not defined in this Scope T_T']
+            
  
