@@ -113,14 +113,15 @@ expression %= conditional, lambda h, s: s[1]
 expression %= let_in, lambda h, s: s[1]
 expression %= while_loop, lambda h, s: s[1]
 expression %= for_loop, lambda h, s: s[1]
-expression %= string_expression, lambda h, s: s[1]
 expression %= destructive_assignment, lambda h, s: s[1]
 expression %= vector_initialization, lambda h, s: s[1]
 
 # todo check type instantiation, is and as priority
 expression %= type_instantiation, lambda h, s: s[1]
-# expression %= is_operation, lambda h, s: s[1]
-# expression %= as_operation, lambda h, s: s[1]
+expression %= as_operation, lambda h, s: s[1]
+
+as_operation %= string_expression + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(s[1], s[3])
+as_operation %= string_expression, lambda h, s: s[1]
 
 # String expression
 string_expression %= string_expression + amper + boolean_exp, lambda h, s: hulk_ast_nodes.ConcatNode(s[1], s[3])
@@ -136,6 +137,9 @@ boolean_exp %= conjunctive_component, lambda h, s: s[1]
 
 conjunctive_component %= conjunctive_component + and_op + neg, lambda h, s: hulk_ast_nodes.AndNode(s[1], s[3])
 conjunctive_component %= neg, lambda h, s: s[1]
+
+is_operation %= neg + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(s[1], s[3])
+is_operation %= neg, lambda h, s: s[1]
 
 neg %= not_op + equality, lambda h, s: hulk_ast_nodes.NotNode(s[2])
 neg %= equality, lambda h, s: s[1]
@@ -272,10 +276,6 @@ method_declaration %= (idx + opar + params_list + cpar + colon + idx + expressio
 attribute %= idx + equal + expression + semicolon, lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[3])
 attribute %= (idx + colon + idx + equal + expression + semicolon,
               lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[5], s[3]))
-
-is_operation %= expression + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(s[1], s[3])
-
-as_operation %= expression + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(s[1], s[3])
 
 # types instantiation
 type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
