@@ -25,8 +25,8 @@ boolean_exp, conjunctive_component, neg, boolean = G.NonTerminals(
 string_expression = G.NonTerminal('<str_expr>')
 
 # Declarations NonTerminals
-funcs, typed_params, protocol_definition, params_for_type, type_body = G.NonTerminals(
-    '<funcs> <typed_params> <protocol_definition> <params_for_type> <type_body>')
+funcs, typed_params, typed_params_or_empty, protocol_definition, params_for_type, type_body = G.NonTerminals(
+    '<funcs> <typed_params> <typed_params_or_empty> <protocol_definition> <params_for_type> <type_body>')
 
 type_declaration, declarations, function_declaration, let_in, assignments, params_list, protocol_body = G.NonTerminals(
     '<type_declaration> <declarations> <function_declaration> <let_in> <assignments> <params_list> <protocol_body>')
@@ -192,7 +192,7 @@ atom %= attribute_call, lambda h, s: s[1]
 
 func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.CallNode(s[1], s[3])
 
-expr_list_comma_sep_or_empty %= G.EOF, lambda h, s: []
+expr_list_comma_sep_or_empty %= G.Epsilon, lambda h, s: []
 expr_list_comma_sep_or_empty %= expr_list_comma_sep, lambda h, s: s[1]
 
 expr_list_comma_sep %= expression, lambda h, s: [s[1]]
@@ -212,18 +212,21 @@ optional_typing_var %= (idx + colon + idx + equal + expression,
 destructive_assignment %= idx + dest_eq + expression, lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3])
 
 # Functions can be declared using lambda notation or classic notation
-function_declaration %= (function + idx + opar + params + cpar + arrow + expression + semicolon,
+function_declaration %= (function + idx + opar + params_list + cpar + arrow + expression + semicolon,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7]))
-function_declaration %= (function + idx + opar + params + cpar + expression_block,
+function_declaration %= (function + idx + opar + params_list + cpar + expression_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[6]))
 # specifying return type
-function_declaration %= (function + idx + opar + params + cpar + colon + idx + arrow + expression + semicolon,
+function_declaration %= (function + idx + opar + params_list + cpar + colon + idx + arrow + expression + semicolon,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[10], s[7]))
-function_declaration %= (function + idx + opar + params + cpar + colon + idx + expression_block,
+function_declaration %= (function + idx + opar + params_list + cpar + colon + idx + expression_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[6]))
 
 params_list %= params, lambda h, s: s[1]
 params_list %= G.Epsilon, lambda h, s: []
+
+params %= optional_typing_param, lambda h, s: [s[1]]
+params %= params + comma + optional_typing_param, lambda h, s: s[1] + [s[3]]
 
 # Conditional statements must have else
 conditional %= (if_ + opar + expression + cpar + expression + conditional_ending + else_ + expression,
@@ -242,18 +245,14 @@ for_loop %= (for_ + opar + idx + in_ + expression + cpar + expression,
 type_declaration %= (word_type + idx + params_for_type + inheritance + obracket + type_body + cbracket,
                      lambda h, s: hulk_ast_nodes.TypeDeclarationNode(s[2], s[3], s[6], s[4]))
 type_declaration %= (
-    word_type + idx + params_for_type + inherits + idx + opar + expr_list_comma_sep_or_empty + obracket + type_body + cbracket,
-    lambda h, s: hulk_ast_nodes.TypeDeclarationNode(s[2], s[3], s[9], s[5], s[7]))
+    word_type + idx + params_for_type + inherits + idx + opar + expr_list_comma_sep_or_empty + cpar + obracket + type_body + cbracket,
+    lambda h, s: hulk_ast_nodes.TypeDeclarationNode(s[2], s[3], s[10], s[5], s[7]))
 
 inheritance %= inherits + idx, lambda h, s: s[2]
 inheritance %= G.Epsilon, lambda h, s: None
 
-params_for_type %= opar + params + cpar, lambda h, s: s[2]
-params_for_type %= opar + cpar, lambda h, s: []
+params_for_type %= opar + params_list + cpar, lambda h, s: s[2]
 params_for_type %= G.Epsilon, lambda h, s: []
-
-params %= optional_typing_param, lambda h, s: [s[1]]
-params %= params + comma + optional_typing_param, lambda h, s: s[1] + [s[3]]
 
 optional_typing_param %= idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1])
 optional_typing_param %= idx + colon + idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1], s[3])
@@ -295,15 +294,17 @@ protocol_definition %= (protocol + idx + extends + idx + obracket + protocol_bod
 protocol_body %= protocol_body + method_signature, lambda h, s: s[1] + [s[2]]
 protocol_body %= method_signature, lambda h, s: [s[1]]
 
-method_signature %= (idx + opar + typed_params + cpar + colon + idx + semicolon,
+method_signature %= (idx + opar + typed_params_or_empty + cpar + colon + idx + semicolon,
                      lambda h, s: hulk_ast_nodes.MethodSignatureNode(s[1], s[3], s[6]))
+
+typed_params_or_empty %= typed_params, lambda h, s: s[1]
+typed_params_or_empty %= G.Epsilon, lambda h, s: []
 
 typed_params %= typed_params + comma + idx + colon + idx, lambda h, s: s[1] + [hulk_ast_nodes.ParamNode(s[3], s[5])]
 typed_params %= idx + colon + idx, lambda h, s: [hulk_ast_nodes.ParamNode(s[1], s[3])]
 
 # Vector initialization
-vector_initialization %= o_square_bracket + c_square_bracket, lambda h, s: hulk_ast_nodes.VectorInitializationNode([])
 vector_initialization %= (o_square_bracket + expr_list_comma_sep_or_empty + c_square_bracket,
                           lambda h, s: hulk_ast_nodes.VectorInitializationNode(s[2]))
-vector_initialization %= (o_square_bracket + expression + double_bar + idx + in_ + expression,
+vector_initialization %= (o_square_bracket + expression + double_bar + idx + in_ + expression + c_square_bracket,
                           lambda h, s: hulk_ast_nodes.VectorComprehensionNode(s[2], s[4], s[6]))
