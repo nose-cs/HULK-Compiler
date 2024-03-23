@@ -101,15 +101,14 @@ declarations %= protocol_definition, lambda h, s: [s[1]]
 
 # An expression block is a sequence of expressions between brackets
 
-# expression_block %= obracket + expression_list + cbracket, lambda h, s: hulk_ast_nodes.ExpressionBlockNode(s[2])
-#
-# expression_list %= expression + semicolon + expression_list, lambda h, s: [s[1]] + s[3]
-# expression_list %= expression + semicolon, lambda h, s: [s[1]]
-# expression_list %= expression, lambda h, s: [s[1]]
+expression_block %= obracket + expression_list + cbracket, lambda h, s: hulk_ast_nodes.ExpressionBlockNode(s[2])
+
+expression_list %= expression + semicolon + expression_list, lambda h, s: [s[1]] + s[3]
+expression_list %= expression, lambda h, s: [s[1]]
 
 # An expression is ...
 # todo see https://github.com/matcom/hulk/blob/master/docs/guide/functions.md
-# expression %= expression_block, lambda h, s: s[1]
+expression %= expression_block, lambda h, s: s[1]
 expression %= conditional, lambda h, s: s[1]
 expression %= let_in, lambda h, s: s[1]
 expression %= while_loop, lambda h, s: s[1]
@@ -274,9 +273,9 @@ attribute %= idx + equal + expression + semicolon, lambda h, s: hulk_ast_nodes.A
 attribute %= (idx + colon + idx + equal + expression + semicolon,
               lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[5], s[3]))
 
-is_operation %= expression + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(expression, idx)
+is_operation %= expression + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(s[1], s[3])
 
-as_operation %= expression + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(expression, idx)
+as_operation %= expression + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(s[1], s[3])
 
 # types instantiation
 type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
