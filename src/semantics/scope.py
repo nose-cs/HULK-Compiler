@@ -9,3 +9,5 @@ class Scope:
     def IsDefined(self, var):
         if var in self.local_vars: return True
         else: return False if self.parent is None else self.parent.IsDefined(var)
+
+        
