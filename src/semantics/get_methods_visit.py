@@ -67,5 +67,26 @@ class Methods_Visitor(object):
             else: 
                 self.errors.append('Undeclared Param Type')
                 self.current_method.params_types.append(type.ErrorType())
-                
+    
+    @visitor.when(hulk_nodes.FunctionDeclarationNode)
+    def visit(self, node:hulk_nodes.FunctionDeclarationNode):
+        current_funtion = self.context.functions[node.id]
+        if(not node.return_type in self.context.types):
+            self.errors.append(f'Undeclared return type in function {node.id}')
+            current_funtion.return_type = type.ErrorType()
+        else:
+             current_funtion.return_type = self.context.types[node.return_type] 
+
+        for param in node.params:
+            if param.id in current_funtion.arg_names:
+                self.errors.append('A function cannot have two parameters with the same name')
+                #Todo Create an error id
+            else:
+                current_funtion.arg_names.append(param.id)
+                if param.var_type in self.context.types: current_funtion.arg_types.append(param.var_type)
+                else:
+                     self.errors.append('Undeclared Param Type')
+                     self.current_function.params_types.append(type.ErrorType())
+
+
 

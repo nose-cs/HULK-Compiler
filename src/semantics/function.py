@@ -3,3 +3,4 @@ class Function:
         self.id = id
         self.args_names = []
         self.args_types = []
+        self.return_type = None
