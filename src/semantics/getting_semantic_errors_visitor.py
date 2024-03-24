@@ -38,5 +38,4 @@ class SemanticErrorVisitor(object):
         return [] if scope.isDefined(node.id) else [f'The variable {node.id} is not defined in this Scope T_T']
     
 
-            
- 
+    
