@@ -43,4 +43,5 @@ class Methods_Visitor(object):
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
-        
+        args_names = []
+        args_types = []
