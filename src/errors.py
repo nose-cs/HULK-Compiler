@@ -22,7 +22,6 @@ class HulkError(Exception):
 class LexicographicError(HulkError):
     UNKNOWN_TOKEN = 'Unknown token'
     UNTERMINATED_STRING = 'Unterminated string constant'
-    EOF_STRING = 'EOF in string constant'
 
     @property
     def error_type(self):

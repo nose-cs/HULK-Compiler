@@ -10,10 +10,10 @@ def run_pipeline(input_path, output_path):
         text = f.read()
 
     hulk_lexer = HulkLexer()
-    tokens, errors = hulk_lexer(text)
+    tokens, lexicographic_errors = hulk_lexer(text)
 
-    if errors:
-        for err in errors:
+    if lexicographic_errors:
+        for err in lexicographic_errors:
             print(err)
         raise Exception()
 
