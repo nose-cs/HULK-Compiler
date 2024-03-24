@@ -19,14 +19,6 @@ class HulkError(Exception):
         return str(self)
 
 
-class CompilerError(HulkError):
-    UNKNOWN_FILE = 'The file "%s" does not exist'
-
-    @property
-    def error_type(self):
-        return 'CompilerError'
-
-
 class LexicographicError(HulkError):
     UNKNOWN_TOKEN = 'Unknown token'
     UNTERMINATED_STRING = 'Unterminated string constant'

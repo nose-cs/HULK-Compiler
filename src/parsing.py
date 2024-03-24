@@ -1,3 +1,5 @@
+from abc import abstractmethod, ABC
+
 from src.automaton import State, multiline_formatter
 from src.pycompiler import Grammar, Production, Item
 from src.utils import ContainerSet
@@ -141,7 +143,7 @@ def build_LR0_automaton(G: Grammar):
     return start
 
 
-class ShiftReduceParser:
+class ShiftReduceParser(ABC):
     SHIFT = 'SHIFT'
     REDUCE = 'REDUCE'
     OK = 'OK'
@@ -152,6 +154,7 @@ class ShiftReduceParser:
         self.table = {}
         self._build_parsing_table()
 
+    @abstractmethod
     def _build_parsing_table(self):
         raise NotImplementedError()
 
@@ -192,9 +195,10 @@ class ShiftReduceParser:
                             0] == ShiftReduceParser.SHIFT:
                             stack.append(self.table[(stack[-1], Left.Name)][1])
                         else:
-                            raise Exception("Chain cannot be parsed")
+                            raise Exception(
+                                f"Chain cannot be parsed {stack[-1], Left.Name} not in table or table[{stack[-1]}, {Left.Name} ] {self.table[(stack[-1], Left.Name)][0]}")
             else:
-                raise Exception("Chain cannot be parsed")
+                raise Exception(f"Chain cannot be parsed {state, lookahead} not in table")
 
         raise Exception("Chain cannot be parsed")
 
@@ -381,7 +385,7 @@ class LR1Parser(ShiftReduceParser):
                                         ShiftReduceParser.REDUCE, item.production)
                                 else:
                                     raise Exception(
-                                        f"Grammar is not LR(1). A conflict had happened at {states[state], terminal.Name}: table[{states[state]},{terminal.Name}] = {self.table[states[state], terminal.Name]} and tried to {ShiftReduceParser.REDUCE, item.production}")
+                                        f"Grammar is not LR(1). A conflict had happened at {states[state], terminal.Name}: table[{states[state]},{terminal.Name}] = {self.table[states[state], terminal.Name]} and tried to set it to {ShiftReduceParser.REDUCE, item.production}")
 
     @staticmethod
     def _register(table, key, value):
