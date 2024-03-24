@@ -52,10 +52,11 @@ class Methods_Visitor(object):
         self.curent_type.methods[node.id] = self.current_method
         for param in node.params:
             self.visit(param)
-        if not node.return_type in self.context.types:
-            self.errors.append('Undefined return type (._. )')
-        else:
-            self.current_method.return_type = self.context.types[node.return_type]
+        if node.return_type is not None:
+            if not node.return_type in self.context.types:
+                self.errors.append('Undefined return type (._. )')
+            else:
+                self.current_method.return_type = self.context.types[node.return_type]
 
     @visitor.when(hulk_nodes.ParamNode)
     def visit(self, node:hulk_nodes.ParamNode):
