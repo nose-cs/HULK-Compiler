@@ -9,15 +9,15 @@ class SemanticErrorVisitor(object):
         pass
 
     @visitor.when(hulk_nodes.ProgramNode)
-    def visit(self, node: hulk_nodes.ProgramNode, scope:Scope, types , functions):
+    def visit(self, node: hulk_nodes.ProgramNode, scope:Scope, globalContext):
         errors = []
         for declaration in node.declarations:
-            errors.append(self.visit(declaration, scope, types, functions))
+            errors.append(self.visit(declaration, scope, globalContext))
         errors.append(self.visit(node.expression))
         return errors
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
-    def visit(self, node: hulk_nodes.VarDeclarationNode, scope:Scope, types, functions):
+    def visit(self, node: hulk_nodes.VarDeclarationNode, scope:Scope, globalContext):
         if scope.IsDefined(node.id):
             return [f'The variable {node.id} is alredy declarated :(']
         scope.define(node.id)
@@ -25,16 +25,18 @@ class SemanticErrorVisitor(object):
     
 
     @visitor.when(hulk_nodes.LetInNode)
-    def visit(self, node: hulk_nodes.LetInNode, scope:Scope, types, functions):
+    def visit(self, node: hulk_nodes.LetInNode, scope:Scope, globalContext):
         errors = []
         newScope = scope.newContext
         for declaration in node.var_declarations:
-            errors.append(self.visit(declaration, newScope, types, functions))
-        errors.append(self.visit(declaration, newScope, types, functions)) 
+            errors.append(self.visit(declaration, newScope, globalContext))
+        errors.append(self.visit(declaration, newScope, globalContext)) 
         return errors
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, scope:Scope, types, functions):
         return [] if scope.isDefined(node.id) else [f'The variable {node.id} is not defined in this Scope T_T']
+    
+
             
  
