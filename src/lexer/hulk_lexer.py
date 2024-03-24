@@ -1,4 +1,5 @@
 import src.hulk_grammar.hulk_grammar as hulk_grammar
+from src.errors import LexicographicError
 from src.hulk_grammar.hulk_grammar import G
 from src.lexer.lexer import Lexer
 from src.pycompiler import Terminal
