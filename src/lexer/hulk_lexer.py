@@ -11,7 +11,7 @@ upper_letters = '|'.join(chr(n) for n in range(ord('A'), ord('Z') + 1))
 number_regexes = [f"(({nonzero_digits})({digits})*)",
                   f"(({nonzero_digits})({digits})*(.)({digits})*)",
                   f"((0.)({digits})*)",
-                  "(0)"]
+                  "0"]
 spaces = Terminal("<spaces>", None)
 
 Regex_Terminal = [
@@ -24,7 +24,7 @@ Regex_Terminal = [
     ("^", hulk_grammar.power), ("%", hulk_grammar.mod), ("\\*\\*", hulk_grammar.power2),
     ("==", hulk_grammar.eq), ("!=", hulk_grammar.neq), ("<=", hulk_grammar.leq), (">=", hulk_grammar.geq),
     ("<", hulk_grammar.lt), (">", hulk_grammar.gt), ("&", hulk_grammar.and_op), ("\\|", hulk_grammar.or_op),
-    ("!", hulk_grammar.not_op), ("(true)|(false)", hulk_grammar.bool_term), ("@", hulk_grammar.amper),
+    ("!", hulk_grammar.not_op), ("true|false", hulk_grammar.bool_term), ("@", hulk_grammar.amper),
     ("@@", hulk_grammar.double_amp), ('|'.join(number_regexes), hulk_grammar.number), (".", hulk_grammar.dot),
     (":", hulk_grammar.colon),
     (f"((_|{upper_letters}|{lower_letters})(_|{upper_letters}|{lower_letters}|{digits})*)", hulk_grammar.idx),

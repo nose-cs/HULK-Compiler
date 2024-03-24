@@ -8,7 +8,7 @@ class CharNode(Node):
         self.token = token
 
 
-class RegexNode(Node):
+class ConcatNode(Node):
     def __init__(self, concat) -> None:
         self.nodes = concat
 
