@@ -32,13 +32,13 @@ class Lexer:
         if end >= len(text):
             return row, col
 
-        for j in range(start + 1, end):
+        for j in range(start, end):
             if text[j] == '\n':
                 row += 1
-                col = 0
+                col = 1
             else:
                 col += 1
-        return row, col + 1
+        return row, col
 
     def find_next_valid_token_after_an_error(self, text, start):
         i = start
@@ -74,9 +74,8 @@ class Lexer:
                 return max_pos[0]
 
             elif len(current_states) == 0 or i + 1 == len(text):
-                i = max_pos[1]
-                max_pos = (max_pos[1] + 1, None)
-                current_states = self.automaton.epsilon_closure
+                max_pos = (i + 1, None)
+                current_states = self.synchronizing_automaton.epsilon_closure
 
             i += 1
 
