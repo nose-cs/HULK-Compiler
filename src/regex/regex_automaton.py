@@ -1,5 +1,5 @@
 from src.evaluation import evaluate_reverse_parse
-from src.parsing import SLR1Parser
+from src.parsing import LR1Parser
 from src.regex.build_automaton_visitor import AutomataBuilderVisitor
 from src.regex.regex_grammar import get_regex_grammar
 from src.utils import Token
@@ -21,7 +21,7 @@ def get_regex_automaton(regex: str):
                     return cpar, Token(charrr, cpar)
         return char, Token(charrr, char)
 
-    parser = SLR1Parser(G)
+    parser = LR1Parser(G)
 
     terminals = []
     tokens = []
