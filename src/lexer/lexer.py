@@ -4,12 +4,15 @@ from src.utils import Token, UnknownToken
 
 
 class Lexer:
-    def __init__(self, table, eof):
+    def __init__(self, table, eof, synchronizing_tokens=None):
+        if synchronizing_tokens is None:
+            synchronizing_tokens = []
         self.eof = eof
         self.automaton = self._build_automaton(table)
+        self.synchronizing_automaton = self._build_automaton(synchronizing_tokens)
 
     @staticmethod
-    def _build_automaton(table):
+    def _build_automaton(table) -> State:
         start = State(None)
 
         for i, value in enumerate(table):
@@ -36,10 +39,10 @@ class Lexer:
                 col += 1
         return row, col + 1
 
-    def find_next_valid_token(self, text, start, row, col):
+    def find_next_valid_token_after_an_error(self, text, start, row, col):
         i = start
         max_pos = (i, None, None)
-        current_states = self.automaton.epsilon_closure
+        current_states = self.synchronizing_automaton.epsilon_closure
 
         while i < len(text):
             char = text[i]
@@ -117,11 +120,10 @@ class Lexer:
                 current_states = self.automaton.epsilon_closure
 
             elif len(current_states) == 0 or i + 1 == len(text):
-                i, row, col = self.find_next_valid_token(text, i, row, col)
                 # return an unknown token
                 yield text[max_pos[0]: i], None, row, col
                 # update row and col
-                row, col = self._get_new_row_col(text, max_pos[0], i + 1, row, col)
+                i, row, col = self.find_next_valid_token_after_an_error(text, i, row, col)
                 max_pos = (i, None, None)
                 current_states = self.automaton.epsilon_closure
 
