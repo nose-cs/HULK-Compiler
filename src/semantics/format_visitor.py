@@ -9,27 +9,56 @@ class FormatVisitor(object):
 
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ProgramNode [<stat>; ... <stat>;]'
+        ans = '\t' * tabs + f'\\__ ProgramNode [<stat>; ... <stat> <expr>;]'
         declarations = '\n'.join(self.visit(decl, tabs + 1) for decl in node.declarations)
         expression = self.visit(node.expression, tabs + 1)
         return f'{ans}\n{declarations}\n{expression}'
 
-    @visitor.when(hulk_nodes.VarDeclarationNode)
-    def visit(self, node: hulk_nodes.VarDeclarationNode, tabs=0):
-        ans = '\t' * tabs + f'\\__VarDeclarationNode: let {node.id} = <expr>'
-        expr = self.visit(node.expr, tabs + 1)
-        return f'{ans}\n{expr}'
-
     @visitor.when(hulk_nodes.FunctionDeclarationNode)
     def visit(self, node: hulk_nodes.FunctionDeclarationNode, tabs=0):
-        params = ', '.join(node.args)
-        ans = '\t' * tabs + f'\\__FuncDeclarationNode: def {node.id}({params}) -> <expr>'
+        params = ', '.join(self.visit(node.params))
+        ans = '\t' * tabs + f'\\__ FuncDeclarationNode: def {node.id}({params}) -> <expr>'
+        body = self.visit(node.expr, tabs + 1)
+        return f'{ans}\n{body}'
+
+    @visitor.when(hulk_nodes.TypeDeclarationNode)
+    def visit(self, node: hulk_nodes.TypeDeclarationNode, tabs=0):
+        params = ', '.join(node.params)
+        parent = f": {node.parent}({', '.join(node.parent_params)})" if node.parent else ""
+        ans = '\t' * tabs + f'\\__ TypeDeclarationNode: type {node.idx}({params}){parent} -> <body>'
+        body = self.visit(node.body, tabs + 1)
+        return f'{ans}\n{body}'
+
+    @visitor.when(hulk_nodes.MethodDeclarationNode)
+    def visit(self, node: hulk_nodes.MethodDeclarationNode, tabs=0):
+        params = ', '.join(node.params)
+        ans = '\t' * tabs + f'\\__ MethodDeclarationNode: {node.id}({params}) -> <expr>'
+        body = self.visit(node.expr, tabs + 1)
+        return f'{ans}\n{body}'
+
+    @visitor.when(hulk_nodes.ProtocolDeclarationNode)
+    def visit(self, node: hulk_nodes.ProtocolDeclarationNode, tabs=0):
+        methods = '\n'.join(self.visit(decl, tabs + 1) for decl in node.methods_signature)
+        parent = f": {node.parent}" if node.parent else ""
+        ans = '\t' * tabs + f'\\__ ProtocolDeclarationNode: protocol {node.idx}{parent} -> <body>'
+        return f'{ans}\n{methods}'
+
+    @visitor.when(hulk_nodes.MethodSignatureNode)
+    def visit(self, node: hulk_nodes.MethodSignatureNode, tabs=0):
+        params = ', '.join(node.params)
+        ans = '\t' * tabs + f'\\__ MethodDeclarationNode: {node.id}({params}):{node.return_type}'
+        return f'{ans}'
+
+    @visitor.when(hulk_nodes.AttributeStatementNode)
+    def visit(self, node: hulk_nodes.AttributeStatementNode, tabs=0):
+        ttype = f": {node.attribute_type}" if node.attribute_type is not None else ""
+        ans = '\t' * tabs + f'\\__ AttributeStatementNode: {node.id}{ttype} = <expr>'
         body = self.visit(node.expr, tabs + 1)
         return f'{ans}\n{body}'
 
     @visitor.when(hulk_nodes.BinaryExpressionNode)
     def visit(self, node: hulk_nodes.BinaryExpressionNode, tabs=0):
-        ans = '\t' * tabs + f'\\__<expr> {node.__class__.__name__} <expr>'
+        ans = '\t' * tabs + f'\\__ <expr> {node.__class__.__name__} <expr>'
         left = self.visit(node.left, tabs + 1)
         right = self.visit(node.right, tabs + 1)
         return f'{ans}\n{left}\n{right}'
@@ -38,22 +67,111 @@ class FormatVisitor(object):
     def visit(self, node: hulk_nodes.AtomicNode, tabs=0):
         return '\t' * tabs + f'\\__ {node.__class__.__name__}: {node.lex}'
 
+    @visitor.when(hulk_nodes.UnaryExpressionNode)
+    def visit(self, node: hulk_nodes.UnaryExpressionNode, tabs=0):
+        return '\t' * tabs + f'\\__ {node.__class__.__name__}: {node.operand}'
+
+    @visitor.when(hulk_nodes.LetInNode)
+    def visit(self, node: hulk_nodes.LetInNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ LetInNode: let [<var>, ..., <var>] in <expr>'
+        variables = '\n'.join(self.visit(var, tabs + 1) for var in node.var_declarations)
+        expr = self.visit(node.body, tabs + 1)
+        return f'{ans}\n{variables}\n{expr}'
+
+    @visitor.when(hulk_nodes.VarDeclarationNode)
+    def visit(self, node: hulk_nodes.VarDeclarationNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ VarDeclarationNode: {node.id} = <expr>'
+        expr = self.visit(node.expr, tabs + 1)
+        return f'{ans}\n{expr}'
+
     @visitor.when(hulk_nodes.CallNode)
     def visit(self, node: hulk_nodes.CallNode, tabs=0):
-        ans = '\t' * tabs + f'\\__CallNode: {node.lex}(<expr>, ..., <expr>)'
+        ans = '\t' * tabs + f'\\__ CallNode: {node.lex}(<expr>, ..., <expr>)'
         args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
         return f'{ans}\n{args}'
 
-    @visitor.when(hulk_nodes.EqualNode)
-    def visit(self, node: hulk_nodes.EqualNode, tabs=0):
-        ans = '\t' * tabs + f'\\__EqualNode: <expr> == <expr>'
-        left = self.visit(node.left, tabs + 1)
-        right = self.visit(node.right, tabs + 1)
-        return f'{ans}\n{left}\n{right}'
+    @visitor.when(hulk_nodes.MethodCallNode)
+    def visit(self, node: hulk_nodes.MethodCallNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ MethodCallNode: {node.lex}(<expr>, ..., <expr>)'
+        args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
+        return f'{ans}\n{args}'
 
-    @visitor.when(hulk_nodes.PlusNode)
-    def visit(self, node: hulk_nodes.PlusNode, tabs=0):
-        ans = '\t' * tabs + f'\\__PlusNode: <expr> + <expr>'
-        left = self.visit(node.left, tabs + 1)
-        right = self.visit(node.right, tabs + 1)
-        return f'{ans}\n{left}\n{right}'
+    @visitor.when(hulk_nodes.ParamNode)
+    def visit(self, node: hulk_nodes.ParamNode, tabs=0):
+        ttype = f": {node.var_type}" if node.var_type is not None else ""
+        return '\t' * tabs + f'\\__ ParamNode: {node.id}{ttype}'
+
+    @visitor.when(hulk_nodes.TypeInstantiationNode)
+    def visit(self, node: hulk_nodes.TypeInstantiationNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ TypeInstantiationNode: {node.idx}(<expr>, ..., <expr>)'
+        args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
+        return f'{ans}\n{args}'
+
+    @visitor.when(hulk_nodes.ExpressionBlockNode)
+    def visit(self, node: hulk_nodes.ExpressionBlockNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ ExpressionBlockNode [<expr>; ... <expr>;]'
+        expressions = '\n'.join(self.visit(decl, tabs + 1) for decl in node.expressions)
+        return f'{ans}\n{expressions}'
+
+    @visitor.when(hulk_nodes.DestructiveAssignmentNode)
+    def visit(self, node: hulk_nodes.DestructiveAssignmentNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ DestructiveAssignmentNode: {node.id} := <expr>'
+        expr = self.visit(node.expr, tabs + 1)
+        return f'{ans}\n{expr}'
+
+    @visitor.when(hulk_nodes.WhileNode)
+    def visit(self, node: hulk_nodes.WhileNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ WhileNode: while(<expr>) <expr>'
+        cond = self.visit(node.condition)
+        expr = self.visit(node.expression, tabs + 1)
+        return f'{ans}\n{cond}\n{expr}'
+
+    @visitor.when(hulk_nodes.ForNode)
+    def visit(self, node: hulk_nodes.ForNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ ForNode: for({node.var} in <expr>) <expr>'
+        iterable = self.visit(node.iterable)
+        expr = self.visit(node.expression, tabs + 1)
+        return f'{ans}\n{iterable}\n{expr}'
+
+    @visitor.when(hulk_nodes.ConditionalNode)
+    def visit(self, node: hulk_nodes.ConditionalNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ ConditionalNode:'
+
+        cond_expr = [(self.visit(cond, tabs + 1), self.visit(expr, tabs + 1)) for cond, expr in node.cond_expr]
+
+        if_cond, if_expr = cond_expr[0]
+        if_clause = '\t' * tabs + f'\\__ if(<expr>) <expr>\n{if_cond}\n{if_expr}'
+
+        cond_exp = cond_expr[1:]
+
+        elif_clauses = ['\t' * tabs + f'\\__ elif(<expr>) <expr>\n{cond}\n{expr}' for (cond, expr) in cond_exp]
+        elif_clauses = '\n' + '\n'.join(elif_clauses) if len(elif_clauses) > 0 else ''
+
+        else_clause = '\t' * tabs + f'\\__ else <expr>\n{self.visit(node.default_expr, tabs + 1)}'
+
+        return f'{ans}\n{if_clause}{elif_clauses}\n{else_clause}'
+
+    @visitor.when(hulk_nodes.AsNode)
+    def visit(self, node: hulk_nodes.AsNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ AsNode: <expr> as {node.ttype}'
+        expr = self.visit(node.expression, tabs + 1)
+        return f'{ans}\n{expr}'
+
+    @visitor.when(hulk_nodes.IsNode)
+    def visit(self, node: hulk_nodes.IsNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ IsNode: <expr> is {node.ttype}'
+        expr = self.visit(node.expression, tabs + 1)
+        return f'{ans}\n{expr}'
+
+    @visitor.when(hulk_nodes.VectorInitializationNode)
+    def visit(self, node: hulk_nodes.VectorInitializationNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ VectorInitializationNode: [<expr>, ..., <expr>]'
+        elements = '\n'.join(self.visit(element, tabs + 1) for element in node.elements)
+        return f'{ans}\n{elements}'
+
+    @visitor.when(hulk_nodes.VectorComprehensionNode)
+    def visit(self, node: hulk_nodes.VectorComprehensionNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ VectorComprehensionNode: [<expr> || {node.var} in <expr>]'
+        selector = self.visit(node.selector, tabs + 1)
+        iterable = self.visit(node.iterable, tabs + 1)
+        return f'{ans}\n{selector}\n{iterable}'
