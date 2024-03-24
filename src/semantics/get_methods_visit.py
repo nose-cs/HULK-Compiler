@@ -3,12 +3,14 @@ import src.visitor as visitor
 from global_Context import GlobalContext
 from type import Type
 import type
+import method
 class Methods_Visitor(object):
 
     def __init__(self, context:GlobalContext, errors = []) -> None:
         self.context:GlobalContext = context
         self.curent_type:Type = None
         self.errors:list = errors
+        self.current_method:method = None
 
     @visitor.on('node')
     def visit(self, node):
@@ -43,5 +45,14 @@ class Methods_Visitor(object):
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
-        args_names = []
-        args_types = []
+        self.current_method = method.method(node.id)
+        if(node.id in self.curent_type.methods):
+            self.errors.append(f'Method {node.id} is defined more than once in the same type')
+            return
+        self.curent_type.methods[node.id] = self.current_method
+        for param in node.params:
+            self.visit(param)
+        if not node.return_type in self.context.types:
+            self.errors.append('Undefined return type')
+        else:
+            self.current_method.return_type = self.context.types[node.return_type]
