@@ -52,11 +52,10 @@ class State:
         return any(s.final for s in states)
 
     def to_deterministic(self, formatter=lambda x: str(x)):
-        closure = self.epsilon_closure
-        start = State(tuple(closure), any(s.final for s in closure), formatter)
+        closure = tuple(self.epsilon_closure)
+        start = State(closure, any(s.final for s in closure), formatter)
 
-        closures = [closure]
-        states = [start]
+        closures = {closure: start}
         pending = [start]
 
         while pending:
@@ -64,17 +63,14 @@ class State:
             symbols = {symbol for s in state.state for symbol in s.transitions}
 
             for symbol in symbols:
-                move = self.move_by_state(symbol, *state.state)
-                closure = self.epsilon_closure_by_state(*move)
+                closure = tuple(self.move_by_state(symbol, *state.state))
 
                 if closure not in closures:
-                    new_state = State(tuple(closure), any(s.final for s in closure), formatter)
-                    closures.append(closure)
-                    states.append(new_state)
+                    new_state = State(closure, any(s.final for s in closure), formatter)
+                    closures[closure] = new_state
                     pending.append(new_state)
                 else:
-                    index = closures.index(closure)
-                    new_state = states[index]
+                    new_state = closures[closure]
 
                 state.add_transition(symbol, new_state)
 
@@ -98,24 +94,33 @@ class State:
 
     @staticmethod
     def move_by_state(symbol, *states):
-        return {s for state in states if state.has_transition(symbol) for s in state[symbol]}
+        new_states = set()
+
+        for state in states:
+            if state.has_transition(symbol):
+                new_states.update(state[symbol])
+
+                for nstate in state[symbol]:
+                    State.epsilon_closure_by_state(new_states, nstate.epsilon_transitions)
+
+        return new_states
 
     @staticmethod
-    def epsilon_closure_by_state(*states):
-        closure = {state for state in states}
+    def epsilon_closure_by_state(states, epsilons):
+        states.update(epsilons)
 
-        l = 0
-        while l != len(closure):
-            l = len(closure)
-            tmp = [s for s in closure]
-            for s in tmp:
-                for epsilon_state in s.epsilon_transitions:
-                    closure.add(epsilon_state)
-        return closure
+        for e in epsilons:
+            before = len(states)
+            states.update(e.epsilon_transitions)
+            
+            if len(states) > before:
+                State.epsilon_closure_by_state(states, e.epsilon_transitions)
 
     @property
     def epsilon_closure(self):
-        return self.epsilon_closure_by_state(self)
+        initial = {self}
+        self.epsilon_closure_by_state(initial, self.epsilon_transitions)
+        return initial
 
     @property
     def name(self):
