@@ -110,9 +110,11 @@ simple_expr %= conditional, lambda h, s: s[1]
 simple_expr %= let_in, lambda h, s: s[1]
 simple_expr %= while_loop, lambda h, s: s[1]
 simple_expr %= for_loop, lambda h, s: s[1]
+simple_expr %= as_operation, lambda h, s: s[1]
+
+# todo check destructive assignment and type instantiation precedence
 simple_expr %= destructive_assignment, lambda h, s: s[1]
 simple_expr %= type_instantiation, lambda h, s: s[1]
-simple_expr %= as_operation, lambda h, s: s[1]
 
 as_operation %= concat_operation + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(s[1], s[3])
 as_operation %= concat_operation, lambda h, s: s[1]
@@ -217,8 +219,10 @@ optional_typing_var %= idx + equal + expr, lambda h, s: hulk_ast_nodes.VarDeclar
 optional_typing_var %= (idx + colon + idx + equal + expr,
                         lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[5], s[3]))
 
+# Todo check if this is correct
 # Destructive assigment
-destructive_assignment %= idx + dest_eq + expr, lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3])
+destructive_assignment %= (obj_method_or_attribute_call + dest_eq + expr,
+                           lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3]))
 
 # Functions can be declared using lambda notation or classic notation
 function_declaration %= (function + idx + opar + params_list_or_empty + cpar + arrow + simple_expr + semicolon,
