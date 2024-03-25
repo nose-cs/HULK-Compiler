@@ -1,6 +1,6 @@
-import hulk_grammar.hulk_ast_nodes as hulk_nodes
-from type import Type
-from function import Function
+import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
+from src.semantics.type import Type
+from src.semantics.function import Function
 
 class GlobalContext:
     
@@ -21,7 +21,7 @@ class GlobalContext:
             return [f'The function {function.id} is declared more than once']
         self.functions[function.id] = Function(function.id)
 
-    def define_protocol(self, protocol: hulk_nodes.ProtocolDeclaration):
+    def define_protocol(self, protocol: hulk_nodes.ProtocolDeclarationNode):
         #Todo, I have not an exact idea of what to do here
         pass
 

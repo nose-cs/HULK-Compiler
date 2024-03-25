@@ -1,7 +1,7 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
-from global_Context import GlobalContext 
-import type
+from src.semantics.global_Context import GlobalContext 
+import src.semantics.type as types
 
 class Types_Visitor(object):
 
@@ -17,10 +17,10 @@ class Types_Visitor(object):
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode):
         self.context = GlobalContext()
-        self.context.types['String'] = type.StringType()
-        self.context.types['Number'] = type.NumberType()
-        self.context.types['Bool'] = type.BoolType()
-        self.context.types['Object'] = type.ObjectType()
+        self.context.types['String'] = types.StringType()
+        self.context.types['Number'] = types.NumberType()
+        self.context.types['Bool'] = types.BoolType()
+        self.context.types['Object'] = types.ObjectType()
         for decl in node.declarations:
             self.visit(decl)
         return self.context , self.errorsList 
@@ -33,6 +33,6 @@ class Types_Visitor(object):
     def visit(self, node: hulk_nodes.FunctionDeclarationNode):
         self.errorsList.append(self.context.define_function(node))
 
-    @visitor.when(hulk_nodes.ProtocolDeclaration)
-    def visit(self, node: hulk_nodes.ProtocolDeclaration):
+    @visitor.when(hulk_nodes.ProtocolDeclarationNode)
+    def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
         self.errorsList.append(self.context.ed)
