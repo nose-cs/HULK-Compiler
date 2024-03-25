@@ -3,3 +3,4 @@ cmp/__pycache__
 src/regex/__pycache__
 src/hulk_grammar/__pycache__
 src/lexer/__pycache__
+src/semantics/__pycache__
