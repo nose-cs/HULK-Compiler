@@ -31,22 +31,26 @@ class StatementNode(Node):
 class FunctionDeclarationNode(StatementNode):
     def __init__(self, idx, params, expr, return_type=None):
         super().__init__()
+        params_ids, params_types = zip(*params)
         self.id = idx
-        self.params = params
+        self.params_ids = params_ids
+        self.params_types = params_types
         self.expr = expr
         self.return_type = return_type
 
 
 class TypeDeclarationNode(StatementNode):
-    def __init__(self, idx, params, body, parent, parent_params=None):
+    def __init__(self, idx, params, body, parent, parent_args=None):
         super().__init__()
-        if parent_params is None:
-            parent_params = []
+        if parent_args is None:
+            parent_args = []
+        params_ids, params_types = zip(*params)
         self.idx = idx
         self.body = body
-        self.params = params
+        self.params_ids = params_ids
+        self.params_types = params_types
         self.parent = parent
-        self.parent_params = parent_params
+        self.parent_args = parent_args
 
 
 class ProtocolDeclarationNode(StatementNode):
@@ -60,8 +64,10 @@ class ProtocolDeclarationNode(StatementNode):
 class MethodDeclarationNode(StatementNode):
     def __init__(self, idx, params, expr, return_type=None):
         super().__init__()
+        params_ids, params_types = zip(*params)
         self.id = idx
-        self.params = params
+        self.params_ids = params_ids
+        self.params_types = params_types
         self.expr = expr
         self.return_type = return_type
 
@@ -69,8 +75,10 @@ class MethodDeclarationNode(StatementNode):
 class MethodSignatureNode(StatementNode):
     def __init__(self, idx, params, return_type):
         super().__init__()
+        params_ids, params_types = zip(*params)
         self.id = idx
-        self.params = params
+        self.params_ids = params_ids
+        self.params_types = params_types
         self.return_type = return_type
 
 
@@ -83,13 +91,6 @@ class AttributeStatementNode(StatementNode):
 
 
 # Expressions
-class ParamNode(ExpressionNode):
-    def __init__(self, idx, param_type=None):
-        super().__init__()
-        self.id = idx
-        self.var_type = param_type
-
-
 class TypeInstantiationNode(ExpressionNode):
     def __init__(self, idx, args):
         super().__init__()
@@ -132,7 +133,9 @@ class UnaryExpressionNode(ExpressionNode):
 class ConditionalNode(ExpressionNode):
     def __init__(self, cond_expr: List[Tuple], default_expr):
         super().__init__()
-        self.cond_expr = cond_expr
+        conditions, expressions = zip(*cond_expr)
+        self.conditions = conditions
+        self.expressions = expressions
         self.default_expr = default_expr
 
 

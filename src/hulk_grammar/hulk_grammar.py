@@ -248,8 +248,8 @@ params_list_or_empty %= G.Epsilon, lambda h, s: []
 params_list %= optional_typing_param, lambda h, s: [s[1]]
 params_list %= params_list + comma + optional_typing_param, lambda h, s: s[1] + [s[3]]
 
-optional_typing_param %= idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1])
-optional_typing_param %= idx + colon + idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1], s[3])
+optional_typing_param %= idx, lambda h, s: (s[1], None)
+optional_typing_param %= idx + colon + idx, lambda h, s: (s[1], s[3])
 
 # Conditional expressions must have one if and one else and can 0 or more elifs
 conditional %= (if_ + opar + expr + cpar + expr + conditional_ending + else_ + expr,
@@ -323,5 +323,5 @@ method_signature %= (idx + opar + typed_params_or_empty + cpar + colon + idx + s
 typed_params_or_empty %= typed_params, lambda h, s: s[1]
 typed_params_or_empty %= G.Epsilon, lambda h, s: []
 
-typed_params %= typed_params + comma + idx + colon + idx, lambda h, s: s[1] + [hulk_ast_nodes.ParamNode(s[3], s[5])]
-typed_params %= idx + colon + idx, lambda h, s: [hulk_ast_nodes.ParamNode(s[1], s[3])]
+typed_params %= typed_params + comma + idx + colon + idx, lambda h, s: s[1] + [(s[3], s[5])]
+typed_params %= idx + colon + idx, lambda h, s: [(s[1], s[3])]
