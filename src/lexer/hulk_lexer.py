@@ -3,6 +3,8 @@ from src.errors import LexicographicError
 from src.hulk_grammar.hulk_grammar import G
 from src.lexer.lexer import Lexer
 from src.pycompiler import Terminal
+import dill
+import sys
 
 nonzero_digits = '|'.join(str(n) for n in range(1, 10))
 digits = '|'.join(str(n) for n in range(10))
@@ -57,8 +59,25 @@ hulk_tokens = operators + reserved_words + [
 
 
 class HulkLexer(Lexer):
-    def __init__(self) -> None:
-        super().__init__(hulk_tokens, G.EOF, synchronizing_tokens)
+    def __init__(self, rebuild=False, convert_to_dfa=False, save=False) -> None:
+        super().__init__(hulk_tokens, G.EOF, rebuild, convert_to_dfa, synchronizing_tokens)
+
+        if not rebuild:
+            try:
+                with open('src/lexer/hulk_lexer.pkl', 'rb') as automaton_pkl:
+                    self.automaton = dill.load(automaton_pkl)
+                with open('src/lexer/hulk_lexer_synchronizing.pkl', 'rb') as synchronizing_automaton_pkl:
+                    self.synchronizing_automaton = dill.load(synchronizing_automaton_pkl)
+            except:
+                super().__init__(hulk_tokens, G.EOF, True, convert_to_dfa, synchronizing_tokens)
+
+        if save:
+            sys.setrecursionlimit(10000)
+
+            with open('src/lexer/hulk_lexer.pkl', 'wb') as automaton_pkl:
+                dill.dump(self.automaton, automaton_pkl)
+            with open('src/lexer/hulk_lexer_synchronizing.pkl', 'wb') as synchronizing_automaton_pkl:
+                dill.dump(self.synchronizing_automaton, synchronizing_automaton_pkl)
 
     @staticmethod
     def find_errors(tokens):
