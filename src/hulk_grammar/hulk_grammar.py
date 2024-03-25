@@ -195,7 +195,7 @@ atom %= func_call, lambda h, s: s[1]
 atom %= vector_initialization, lambda h, s: s[1]
 
 # Function call
-func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.CallNode(s[1], s[3])
+func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.FunctionCallNode(s[1], s[3])
 
 expr_list_comma_sep_or_empty %= G.Epsilon, lambda h, s: []
 expr_list_comma_sep_or_empty %= expr_list_comma_sep, lambda h, s: s[1]
@@ -300,9 +300,9 @@ method_declaration %= (idx + opar + params_list_or_empty + cpar + colon + idx + 
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[7], s[6]))
 
 # Attribute declaration
-attribute %= idx + equal + eol_expr, lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[3])
+attribute %= idx + equal + eol_expr, lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[3])
 attribute %= (idx + colon + idx + equal + eol_expr,
-              lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[5], s[3]))
+              lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[5], s[3]))
 
 # Type instantiation
 type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
@@ -318,7 +318,7 @@ protocol_body %= protocol_body + method_signature, lambda h, s: s[1] + [s[2]]
 protocol_body %= method_signature, lambda h, s: [s[1]]
 
 method_signature %= (idx + opar + typed_params_or_empty + cpar + colon + idx + semicolon,
-                     lambda h, s: hulk_ast_nodes.MethodSignatureNode(s[1], s[3], s[6]))
+                     lambda h, s: hulk_ast_nodes.MethodSignatureDeclarationNode(s[1], s[3], s[6]))
 
 typed_params_or_empty %= typed_params, lambda h, s: s[1]
 typed_params_or_empty %= G.Epsilon, lambda h, s: []

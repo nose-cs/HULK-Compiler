@@ -20,7 +20,7 @@ class ExpressionNode(Node):
         pass
 
 
-class StatementNode(Node):
+class DeclarationNode(Node):
     def __init__(self):
         pass
 
@@ -28,7 +28,7 @@ class StatementNode(Node):
 # ---------------------------------------------------Depth 2---------------------------------------------------------- #
 
 # Statements
-class FunctionDeclarationNode(StatementNode):
+class FunctionDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, expr, return_type=None):
         super().__init__()
         params_ids, params_types = zip(*params)
@@ -39,7 +39,7 @@ class FunctionDeclarationNode(StatementNode):
         self.return_type = return_type
 
 
-class TypeDeclarationNode(StatementNode):
+class TypeDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, body, parent, parent_args=None):
         super().__init__()
         if parent_args is None:
@@ -53,7 +53,7 @@ class TypeDeclarationNode(StatementNode):
         self.parent_args = parent_args
 
 
-class ProtocolDeclarationNode(StatementNode):
+class ProtocolDeclarationNode(DeclarationNode):
     def __init__(self, idx, methods_signature, parent):
         super().__init__()
         self.idx = idx
@@ -61,7 +61,7 @@ class ProtocolDeclarationNode(StatementNode):
         self.parent = parent
 
 
-class MethodDeclarationNode(StatementNode):
+class MethodDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, expr, return_type=None):
         super().__init__()
         params_ids, params_types = zip(*params)
@@ -72,7 +72,7 @@ class MethodDeclarationNode(StatementNode):
         self.return_type = return_type
 
 
-class MethodSignatureNode(StatementNode):
+class MethodSignatureDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, return_type):
         super().__init__()
         params_ids, params_types = zip(*params)
@@ -82,7 +82,7 @@ class MethodSignatureNode(StatementNode):
         self.return_type = return_type
 
 
-class AttributeStatementNode(StatementNode):
+class AttributeDeclarationNode(DeclarationNode):
     def __init__(self, idx, expr, attribute_type=None):
         super().__init__()
         self.id = idx
@@ -197,6 +197,28 @@ class AsNode(ExpressionNode):
         self.ttype = ttype
 
 
+class FunctionCallNode(ExpressionNode):
+    def __init__(self, idx, args):
+        super().__init__()
+        self.idx = idx
+        self.args = args
+
+
+class AttributeCallNode(ExpressionNode):
+    def __init__(self, obj, attribute):
+        super().__init__()
+        self.obj = obj
+        self.attribute = attribute
+
+
+class MethodCallNode(ExpressionNode):
+    def __init__(self, obj, method, args):
+        super().__init__()
+        self.obj = obj
+        self.method = method
+        self.args = args
+
+
 # ---------------------------------------------------Depth 3---------------------------------------------------------- #
 
 # Atomic
@@ -214,27 +236,6 @@ class ConstantStringNode(AtomicNode):
 
 class VariableNode(AtomicNode):
     pass
-
-
-class CallNode(AtomicNode):
-    def __init__(self, idx, args):
-        super().__init__(idx)
-        self.args = args
-
-
-class AttributeCallNode(AtomicNode):
-    def __init__(self, obj, attribute):
-        super().__init__(f"{obj}.{attribute}")
-        self.obj = obj
-        self.attribute = attribute
-
-
-class MethodCallNode(AtomicNode):
-    def __init__(self, obj, method, args):
-        super().__init__(f"{obj}.{method}")
-        self.obj = obj
-        self.method = method
-        self.args = args
 
 
 # String

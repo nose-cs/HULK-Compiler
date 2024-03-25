@@ -49,14 +49,14 @@ class FormatVisitor(object):
         ans = '\t' * tabs + f'\\__ ProtocolDeclarationNode: protocol {node.idx}{parent} -> <body>'
         return f'{ans}\n{methods}'
 
-    @visitor.when(hulk_nodes.MethodSignatureNode)
-    def visit(self, node: hulk_nodes.MethodSignatureNode, tabs=0):
+    @visitor.when(hulk_nodes.MethodSignatureDeclarationNode)
+    def visit(self, node: hulk_nodes.MethodSignatureDeclarationNode, tabs=0):
         params = ', '.join([f'{node.params_ids[i]}' + f': {node.params_types[i]}' for i in range(len(node.params_ids))])
         ans = '\t' * tabs + f'\\__ MethodDeclarationNode: {node.id}({params}):{node.return_type}'
         return f'{ans}'
 
-    @visitor.when(hulk_nodes.AttributeStatementNode)
-    def visit(self, node: hulk_nodes.AttributeStatementNode, tabs=0):
+    @visitor.when(hulk_nodes.AttributeDeclarationNode)
+    def visit(self, node: hulk_nodes.AttributeDeclarationNode, tabs=0):
         ttype = f": {node.attribute_type}" if node.attribute_type is not None else ""
         ans = '\t' * tabs + f'\\__ AttributeStatementNode: {node.id}{ttype} = <expr>'
         body = self.visit(node.expr, tabs + 1)
@@ -90,15 +90,9 @@ class FormatVisitor(object):
         expr = self.visit(node.expr, tabs + 1)
         return f'{ans}\n{expr}'
 
-    @visitor.when(hulk_nodes.CallNode)
-    def visit(self, node: hulk_nodes.CallNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ CallNode: {node.lex}(<expr>, ..., <expr>)'
-        args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
-        return f'{ans}\n{args}'
-
-    @visitor.when(hulk_nodes.MethodCallNode)
-    def visit(self, node: hulk_nodes.MethodCallNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ MethodCallNode: {node.lex}(<expr>, ..., <expr>)'
+    @visitor.when(hulk_nodes.FunctionCallNode)
+    def visit(self, node: hulk_nodes.FunctionCallNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ CallNode: {node.idx}(<expr>, ..., <expr>)'
         args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
         return f'{ans}\n{args}'
 
@@ -181,12 +175,13 @@ class FormatVisitor(object):
 
     @visitor.when(hulk_nodes.AttributeCallNode)
     def visit(self, node: hulk_nodes.AttributeCallNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ AttributeCallNode: {node.lex}'
+        ans = '\t' * tabs + f'\\__ AttributeCallNode: <expr>.{node.attribute}'
         obj = self.visit(node.obj, tabs + 1)
         return f'{ans}\n{obj}'
 
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ MethodCallNode: {node.lex}(<expr>, ..., <expr>)'
+        ans = '\t' * tabs + f'\\__ MethodCallNode: <expr>.{node.method}(<expr>, ..., <expr>)'
+        obj = self.visit(node.obj, tabs + 1)
         args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
-        return f'{ans}\n{args}'
+        return f'{ans}\n{obj}\n{args}'
