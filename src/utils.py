@@ -110,23 +110,14 @@ def pprint(item, header=""):
 
 
 class Token:
-    """
-    Basic token class.
-
-    Parameters
-    ----------
-    lex : str
-        Token's lexeme.
-    token_type : Enum
-        Token's type.
-    """
-
-    def __init__(self, lex, token_type):
+    def __init__(self, lex, token_type, row=0, column=0):
         self.lex = lex
         self.token_type = token_type
+        self.row = row
+        self.column = column
 
     def __str__(self):
-        return f'{self.token_type}: {self.lex}'
+        return f'{self.token_type}: {self.lex} ({self.row}, {self.column})'
 
     def __repr__(self):
         return str(self)
@@ -137,11 +128,11 @@ class Token:
 
 
 class UnknownToken(Token):
-    def __init__(self, lex):
-        Token.__init__(self, lex, None)
+    def __init__(self, lex, row=0, column=0):
+        Token.__init__(self, lex, None, row, column)
 
     def transform_to(self, token_type):
-        return Token(self.lex, token_type)
+        return Token(self.lex, token_type, self.row, self.column)
 
     @property
     def is_valid(self):

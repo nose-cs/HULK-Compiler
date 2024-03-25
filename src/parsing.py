@@ -1,3 +1,5 @@
+from abc import abstractmethod, ABC
+
 from src.automaton import State, multiline_formatter
 from src.pycompiler import Grammar, Production, Item
 from src.utils import ContainerSet
@@ -141,7 +143,7 @@ def build_LR0_automaton(G: Grammar):
     return start
 
 
-class ShiftReduceParser:
+class ShiftReduceParser(ABC):
     SHIFT = 'SHIFT'
     REDUCE = 'REDUCE'
     OK = 'OK'
@@ -149,10 +151,10 @@ class ShiftReduceParser:
     def __init__(self, G, verbose=False):
         self.G = G
         self.verbose = verbose
-        self.action = {}
-        self.goto = {}
+        self.table = {}
         self._build_parsing_table()
 
+    @abstractmethod
     def _build_parsing_table(self):
         raise NotImplementedError()
 
@@ -165,10 +167,11 @@ class ShiftReduceParser:
         while cursor < len(w):
             state = stack[-1]
             lookahead = w[cursor].Name
-            if self.verbose: print(stack, '<---||--->', w[cursor:])
+            if self.verbose:
+                print(stack, '<---||--->', w[cursor:])
 
-            if (state, lookahead) in self.action.keys():
-                action, tag = self.action[state, lookahead]
+            if (state, lookahead) in self.table.keys():
+                action, tag = self.table[state, lookahead]
 
                 operations.append(action)
 
@@ -188,13 +191,14 @@ class ShiftReduceParser:
                             if not symbol.IsEpsilon:
                                 stack.pop()
 
-                        if (stack[-1], Left.Name) in self.action and self.action[(stack[-1], Left.Name)][
+                        if (stack[-1], Left.Name) in self.table and self.table[(stack[-1], Left.Name)][
                             0] == ShiftReduceParser.SHIFT:
-                            stack.append(self.action[(stack[-1], Left.Name)][1])
+                            stack.append(self.table[(stack[-1], Left.Name)][1])
                         else:
-                            raise Exception("Chain cannot be parsed")
+                            raise Exception(
+                                f"Chain cannot be parsed {stack[-1], Left.Name} not in table or table[{stack[-1]}, {Left.Name} ] {self.table[(stack[-1], Left.Name)][0]}")
             else:
-                raise Exception("Chain cannot be parsed")
+                raise Exception(f"Chain cannot be parsed {state, lookahead} not in table")
 
         raise Exception("Chain cannot be parsed")
 
@@ -214,7 +218,7 @@ class SLR1Parser(ShiftReduceParser):
 
         pending = [automaton]
 
-        while (len(pending) > 0):
+        while len(pending) > 0:
             current = pending.pop()
 
             for symbol, list_state in current.transitions.items():
@@ -225,13 +229,13 @@ class SLR1Parser(ShiftReduceParser):
                     states[state] = index
                     index += 1
 
-                self.action[states[current], symbol] = (ShiftReduceParser.SHIFT, states[state])
+                self.table[states[current], symbol] = (ShiftReduceParser.SHIFT, states[state])
 
         for state in states.keys():
             if state.final:
                 for node in state.state:
                     if node.state.production == G.startSymbol.productions[0] and node.state.IsReduceItem:
-                        self.action[states[state], G.EOF.Name] = (ShiftReduceParser.OK, None)
+                        self.table[states[state], G.EOF.Name] = (ShiftReduceParser.OK, None)
 
         for state in states.keys():
             if state.final:
@@ -239,8 +243,8 @@ class SLR1Parser(ShiftReduceParser):
                     if node.state.IsReduceItem:
                         if node.state.production != G.startSymbol.productions[0]:
                             for terminal in follows[node.state.production.Left]:
-                                if (states[state], terminal) not in self.action:
-                                    self.action[states[state], terminal.Name] = (
+                                if (states[state], terminal) not in self.table:
+                                    self.table[states[state], terminal.Name] = (
                                         ShiftReduceParser.REDUCE, node.state.production)
                                 else:
                                     raise Exception("Bad Grammar")
@@ -350,7 +354,7 @@ class LR1Parser(ShiftReduceParser):
 
         pending = [automaton]
 
-        while (len(pending) > 0):
+        while len(pending) > 0:
             current = pending.pop()
 
             for symbol, list_state in current.transitions.items():
@@ -362,13 +366,13 @@ class LR1Parser(ShiftReduceParser):
                     states[state] = index
                     index += 1
 
-                self.action[states[current], symbol] = (ShiftReduceParser.SHIFT, states[state])
+                self.table[states[current], symbol] = (ShiftReduceParser.SHIFT, states[state])
 
         for state in states.keys():
             if state.final:
                 for item in state.state:
                     if item.production == G.startSymbol.productions[0] and item.IsReduceItem:
-                        self.action[states[state], G.EOF.Name] = (ShiftReduceParser.OK, None)
+                        self.table[states[state], G.EOF.Name] = (ShiftReduceParser.OK, None)
 
         for state in states.keys():
             if state.final:
@@ -376,12 +380,12 @@ class LR1Parser(ShiftReduceParser):
                     if item.IsReduceItem:
                         if item.production != G.startSymbol.productions[0]:
                             for terminal in item.lookaheads:
-                                if (states[state], terminal.Name) not in self.action:
-                                    self.action[states[state], terminal.Name] = (
+                                if (states[state], terminal.Name) not in self.table:
+                                    self.table[states[state], terminal.Name] = (
                                         ShiftReduceParser.REDUCE, item.production)
                                 else:
                                     raise Exception(
-                                        f"Grammar is not LR(1). A conflict had happened at {states[state], terminal.Name}: table[{states[state]},{terminal.Name}] = {self.action[states[state], terminal.Name]} and tried to {ShiftReduceParser.REDUCE, item.production}")
+                                        f"Grammar is not LR(1). A conflict had happened at {states[state], terminal.Name}: table[{states[state]},{terminal.Name}] = {self.table[states[state], terminal.Name]} and tried to set it to {ShiftReduceParser.REDUCE, item.production}")
 
     @staticmethod
     def _register(table, key, value):

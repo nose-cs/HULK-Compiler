@@ -1,15 +1,19 @@
 from src.automaton import State
 from src.regex.regex_automaton import get_regex_automaton
-from src.utils import Token
+from src.utils import Token, UnknownToken
 
 
+# todo refactor this
 class Lexer:
-    def __init__(self, table, eof):
+    def __init__(self, table, eof, synchronizing_tokens=None):
+        if synchronizing_tokens is None:
+            synchronizing_tokens = []
         self.eof = eof
         self.automaton = self._build_automaton(table)
+        self.synchronizing_automaton = self._build_automaton(synchronizing_tokens)
 
     @staticmethod
-    def _build_automaton(table):
+    def _build_automaton(table) -> State:
         start = State(None)
 
         for i, value in enumerate(table):
@@ -23,11 +27,23 @@ class Lexer:
 
         return start
 
-    def _tokenize(self, text):
-        max_pos = (0, None)
+    @staticmethod
+    def _get_new_row_col(text, start, end, row, col):
+        if end >= len(text):
+            return row, col
 
-        current_states = self.automaton.epsilon_closure
-        i = 0
+        for j in range(start, end):
+            if text[j] == '\n':
+                row += 1
+                col = 1
+            else:
+                col += 1
+        return row, col
+
+    def find_next_valid_token_after_an_error(self, text, start):
+        i = start
+        max_pos = (i, None, None)
+        current_states = self.synchronizing_automaton.epsilon_closure
 
         while i < len(text):
             char = text[i]
@@ -55,19 +71,74 @@ class Lexer:
                             priority = state.state[0]
 
             if (len(current_states) == 0 or i + 1 == len(text)) and max_pos[1] is not None:
-                yield text[max_pos[0]: max_pos[1] + 1], max_pos[2]
-                i = max_pos[1]
-                max_pos = (max_pos[1] + 1, None)
-                current_states = self.automaton.epsilon_closure
+                return max_pos[0]
 
             elif len(current_states) == 0 or i + 1 == len(text):
-                i = max_pos[0]
-                max_pos = (max_pos[0] + 1, None)
-                current_states = self.automaton.epsilon_closure
+                max_pos = (i + 1, None)
+                current_states = self.synchronizing_automaton.epsilon_closure
 
             i += 1
 
-        yield '$', self.eof
+        return max_pos[0]
+
+    def _tokenize(self, text):
+        max_pos = (0, None)
+
+        current_states = self.automaton.epsilon_closure
+        i = 0
+
+        row, col = 1, 1
+
+        while i < len(text):
+            char = text[i]
+            new_states = set()
+
+            for state in current_states:
+                if char in state.transitions:
+                    for new_state in state.transitions[char]:
+                        new_states.update(new_state.epsilon_closure)
+
+            current_states = new_states
+
+            priority = None
+            for state in current_states:
+                if state.final:
+                    if isinstance(state.state[0], State):
+                        for nfa in state.state:
+                            if nfa.final:
+                                if not priority or priority > nfa.state[0]:
+                                    max_pos = (max_pos[0], i, nfa.state[1])
+                                    priority = nfa.state[0]
+                    else:
+                        if not priority or priority > state.state[0]:
+                            max_pos = (max_pos[0], i, state.state[1])
+                            priority = state.state[0]
+
+            if (len(current_states) == 0 or i + 1 == len(text)) and max_pos[1] is not None:
+                yield text[max_pos[0]: max_pos[1] + 1], max_pos[2], row, col
+                # update row and col
+                row, col = self._get_new_row_col(text, max_pos[0], max_pos[1] + 1, row, col)
+                i = max_pos[1]
+                max_pos = (max_pos[1] + 1, None, None)
+                current_states = self.automaton.epsilon_closure
+
+            elif len(current_states) == 0 or i + 1 == len(text):
+                # update row and col
+                i = self.find_next_valid_token_after_an_error(text, max_pos[0] + 1)
+
+                # return an unknown token
+                yield text[max_pos[0]: i], None, row, col
+
+                # update row and col
+                row, col = self._get_new_row_col(text, max_pos[0], i, row, col)
+                max_pos = (i, None, None)
+                current_states = self.automaton.epsilon_closure
+                continue
+
+            i += 1
+
+        yield '$', self.eof, row + 1, 0
 
     def __call__(self, text):
-        return [Token(lex, ttype) for lex, ttype in self._tokenize(text)]
+        return [Token(lex, ttype, row, col) if ttype is not None else UnknownToken(lex, row, col) for
+                lex, ttype, row, col in self._tokenize(text)]

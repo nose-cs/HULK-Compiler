@@ -223,8 +223,8 @@ class Epsilon(Terminal, Sentence):
 
 class Production(object):
 
-    def __init__(self, nonTerminal, sentence):
-        self.Left: NonTerminal = nonTerminal
+    def __init__(self, non_terminal, sentence):
+        self.Left: NonTerminal = non_terminal
         self.Right: Sentence = sentence
 
     def __str__(self):
@@ -250,10 +250,10 @@ class Production(object):
 
 class AttributeProduction(Production):
 
-    def __init__(self, nonTerminal, sentence, attributes):
+    def __init__(self, non_terminal, sentence, attributes):
         if not isinstance(sentence, Sentence) and isinstance(sentence, Symbol):
             sentence = Sentence(sentence)
-        super(AttributeProduction, self).__init__(nonTerminal, sentence)
+        super(AttributeProduction, self).__init__(non_terminal, sentence)
 
         self.attributes = attributes
 
@@ -271,7 +271,6 @@ class AttributeProduction(Production):
     def IsEpsilon(self):
         return self.Right.IsEpsilon
 
-    # sintetizar en ingles??????, pending aggrement
     def syntetice(self):
         pass
 
@@ -387,7 +386,7 @@ class Grammar():
             productions.append({'Head': head, 'Body': body})
 
         d = {'NonTerminals': [symb.Name for symb in self.nonTerminals],
-             'Terminals': [symb.Name for symb in self.terminals], \
+             'Terminals': [symb.Name for symb in self.terminals],
              'Productions': productions}
 
         # [{'Head':p.Left.Name, "Body": [s.Name for s in p.Right]} for p in self.Productions]
