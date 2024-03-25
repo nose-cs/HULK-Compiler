@@ -1,9 +1,9 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
-from global_Context import GlobalContext
-from type import Type
-import type
-import method
+from src.semantics.global_Context import GlobalContext
+from src.semantics.type import Type
+import src.semantics.type
+import src.semantics.method as method
 class Methods_Visitor(object):
 
     def __init__(self, context:GlobalContext, errors = []) -> None:
