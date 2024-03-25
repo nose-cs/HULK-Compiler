@@ -41,8 +41,8 @@ synchronizing_tokens = [("  *", spaces), ("\n|\t", escaped_char)] + operators
 # tokens that we are going to use to build the lexer
 hulk_tokens = operators + reserved_words + [
     ('|'.join([f"({nonzero_digits})({digits})*",
-               f"({nonzero_digits})({digits})*.({digits})*",
-               f"0.({digits})*",
+               f"({nonzero_digits})({digits})*.({digits})({digits})*",
+               f"0.({digits})({digits})*",
                "0"]), hulk_grammar.number),
     (f"(_|{upper_letters}|{lower_letters})(_|{upper_letters}|{lower_letters}|{digits})*", hulk_grammar.idx),
     (
