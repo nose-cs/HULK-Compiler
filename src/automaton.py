@@ -152,7 +152,10 @@ class State:
         return str(self.state)
 
     def __hash__(self):
-        return hash(self.state)
+        try:
+            return hash(self.state)
+        except:
+            return super().__hash__()
 
     def __iter__(self):
         yield from self._visit()

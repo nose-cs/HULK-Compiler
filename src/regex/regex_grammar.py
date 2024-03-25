@@ -7,29 +7,29 @@ def get_regex_grammar():
 
     origin = G.NonTerminal('<origin>', startSymbol=True)
 
-    regex = G.NonTerminal('<regex>')
+    disjunction = G.NonTerminal('<disjunction>')
 
-    disjunction, kleene, factor = G.NonTerminals('<disjunction> <kleene> <factor>')
+    concat, kleene, factor = G.NonTerminals('<concat> <kleene> <factor>')
 
     star, bar, opar, cpar = G.Terminals('* | ( )')
 
     char = G.Terminal('char')
 
-    origin %= regex, lambda _, s: regex_nodes.RegexNode(s[1])
+    origin %= disjunction, lambda _, s: regex_nodes.OrNode(s[1])
 
-    regex %= regex + disjunction, lambda _, s: s[1] + [regex_nodes.OrNode(s[2])]
+    disjunction %= disjunction + bar + concat, lambda _, s: s[1] + [regex_nodes.ConcatNode(s[3])]
 
-    regex %= disjunction, lambda _, s: [regex_nodes.OrNode(s[1])]
+    disjunction %= concat, lambda _, s: [regex_nodes.ConcatNode(s[1])]
 
-    disjunction %= disjunction + bar + kleene, lambda _, s: s[1] + [s[3]]
+    concat %= concat + kleene, lambda _, s: s[1] + [s[2]]
 
-    disjunction %= kleene, lambda _, s: [s[1]]
+    concat %= kleene, lambda _, s: [s[1]]
 
     kleene %= kleene + star, lambda _, s: regex_nodes.KleeneNode(s[1])
 
     kleene %= factor, lambda _, s: s[1]
 
-    factor %= opar + regex + cpar, lambda _, s: regex_nodes.RegexNode(s[2])
+    factor %= opar + disjunction + cpar, lambda _, s: regex_nodes.OrNode(s[2])
 
     factor %= char, lambda _, s: regex_nodes.CharNode(s[1])
 
