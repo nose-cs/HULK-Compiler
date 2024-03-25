@@ -143,7 +143,7 @@ equality %= inequality + neq + inequality, lambda h, s: hulk_ast_nodes.NotEqualN
 equality %= inequality, lambda h, s: s[1]
 
 # makes sense 3 <= 8 <= 11 ?
-# No, book page 148
+# No, compilers book page 148
 inequality %= (plus_or_minus_operation + leq + plus_or_minus_operation,
                lambda h, s: hulk_ast_nodes.LessOrEqualNode(s[1], s[3]))
 inequality %= (plus_or_minus_operation + geq + plus_or_minus_operation,
