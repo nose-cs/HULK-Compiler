@@ -58,6 +58,3 @@ class TestHulkLoops(unittest.TestCase):
         self.assertEqual(expected, gotten)
         self.assertEqual(len(errors), 0, f"Expects 0 errors, but got {len(errors)}")
 
-
-if __name__ == '__main__':
-    unittest.main()

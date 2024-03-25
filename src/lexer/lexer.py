@@ -5,8 +5,11 @@ from src.utils import Token, UnknownToken
 
 # todo refactor this
 class Lexer:
-    def __init__(self, table, eof, build_automaton=False, convert_to_dfa = False, synchronizing_tokens=[]):
+    def __init__(self, table, eof, build_automaton=False, convert_to_dfa=False, synchronizing_tokens=None):
         self.eof = eof
+
+        if synchronizing_tokens is None:
+            synchronizing_tokens = []
 
         if build_automaton:
             self.automaton = self._build_automaton(table)
