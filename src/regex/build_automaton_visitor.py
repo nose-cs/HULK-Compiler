@@ -8,8 +8,8 @@ class AutomataBuilderVisitor(object):
     def visit(self, node: regex_nodes.Node, scope):
         pass
 
-    @visitor.when(regex_nodes.RegexNode)
-    def visit(self, node: regex_nodes.RegexNode):
+    @visitor.when(regex_nodes.ConcatNode)
+    def visit(self, node: regex_nodes.ConcatNode):
         acc = self.visit(node.nodes[0])
         for i in range(1, len(node.nodes)):
             acc = regex_operations_automata.concatenate_nfas(acc, self.visit(node.nodes[i]))
