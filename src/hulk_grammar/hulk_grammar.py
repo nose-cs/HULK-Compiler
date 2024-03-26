@@ -110,9 +110,11 @@ simple_expr %= conditional, lambda h, s: s[1]
 simple_expr %= let_in, lambda h, s: s[1]
 simple_expr %= while_loop, lambda h, s: s[1]
 simple_expr %= for_loop, lambda h, s: s[1]
+simple_expr %= as_operation, lambda h, s: s[1]
+
+# todo check destructive assignment and type instantiation precedence
 simple_expr %= destructive_assignment, lambda h, s: s[1]
 simple_expr %= type_instantiation, lambda h, s: s[1]
-simple_expr %= as_operation, lambda h, s: s[1]
 
 as_operation %= concat_operation + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(s[1], s[3])
 as_operation %= concat_operation, lambda h, s: s[1]
@@ -143,7 +145,7 @@ equality %= inequality + neq + inequality, lambda h, s: hulk_ast_nodes.NotEqualN
 equality %= inequality, lambda h, s: s[1]
 
 # makes sense 3 <= 8 <= 11 ?
-# No, book page 148
+# No, compilers book page 148
 inequality %= (plus_or_minus_operation + leq + plus_or_minus_operation,
                lambda h, s: hulk_ast_nodes.LessOrEqualNode(s[1], s[3]))
 inequality %= (plus_or_minus_operation + geq + plus_or_minus_operation,
@@ -193,7 +195,7 @@ atom %= func_call, lambda h, s: s[1]
 atom %= vector_initialization, lambda h, s: s[1]
 
 # Function call
-func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.CallNode(s[1], s[3])
+func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.FunctionCallNode(s[1], s[3])
 
 expr_list_comma_sep_or_empty %= G.Epsilon, lambda h, s: []
 expr_list_comma_sep_or_empty %= expr_list_comma_sep, lambda h, s: s[1]
@@ -217,8 +219,10 @@ optional_typing_var %= idx + equal + expr, lambda h, s: hulk_ast_nodes.VarDeclar
 optional_typing_var %= (idx + colon + idx + equal + expr,
                         lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[5], s[3]))
 
+# Todo check if this is correct
 # Destructive assigment
-destructive_assignment %= idx + dest_eq + expr, lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3])
+destructive_assignment %= (obj_method_or_attribute_call + dest_eq + expr,
+                           lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3]))
 
 # Functions can be declared using lambda notation or classic notation
 function_declaration %= (function + idx + opar + params_list_or_empty + cpar + arrow + simple_expr + semicolon,
@@ -244,8 +248,8 @@ params_list_or_empty %= G.Epsilon, lambda h, s: []
 params_list %= optional_typing_param, lambda h, s: [s[1]]
 params_list %= params_list + comma + optional_typing_param, lambda h, s: s[1] + [s[3]]
 
-optional_typing_param %= idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1])
-optional_typing_param %= idx + colon + idx, lambda h, s: hulk_ast_nodes.ParamNode(s[1], s[3])
+optional_typing_param %= idx, lambda h, s: (s[1], None)
+optional_typing_param %= idx + colon + idx, lambda h, s: (s[1], s[3])
 
 # Conditional expressions must have one if and one else and can 0 or more elifs
 conditional %= (if_ + opar + expr + cpar + expr + conditional_ending + else_ + expr,
@@ -296,9 +300,9 @@ method_declaration %= (idx + opar + params_list_or_empty + cpar + colon + idx + 
                        lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[7], s[6]))
 
 # Attribute declaration
-attribute %= idx + equal + eol_expr, lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[3])
+attribute %= idx + equal + eol_expr, lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[3])
 attribute %= (idx + colon + idx + equal + eol_expr,
-              lambda h, s: hulk_ast_nodes.AttributeStatementNode(s[1], s[5], s[3]))
+              lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[5], s[3]))
 
 # Type instantiation
 type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
@@ -314,10 +318,10 @@ protocol_body %= protocol_body + method_signature, lambda h, s: s[1] + [s[2]]
 protocol_body %= method_signature, lambda h, s: [s[1]]
 
 method_signature %= (idx + opar + typed_params_or_empty + cpar + colon + idx + semicolon,
-                     lambda h, s: hulk_ast_nodes.MethodSignatureNode(s[1], s[3], s[6]))
+                     lambda h, s: hulk_ast_nodes.MethodSignatureDeclarationNode(s[1], s[3], s[6]))
 
 typed_params_or_empty %= typed_params, lambda h, s: s[1]
 typed_params_or_empty %= G.Epsilon, lambda h, s: []
 
-typed_params %= typed_params + comma + idx + colon + idx, lambda h, s: s[1] + [hulk_ast_nodes.ParamNode(s[3], s[5])]
-typed_params %= idx + colon + idx, lambda h, s: [hulk_ast_nodes.ParamNode(s[1], s[3])]
+typed_params %= typed_params + comma + idx + colon + idx, lambda h, s: s[1] + [(s[3], s[5])]
+typed_params %= idx + colon + idx, lambda h, s: [(s[1], s[3])]

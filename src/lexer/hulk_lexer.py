@@ -85,7 +85,7 @@ class HulkLexer(Lexer):
         for token in tokens:
             if not token.is_valid:
                 errors.append(LexicographicError(LexicographicError.UNKNOWN_TOKEN, token.row, token.column))
-            if token.token_type is unterminated_string:
+            if token.token_type == unterminated_string.Name:
                 errors.append(LexicographicError(LexicographicError.UNTERMINATED_STRING, token.row, token.column))
         return errors
 
