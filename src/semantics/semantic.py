@@ -42,7 +42,7 @@ class Function:
 
     def __str__(self):
         params = ', '.join(f'{n}:{t.name}' for n, t in zip(self.param_names, self.param_types))
-        return f'[function] {self.name}({params}): {self.return_type.name};'
+        return f'function {self.name}({params}): {self.return_type.name};'
 
     def __eq__(self, other):
         return other.name == self.name and \
@@ -55,6 +55,20 @@ class Protocol:
         self.name = name
         self.methods = []
         self.parents = []
+
+    def __str__(self):
+        output = f'protocol {self.name}'
+        parents = '' if not self.parents else f' extends {", ".join(x.name for x in self.parents)}'
+        output += parents
+        output += ' {'
+        output += '\n\t' if self.methods else ''
+        output += '\n\t'.join(str(x) for x in self.methods)
+        output += '\n' if self.methods else ''
+        output += '}\n'
+        return output
+
+    def __repr__(self):
+        return str(self)
 
 
 class Type:
@@ -132,7 +146,7 @@ class Type:
 
     def __str__(self):
         output = f'type {self.name}'
-        parent = '' if self.parent is None else f' : {self.parent.name}'
+        parent = '' if self.parent is None else f' inherits {self.parent.name}'
         output += parent
         output += ' {'
         output += '\n\t' if self.attributes or self.methods else ''
