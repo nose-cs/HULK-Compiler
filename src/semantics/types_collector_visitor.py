@@ -5,11 +5,11 @@ from src.errors import SemanticError
 from src.semantics.semantic import Context, StringType, NumberType, BoolType, ObjectType
 
 
-class TypesCollectorVisitor(object):
+class TypesCollector(object):
 
-    def __init__(self) -> None:
+    def __init__(self, errors) -> None:
         self.context: Context = None
-        self.errors = []
+        self.errors = errors
 
     @visitor.on('node')
     def visit(self, node):

@@ -1,7 +1,7 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 from src.errors import SemanticError
-from src.semantics.semantic import Context, ErrorType
+from src.semantics.semantic import Context, ErrorType, AutoType
 
 
 class TypesBuilder(object):
@@ -25,12 +25,15 @@ class TypesBuilder(object):
     def visit(self, node: hulk_nodes.FunctionDeclarationNode):
         params_names, params_types = self.get_params_names_and_types(node)
 
-        try:
-            # Check if the return type is declared
-            return_type = self.context.get_type_or_protocol(node.return_type)
-        except SemanticError as e:
-            self.errors.append(e)
-            return_type = ErrorType()
+        if node.return_type is None:
+            return_type = AutoType()
+        else:
+            try:
+                # Check if the return type is declared
+                return_type = self.context.get_type_or_protocol(node.return_type)
+            except SemanticError as e:
+                self.errors.append(e)
+                return_type = ErrorType()
 
         try:
             return self.context.create_function(node.id, params_names, params_types, return_type)
@@ -50,9 +53,8 @@ class TypesBuilder(object):
             if node.params_ids[i] in params_names:
                 continue
             try:
-                # todo check this
                 if node.params_types[i] is None:
-                    param_type = None
+                    param_type = AutoType()
                     params_types.append(param_type)
                 else:
                     # Check if the param type is declared
@@ -83,7 +85,7 @@ class TypesBuilder(object):
                 while current is not None:
                     if current.parent.name == self.current_type.name:
                         self.errors.append(SemanticError('Circular dependency inheritance  :O'))
-                    parent = ErrorType()
+                        parent = ErrorType()
                     break
             except SemanticError as e:
                 # If the parent type is not declared, set it to ErrorType
@@ -104,12 +106,15 @@ class TypesBuilder(object):
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
         params_names, params_types = self.get_params_names_and_types(node)
 
-        try:
-            # Check if the return type is declared
-            return_type = self.context.get_type_or_protocol(node.return_type)
-        except SemanticError as e:
-            self.errors.append(e)
-            return_type = ErrorType()
+        if node.return_type is None:
+            return_type = AutoType()
+        else:
+            try:
+                # Check if the return type is declared
+                return_type = self.context.get_type_or_protocol(node.return_type)
+            except SemanticError as e:
+                self.errors.append(e)
+                return_type = ErrorType()
 
         try:
             return self.current_type.define_method(node.id, params_names, params_types, return_type)
@@ -126,8 +131,7 @@ class TypesBuilder(object):
                 self.errors.append(e)
                 attribute_type = ErrorType()
         else:
-            # todo check this
-            attribute_type = None
+            attribute_type = AutoType()
 
         try:
             return self.current_type.define_attribute(node.id, attribute_type)

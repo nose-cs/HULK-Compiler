@@ -76,12 +76,7 @@ class Type:
         try:
             return next(attr for attr in self.attributes if attr.name == name)
         except StopIteration:
-            if self.parent is None:
-                raise SemanticError(f'Attribute "{name}" is not defined in {self.name}.')
-            try:
-                return self.parent.get_attribute(name)
-            except SemanticError:
-                raise SemanticError(f'Attribute "{name}" is not defined in {self.name}.')
+            raise SemanticError(f'Attribute "{name}" is not defined in {self.name}.')
 
     def define_attribute(self, name: str, typex):
         try:
@@ -164,6 +159,11 @@ class ErrorType(Type):
 
     def __eq__(self, other):
         return isinstance(other, Type)
+
+
+class AutoType(Type):
+    def __init__(self):
+        Type.__init__(self, '<auto>')
 
 
 class StringType(Type):
@@ -256,7 +256,11 @@ class Context:
             return self.get_type(name)
 
     def __str__(self):
-        return '{\n\t' + '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) + '\n}'
+        return ('{\n\t' +
+                '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) +
+                '\n\t'.join(y for x in self.protocols.values() for y in str(x).split('\n')) +
+                '\n\t'.join(y for x in self.functions.values() for y in str(x).split('\n')) +
+                '\n}')
 
     def __repr__(self):
         return str(self)
