@@ -306,6 +306,12 @@ class VariableInfo:
         self.name = name
         self.type = vtype
 
+    def __str__(self):
+        return f'{self.name} : {self.type.name}'
+
+    def __repr__(self):
+        return str(self)
+
 
 class Scope:
     def __init__(self, parent=None):
@@ -339,3 +345,14 @@ class Scope:
 
     def is_local(self, var_name):
         return any(True for x in self.locals if x.name == var_name)
+
+    def __str__(self):
+        return self.tab_level(1, '', 1)
+
+    def tab_level(self, tabs, name, num) -> str:
+        res = ('\t' * tabs) + ('\n' + ('\t' * tabs)).join(str(local) for local in self.locals)
+        children = '\n'.join(child.tab_level(tabs + 1, num, num + 1) for child in self.children)
+        return "\t" * (tabs - 1) + f'{name}' + "\t" * tabs + f'\n{res}\n{children}'
+
+    def __repr__(self):
+        return str(self)

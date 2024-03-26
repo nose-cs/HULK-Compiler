@@ -4,6 +4,8 @@ from src.errors import SemanticError
 from src.semantics.semantic import Context, ErrorType, AutoType
 
 
+# todo By default, a type inherits its parent type arguments, which means that to construct a PolarPoint
+#  you have to pass the x and y that Point is expecting:
 class TypesBuilder(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:

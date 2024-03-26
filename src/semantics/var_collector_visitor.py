@@ -23,7 +23,7 @@ class VariablesCollectorVisitor(object):
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode, scope: Scope):
         for declaration in node.declarations:
-            self.visit(declaration, scope.create_child())
+            self.visit(declaration, scope)
 
         self.visit(node.expression, scope)
 
@@ -34,7 +34,7 @@ class VariablesCollectorVisitor(object):
         # Create a new scope that includes the parameters
         new_scope = scope.create_child()
         for i in range(len(self.current_type.params_names)):
-            scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i])
+            new_scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i])
 
         for expr in node.parent_args:
             self.visit(expr, new_scope)
@@ -44,6 +44,7 @@ class VariablesCollectorVisitor(object):
 
         # Create a new scope that includes the self symbol
         methods_scope = scope.create_child()
+        methods_scope.define_variable('self', self.current_type)
         for method in node.methods:
             self.visit(method, methods_scope)
 
