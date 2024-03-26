@@ -36,7 +36,10 @@ class Method:
 class Type:
     def __init__(self, name: str):
         self.name = name
+        self.args_names = []
+        self.args_types = []
         self.attributes = []
+        self.attributes_types = []
         self.methods = []
         self.parent = None
 
@@ -134,26 +137,41 @@ class ErrorType(Type):
         return isinstance(other, Type)
 
 
-class VoidType(Type):
+class StringType(Type):
     def __init__(self):
-        Type.__init__(self, '<void>')
-
-    def conforms_to(self, other):
-        raise Exception('Invalid type: void type.')
-
-    def bypass(self):
-        return True
+        super().__init__('String')
 
     def __eq__(self, other):
-        return isinstance(other, VoidType)
+        return isinstance(other, StringType) or other.name == self.name
 
 
-class IntType(Type):
+class BoolType(Type):
     def __init__(self):
-        Type.__init__(self, 'int')
+        super().__init__('Bool')
 
     def __eq__(self, other):
-        return other.name == self.name or isinstance(other, IntType)
+        return isinstance(other, BoolType) or other.name == self.name
+
+
+class NumberType(Type):
+    def __init__(self) -> None:
+        super().__init__('Number')
+
+    def __eq__(self, other):
+        return isinstance(other, NumberType) or other.name == self.name
+
+
+class ObjectType(Type):
+    def __init__(self) -> None:
+        super().__init__('Object')
+
+    def __eq__(self, other):
+        return isinstance(other, Type)
+
+
+class SelfType(Type):
+    def __init__(self) -> None:
+        super().__init__('Self')
 
 
 class Context:
