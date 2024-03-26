@@ -33,6 +33,30 @@ class Method:
             other.param_types == self.param_types
 
 
+class Function:
+    def __init__(self, name, param_names, param_types, return_type):
+        self.name = name
+        self.param_names = param_names
+        self.param_types = param_types
+        self.return_type = return_type
+
+    def __str__(self):
+        params = ', '.join(f'{n}:{t.name}' for n, t in zip(self.param_names, self.param_types))
+        return f'[function] {self.name}({params}): {self.return_type.name};'
+
+    def __eq__(self, other):
+        return other.name == self.name and \
+            other.return_type == self.return_type and \
+            other.param_types == self.param_types
+
+
+class Protocol:
+    def __init__(self, name: str):
+        self.name = name
+        self.methods = []
+        self.parents = []
+
+
 class Type:
     def __init__(self, name: str):
         self.name = name
@@ -83,7 +107,8 @@ class Type:
     def define_method(self, name: str, param_names: list, param_types: list, return_type):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-
+        if len(param_names) != len(set(param_names)):
+            raise SemanticError(f'Method "{name}" of {self.name} has repeated parameter names.')
         method = Method(name, param_names, param_types, return_type)
         self.methods.append(method)
         return method
@@ -177,10 +202,14 @@ class SelfType(Type):
 class Context:
     def __init__(self):
         self.types = {}
+        self.protocols = {}
+        self.functions = {}
 
     def create_type(self, name: str):
         if name in self.types:
             raise SemanticError(f'Type with the same name ({name}) already in context.')
+        if name in self.protocols:
+            raise SemanticError(f'Protocol with the same name ({name}) already in context.')
         typex = self.types[name] = Type(name)
         return typex
 
@@ -189,6 +218,32 @@ class Context:
             return self.types[name]
         except KeyError:
             raise SemanticError(f'Type "{name}" is not defined.')
+
+    def create_protocol(self, name: str):
+        if name in self.protocols:
+            raise SemanticError(f'Protocol with the same name ({name}) already in context.')
+        if name in self.types:
+            raise SemanticError(f'Type with the same name ({name}) already in context.')
+        protocol = self.protocols[name] = Protocol(name)
+        return protocol
+
+    def get_protocol(self, name: str):
+        try:
+            return self.protocols[name]
+        except KeyError:
+            raise SemanticError(f'Protocol "{name}" is not defined.')
+
+    def create_function(self, name: str, params_names: list, params_types: list, return_type):
+        if name in self.functions:
+            raise SemanticError(f'Function with the same name ({name}) already in context.')
+        function = self.functions[name] = Function(name, params_names, params_types, return_type)
+        return function
+
+    def get_function(self, name: str):
+        try:
+            return self.functions[name]
+        except KeyError:
+            raise SemanticError(f'Function "{name}" is not defined.')
 
     def __str__(self):
         return '{\n\t' + '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) + '\n}'
