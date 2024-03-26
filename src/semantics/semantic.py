@@ -42,7 +42,7 @@ class Function:
 
     def __str__(self):
         params = ', '.join(f'{n}:{t.name}' for n, t in zip(self.param_names, self.param_types))
-        return f'function {self.name}({params}): {self.return_type.name};'
+        return '\n' + f'function {self.name}({params}): {self.return_type.name};' + '\n'
 
     def __eq__(self, other):
         return other.name == self.name and \
