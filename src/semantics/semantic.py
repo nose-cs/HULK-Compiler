@@ -60,8 +60,8 @@ class Protocol:
 class Type:
     def __init__(self, name: str):
         self.name = name
-        self.args_names = []
-        self.args_types = []
+        self.params_names = []
+        self.params_types = []
         self.attributes = []
         self.attributes_types = []
         self.methods = []
@@ -112,6 +112,10 @@ class Type:
         method = Method(name, param_names, param_types, return_type)
         self.methods.append(method)
         return method
+
+    def set_params(self, params_names, params_types):
+        self.params_names = params_names
+        self.params_types = params_types
 
     def all_attributes(self, clean=True):
         plain = OrderedDict() if self.parent is None else self.parent.all_attributes(False)
@@ -244,6 +248,12 @@ class Context:
             return self.functions[name]
         except KeyError:
             raise SemanticError(f'Function "{name}" is not defined.')
+
+    def get_type_or_protocol(self, name: str):
+        try:
+            return self.get_protocol(name)
+        except SemanticError:
+            return self.get_type(name)
 
     def __str__(self):
         return '{\n\t' + '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) + '\n}'
