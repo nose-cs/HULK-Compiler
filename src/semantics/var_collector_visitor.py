@@ -1,7 +1,7 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 from src.errors import SemanticError
-from src.semantics.semantic import Scope, Context, ErrorType, AutoType, SelfType
+from src.semantics.semantic import Scope, Context, ErrorType, AutoType, Method, Function
 
 
 # todo: i am calling scope.define_variable() in a bad way
@@ -17,7 +17,7 @@ class VariablesCollectorVisitor(object):
         self.errors: list = errors
 
     @visitor.on('node')
-    def visit(self, node, scope, types, functions):
+    def visit(self, node, scope):
         pass
 
     @visitor.when(hulk_nodes.ProgramNode)
@@ -25,19 +25,16 @@ class VariablesCollectorVisitor(object):
         for declaration in node.declarations:
             self.visit(declaration, scope.create_child())
 
-        self.visit(node.expression)
+        self.visit(node.expression, scope)
 
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode, scope: Scope):
         self.current_type = self.context.get_type(node.idx)
+
         # Create a new scope that includes the parameters
         new_scope = scope.create_child()
-
-        for i in range(self.current_type.params_names):
-            try:
-                scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i])
-            except SemanticError as e:
-                self.errors.append(e)
+        for i in range(len(self.current_type.params_names)):
+            scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i])
 
         for expr in node.parent_args:
             self.visit(expr, new_scope)
@@ -45,13 +42,10 @@ class VariablesCollectorVisitor(object):
         for attr in node.attributes:
             self.visit(attr, new_scope)
 
-        # add self.current_types.attributes here ??
-
-        # todo check this, is self.attr a variable?
-        new_scope.define_variable('self', SelfType())
-
+        # Create a new scope that includes the self symbol
+        methods_scope = scope.create_child()
         for method in node.methods:
-            self.visit(method, new_scope)
+            self.visit(method, methods_scope)
 
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
     def visit(self, node: hulk_nodes.AttributeDeclarationNode, scope: Scope):
@@ -59,31 +53,23 @@ class VariablesCollectorVisitor(object):
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode, scope: Scope):
-        method = self.current_type.get_method(node.id)
+        method: Method = self.current_type.get_method(node.id)
 
         new_scope = scope.create_child()
 
-        for i in range(len(method.params_names)):
-            try:
-                new_scope.define_variable(method.params_names[i], method.params_types[i])
-            except SemanticError as e:
-                # todo can put a more specific error message
-                self.errors.append(e)
+        for i in range(len(method.param_names)):
+            new_scope.define_variable(method.param_names[i], method.param_types[i])
 
         self.visit(node.expr, new_scope)
 
     @visitor.when(hulk_nodes.FunctionDeclarationNode)
     def visit(self, node: hulk_nodes.FunctionDeclarationNode, scope: Scope):
-        function = self.context.get_function(node.id)
+        function: Function = self.context.get_function(node.id)
 
         new_scope = scope.create_child()
 
-        for i in range(len(function.params_names)):
-            try:
-                new_scope.define_variable(function.params_names[i], function.params_types[i])
-            except SemanticError as e:
-                # todo can put a more specific error message
-                self.errors.append(e)
+        for i in range(len(function.param_names)):
+            new_scope.define_variable(function.param_names[i], function.param_types[i])
 
         self.visit(node.expr, new_scope)
 
@@ -107,19 +93,19 @@ class VariablesCollectorVisitor(object):
         else:
             var_type = AutoType()
 
-        try:
-            scope.define_variable(node.id, var_type)
-        except SemanticError as e:
-            self.errors.append(e)
+        scope.define_variable(node.id, var_type)
 
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode, scope: Scope):
-        new_scope = scope.create_child()
-
+        # Create a new scope for every new variable declaration to follow scoping rules
+        # https://matcom.in/hulk/guide/variables/#scoping-rules
+        old_scope = scope
         for declaration in node.var_declarations:
+            new_scope = old_scope.create_child()
             self.visit(declaration, new_scope)
+            old_scope = new_scope
 
-        self.visit(node.body, new_scope)
+        self.visit(node.body, old_scope)
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, scope: Scope):
