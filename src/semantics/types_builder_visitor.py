@@ -100,8 +100,11 @@ class TypesBuilder(object):
         else:
             self.current_type.set_parent(self.context.get_type('Object'))
 
-        for member in node.body:
-            self.visit(member)
+        for attribute in node.attributes:
+            self.visit(attribute)
+
+        for method in node.methods:
+            self.visit(method)
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
@@ -124,11 +127,12 @@ class TypesBuilder(object):
 
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
     def visit(self, node: hulk_nodes.AttributeDeclarationNode):
+        # Set the attribute type to the declared type, ErrorType if it doesn't exist in the context or AutoType if we
+        # are going to infer it
         if node.attribute_type is not None:
             try:
                 attribute_type = self.context.get_type(node.attribute_type)
             except SemanticError as e:
-                # If the attribute type is not declared, set it to ErrorType
                 self.errors.append(e)
                 attribute_type = ErrorType()
         else:

@@ -52,7 +52,8 @@ class TypeDeclarationNode(DeclarationNode):
         else:
             params_ids, params_types = [], []
         self.idx = idx
-        self.body = body
+        self.methods = [method for method in body if isinstance(method, MethodDeclarationNode)]
+        self.attributes = [attribute for attribute in body if isinstance(attribute, AttributeDeclarationNode)]
         self.params_ids = params_ids
         self.params_types = params_types
         self.parent = parent
