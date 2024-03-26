@@ -54,12 +54,35 @@ class Protocol:
     def __init__(self, name: str):
         self.name = name
         self.methods = []
-        self.parents = []
+        self.parent = None
+
+    def set_parent(self, parent):
+        if self.parent is not None:
+            raise SemanticError(f'Parent type is already set for {self.name}.')
+        self.parent = parent
+
+    def get_method(self, name: str):
+        try:
+            return next(method for method in self.methods if method.name == name)
+        except StopIteration:
+            if self.parent is None:
+                raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
+            try:
+                return self.parent.get_method(name)
+            except SemanticError:
+                raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
+
+    def define_method(self, name: str, param_names: list, param_types: list, return_type):
+        if name in (method.name for method in self.methods):
+            raise SemanticError(f'Method "{name}" already defined in {self.name}')
+        method = Method(name, param_names, param_types, return_type)
+        self.methods.append(method)
+        return method
 
     def __str__(self):
         output = f'protocol {self.name}'
-        parents = '' if not self.parents else f' extends {", ".join(x.name for x in self.parents)}'
-        output += parents
+        parent = '' if self.parent is None else f' extends {self.parent.name}'
+        output += parent
         output += ' {'
         output += '\n\t' if self.methods else ''
         output += '\n\t'.join(str(x) for x in self.methods)
@@ -116,8 +139,6 @@ class Type:
     def define_method(self, name: str, param_names: list, param_types: list, return_type):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        if len(param_names) != len(set(param_names)):
-            raise SemanticError(f'Method "{name}" of {self.name} has repeated parameter names.')
         method = Method(name, param_names, param_types, return_type)
         self.methods.append(method)
         return method

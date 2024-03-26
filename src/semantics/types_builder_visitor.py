@@ -69,7 +69,7 @@ class TypesBuilder(object):
 
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
-        self.current_type = self.context.types[node.idx]
+        self.current_type = self.context.get_type(node.idx)
 
         params_names, params_types = self.get_params_names_and_types(node)
         self.current_type.set_params(params_names, params_types)
@@ -83,10 +83,11 @@ class TypesBuilder(object):
                 parent = self.context.get_type(node.parent)
                 current = parent
                 while current is not None:
-                    if current.parent.name == self.current_type.name:
+                    if current.name == self.current_type.name:
                         self.errors.append(SemanticError('Circular dependency inheritance  :O'))
                         parent = ErrorType()
-                    break
+                        break
+                    current = current.parent
             except SemanticError as e:
                 # If the parent type is not declared, set it to ErrorType
                 self.errors.append(e)
@@ -140,9 +141,27 @@ class TypesBuilder(object):
 
     @visitor.when(hulk_nodes.ProtocolDeclarationNode)
     def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
-        self.current_type = self.context.protocols[node.idx]
-
-        # todo Check parents ??
+        self.current_type = self.context.get_protocol(node.idx)
+        if node.parent is not None:
+            try:
+                # Look for a circular dependency
+                parent = self.context.get_protocol(node.parent)
+                current = parent
+                while current is not None:
+                    if current.name == self.current_type.name:
+                        self.errors.append(SemanticError('Circular dependency inheritance  :O'))
+                        parent = ErrorType()
+                        break
+                    current = current.parent
+            except SemanticError as e:
+                # If the parent type is not declared, set it to ErrorType
+                self.errors.append(e)
+                parent = ErrorType()
+            try:
+                self.current_type.set_parent(parent)
+            except SemanticError as e:
+                # If the parent type is already set
+                self.errors.append(e)
 
         for method in node.methods_signature:
             self.visit(method)
