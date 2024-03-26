@@ -272,6 +272,12 @@ class Context:
         except KeyError:
             raise SemanticError(f'Protocol "{name}" is not defined.')
 
+    def get_type_or_protocol(self, name: str):
+        try:
+            return self.get_protocol(name)
+        except SemanticError:
+            return self.get_type(name)
+
     def create_function(self, name: str, params_names: list, params_types: list, return_type):
         if name in self.functions:
             raise SemanticError(f'Function with the same name ({name}) already in context.')
@@ -283,12 +289,6 @@ class Context:
             return self.functions[name]
         except KeyError:
             raise SemanticError(f'Function "{name}" is not defined.')
-
-    def get_type_or_protocol(self, name: str):
-        try:
-            return self.get_protocol(name)
-        except SemanticError:
-            return self.get_type(name)
 
     def __str__(self):
         return ('{\n\t' +
