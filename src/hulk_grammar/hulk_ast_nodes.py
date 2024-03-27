@@ -15,11 +15,11 @@ class ProgramNode(Node):
         self.expression = expression
 
 
-class ExpressionNode(Node):
+class ExpressionNode(Node, ABC):
     pass
 
 
-class DeclarationNode(Node):
+class DeclarationNode(Node, ABC):
     pass
 
 
@@ -111,18 +111,18 @@ class DestructiveAssignmentNode(ExpressionNode):
         self.expr = expr
 
 
-class AtomicNode(ExpressionNode):
+class AtomicNode(ExpressionNode, ABC):
     def __init__(self, lex):
         self.lex = lex
 
 
-class BinaryExpressionNode(ExpressionNode):
+class BinaryExpressionNode(ExpressionNode, ABC):
     def __init__(self, left, right):
         self.left = left
         self.right = right
 
 
-class UnaryExpressionNode(ExpressionNode):
+class UnaryExpressionNode(ExpressionNode, ABC):
     def __init__(self, operand):
         self.operand = operand
 
@@ -222,23 +222,23 @@ class VariableNode(AtomicNode):
     pass
 
 
-class StrBinaryExpressionNode(BinaryExpressionNode):
+class StrBinaryExpressionNode(BinaryExpressionNode, ABC):
     pass
 
 
-class BoolBinaryExpressionNode(BinaryExpressionNode):
+class BoolBinaryExpressionNode(BinaryExpressionNode, ABC):
     pass
 
 
-class InequalityExpressionNode(BinaryExpressionNode):
+class InequalityExpressionNode(BinaryExpressionNode, ABC):
     pass
 
 
-class ArithmeticExpressionNode(BinaryExpressionNode):
+class ArithmeticExpressionNode(BinaryExpressionNode, ABC):
     pass
 
 
-class EqualityExpressionNode(BinaryExpressionNode):
+class EqualityExpressionNode(BinaryExpressionNode, ABC):
     pass
 
 
