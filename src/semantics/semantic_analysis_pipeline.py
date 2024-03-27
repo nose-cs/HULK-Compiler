@@ -1,8 +1,8 @@
 from src.semantics.formatter_visitor import FormatterVisitor
-from src.semantics.semantic import Scope
 from src.semantics.type_builder_visitor import TypeBuilder
 from src.semantics.type_checker_visitor import TypeChecker
 from src.semantics.type_collector_visitor import TypeCollector
+from src.semantics.utils import Scope
 
 
 def semantic_analysis_pipeline(ast, debug=False):
@@ -43,6 +43,6 @@ def semantic_analysis_pipeline(ast, debug=False):
         for error in errors:
             print('\t', error)
         print(']')
-        print('Expression return type:')
-        print(exp_type)
+        print('Scope:')
+        print(scope)
     return ast, errors, context, scope

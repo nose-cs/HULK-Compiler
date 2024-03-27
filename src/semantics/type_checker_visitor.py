@@ -1,8 +1,9 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
-import src.semantics.semantic as types
+import src.semantics.types as types
 import src.visitor as visitor
 from src.errors import SemanticError
-from src.semantics.semantic import Scope, Context, Method, Function
+from src.semantics.types import Method
+from src.semantics.utils import Scope, Context, Function
 
 
 class TypeChecker(object):
@@ -11,6 +12,7 @@ class TypeChecker(object):
             errors = []
         self.context: Context = context
         self.current_type = None
+        self.current_method = None
         self.errors: list = errors
 
     @visitor.on('node')
@@ -73,15 +75,16 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
     def visit(self, node: hulk_nodes.ExpressionBlockNode, scope: Scope):
+        expr_type = types.ErrorType()
         for expr in node.expressions:
-            self.visit(expr, scope)
+            expr_type = self.visit(expr, scope)
+        return expr_type
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope: Scope):
         # I don't want to include the var before to avoid let a = a in print(a);
-        self.visit(node.expr, scope)
+        inf_type = self.visit(node.expr, scope)
 
-        # Check if the variable type is a defined type, an error type or auto_type (we need to infer it)
         if node.var_type is not None:
             try:
                 var_type = self.context.get_type_or_protocol(node.var_type)
@@ -89,25 +92,33 @@ class TypeChecker(object):
                 self.errors.append(e)
                 var_type = types.ErrorType()
         else:
-            var_type = types.AutoType()
+            var_type = inf_type
+
+        # todo look for covariance and contravariance (including protocols)
+        if not inf_type.conforms_to(var_type):
+            self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
+            var_type = types.ErrorType()
 
         scope.define_variable(node.id, var_type)
 
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode, scope: Scope):
-        # Create a new scope for every new variable declaration to follow scoping rules
-        # https://matcom.in/hulk/guide/variables/#scoping-rules
+        # Create a new scope for every new variable declaration to allow redefining symbols
         old_scope = scope
         for declaration in node.var_declarations:
             new_scope = old_scope.create_child()
             self.visit(declaration, new_scope)
             old_scope = new_scope
 
-        self.visit(node.body, old_scope)
+        return self.visit(node.body, old_scope)
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, scope: Scope):
-        self.visit(node.expr, scope)
+        new_type = self.visit(node.expr, scope)
+        old_type = self.visit(node.target, scope)
+        if not new_type.conforms_to(old_type):
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
+            return types.ErrorType()
 
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode, scope: Scope):
@@ -116,20 +127,25 @@ class TypeChecker(object):
 
             if not cond_type == types.BoolType():
                 self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
+                # todo ??
                 return types.ErrorType()
 
-        # todo lca
+        lca_type = types.ErrorType()
         for expression in node.expressions:
+            # todo lca
             self.visit(expression, scope.create_child())
 
         self.visit(node.default_expr, scope.create_child())
+
+        return lca_type
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, scope: Scope):
         cond_type = self.visit(node.condition, scope.create_child())
 
-        if not cond_type == types.BoolType():
+        if cond_type != types.BoolType():
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
+            # todo ??
             return types.ErrorType()
 
         return self.visit(node.expression, scope.create_child())
@@ -160,8 +176,7 @@ class TypeChecker(object):
             cast_type = types.ErrorType()
 
         if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
-            self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
-            return types.ErrorType()
+            return types.BoolType()
 
         return types.BoolType()
 
@@ -257,3 +272,37 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.ConstantStringNode)
     def visit(self, node: hulk_nodes.ConstantStringNode, scope: Scope):
         return types.StringType()
+
+    @visitor.when(hulk_nodes.VariableNode)
+    def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
+        if not scope.is_defined(node.lex):
+            self.errors.append(SemanticError(SemanticError.VARIABLE_NOT_DEFINED))
+            return types.ErrorType()
+
+        var = scope.find_variable(node.lex)
+        return var.type
+
+    @visitor.when(hulk_nodes.TypeInstantiationNode)
+    def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
+        try:
+            ttype = self.context.get_type(node.idx)
+        except SemanticError as e:
+            self.errors.append(e)
+            return types.ErrorType()
+
+        args_types = []
+        for arg in node.args:
+            args_types.append(self.visit(arg, scope))
+
+        # Check if the number of arguments is correct
+        if len(args_types) != len(ttype.params_types):
+            self.errors.append(SemanticError(
+                f"Expected {len(ttype.params_types)} arguments, but {len(args_types)} were given."))
+            return types.ErrorType()
+
+        for i in range(len(args_types)):
+            if not args_types[i].conforms_to(ttype.params_types[i]):
+                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
+                return types.ErrorType()
+
+        return ttype

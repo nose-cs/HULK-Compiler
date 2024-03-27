@@ -1,7 +1,8 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 from src.errors import SemanticError
-from src.semantics.semantic import Scope, Context, ErrorType, AutoType, Method, Function
+from src.semantics.types import ErrorType, AutoType, Method
+from src.semantics.utils import Scope, Context, Function
 
 
 class VarCollector(object):
@@ -95,7 +96,7 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode, scope: Scope):
         # Create a new scope for every new variable declaration to follow scoping rules
-        # https://matcom.in/hulk/guide/variables/#scoping-rules
+        # https://matcom.in/hulk/guide/variables/#redefining-symbols
         old_scope = scope
         for declaration in node.var_declarations:
             new_scope = old_scope.create_child()

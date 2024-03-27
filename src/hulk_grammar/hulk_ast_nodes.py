@@ -106,8 +106,8 @@ class ExpressionBlockNode(ExpressionNode):
 
 
 class DestructiveAssignmentNode(ExpressionNode):
-    def __init__(self, idx, expr):
-        self.id = idx
+    def __init__(self, target, expr):
+        self.target = target
         self.expr = expr
 
 
@@ -148,7 +148,7 @@ class ForNode(ExpressionNode):
         self.expression = expression
 
 
-class VarDeclarationNode(ExpressionNode):
+class VarDeclarationNode(DeclarationNode):
     def __init__(self, idx, expr, var_type=None):
         self.id = idx
         self.expr = expr

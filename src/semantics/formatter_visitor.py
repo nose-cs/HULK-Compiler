@@ -111,7 +111,7 @@ class FormatterVisitor(object):
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ DestructiveAssignmentNode: {node.id} := <expr>'
+        ans = '\t' * tabs + f'\\__ DestructiveAssignmentNode: {node.target} := <expr>'
         expr = self.visit(node.expr, tabs + 1)
         return f'{ans}\n{expr}'
 
