@@ -230,7 +230,15 @@ class BoolBinaryExpressionNode(BinaryExpressionNode):
     pass
 
 
-class NumBinaryExpressionNode(BinaryExpressionNode):
+class InequalityExpressionNode(BinaryExpressionNode):
+    pass
+
+
+class ArithmeticExpressionNode(BinaryExpressionNode):
+    pass
+
+
+class EqualityExpressionNode(BinaryExpressionNode):
     pass
 
 
@@ -239,14 +247,6 @@ class NotNode(UnaryExpressionNode):
 
 
 class NegNode(UnaryExpressionNode):
-    pass
-
-
-class EqualNode(BinaryExpressionNode):
-    pass
-
-
-class NotEqualNode(BinaryExpressionNode):
     pass
 
 
@@ -263,41 +263,49 @@ class AndNode(BoolBinaryExpressionNode):
     pass
 
 
-class LessThanNode(NumBinaryExpressionNode):
+class LessThanNode(InequalityExpressionNode):
     pass
 
 
-class GreaterThanNode(NumBinaryExpressionNode):
+class GreaterThanNode(InequalityExpressionNode):
     pass
 
 
-class LessOrEqualNode(NumBinaryExpressionNode):
+class LessOrEqualNode(InequalityExpressionNode):
     pass
 
 
-class GreaterOrEqualNode(NumBinaryExpressionNode):
+class GreaterOrEqualNode(InequalityExpressionNode):
     pass
 
 
-class PlusNode(NumBinaryExpressionNode):
+class PlusNode(ArithmeticExpressionNode):
     pass
 
 
-class MinusNode(NumBinaryExpressionNode):
+class MinusNode(ArithmeticExpressionNode):
     pass
 
 
-class StarNode(NumBinaryExpressionNode):
+class StarNode(ArithmeticExpressionNode):
     pass
 
 
-class DivNode(NumBinaryExpressionNode):
+class DivNode(ArithmeticExpressionNode):
     pass
 
 
-class ModNode(NumBinaryExpressionNode):
+class ModNode(ArithmeticExpressionNode):
     pass
 
 
-class PowNode(NumBinaryExpressionNode):
+class PowNode(ArithmeticExpressionNode):
+    pass
+
+
+class EqualNode(EqualityExpressionNode):
+    pass
+
+
+class NotEqualNode(EqualityExpressionNode):
     pass
