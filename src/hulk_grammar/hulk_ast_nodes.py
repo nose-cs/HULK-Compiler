@@ -31,7 +31,10 @@ class DeclarationNode(Node):
 class FunctionDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, expr, return_type=None):
         super().__init__()
-        params_ids, params_types = zip(*params)
+        if len(params) > 0:
+            params_ids, params_types = zip(*params)
+        else:
+            params_ids, params_types = [], []
         self.id = idx
         self.params_ids = params_ids
         self.params_types = params_types
@@ -44,9 +47,13 @@ class TypeDeclarationNode(DeclarationNode):
         super().__init__()
         if parent_args is None:
             parent_args = []
-        params_ids, params_types = zip(*params)
+        if len(params) > 0:
+            params_ids, params_types = zip(*params)
+        else:
+            params_ids, params_types = [], []
         self.idx = idx
-        self.body = body
+        self.methods = [method for method in body if isinstance(method, MethodDeclarationNode)]
+        self.attributes = [attribute for attribute in body if isinstance(attribute, AttributeDeclarationNode)]
         self.params_ids = params_ids
         self.params_types = params_types
         self.parent = parent
@@ -64,7 +71,10 @@ class ProtocolDeclarationNode(DeclarationNode):
 class MethodDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, expr, return_type=None):
         super().__init__()
-        params_ids, params_types = zip(*params)
+        if len(params) > 0:
+            params_ids, params_types = zip(*params)
+        else:
+            params_ids, params_types = [], []
         self.id = idx
         self.params_ids = params_ids
         self.params_types = params_types
@@ -75,7 +85,10 @@ class MethodDeclarationNode(DeclarationNode):
 class MethodSignatureDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, return_type):
         super().__init__()
-        params_ids, params_types = zip(*params)
+        if len(params) > 0:
+            params_ids, params_types = zip(*params)
+        else:
+            params_ids, params_types = [], []
         self.id = idx
         self.params_ids = params_ids
         self.params_types = params_types

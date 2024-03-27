@@ -30,8 +30,9 @@ class FormatVisitor(object):
              range(len(node.params_ids))])
         parent = f": {node.parent}({', '.join(node.parent_args)})" if node.parent else ""
         ans = '\t' * tabs + f'\\__ TypeDeclarationNode: type {node.idx}({params}){parent} -> <body>'
-        body = '\n'.join([self.visit(decl, tabs + 1) for decl in node.body])
-        return f'{ans}\n{body}'
+        attributes = '\n'.join([self.visit(attr, tabs + 1) for attr in node.attributes])
+        methods = '\n'.join([self.visit(method, tabs + 1) for method in node.methods])
+        return f'{ans}\n{attributes}\n{methods}'
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode, tabs=0):
