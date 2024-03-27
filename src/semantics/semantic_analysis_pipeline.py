@@ -2,7 +2,6 @@ from src.semantics.formatter_visitor import FormatterVisitor
 from src.semantics.type_builder_visitor import TypeBuilder
 from src.semantics.type_checker_visitor import TypeChecker
 from src.semantics.type_collector_visitor import TypeCollector
-from src.semantics.utils import Scope
 
 
 def semantic_analysis_pipeline(ast, debug=False):
@@ -36,8 +35,7 @@ def semantic_analysis_pipeline(ast, debug=False):
         print(context)
         print('=============== CHECKING TYPES ================')
     checker = TypeChecker(context, errors)
-    scope = Scope()
-    exp_type = checker.visit(ast, scope)
+    scope = checker.visit(ast)
     if debug:
         print('Errors: [')
         for error in errors:

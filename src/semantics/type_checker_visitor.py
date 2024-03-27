@@ -20,11 +20,15 @@ class TypeChecker(object):
         pass
 
     @visitor.when(hulk_nodes.ProgramNode)
-    def visit(self, node: hulk_nodes.ProgramNode, scope: Scope):
+    def visit(self, node: hulk_nodes.ProgramNode, scope: Scope = None):
+        scope = Scope()
+
         for declaration in node.declarations:
             self.visit(declaration, scope.create_child())
 
-        return self.visit(node.expression, scope)
+        self.visit(node.expression, scope)
+
+        return scope
 
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode, scope: Scope):
