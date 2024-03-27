@@ -130,8 +130,8 @@ concat_operation %= or_operation, lambda h, s: s[1]
 or_operation %= or_operation + or_op + and_operation, lambda h, s: hulk_ast_nodes.OrNode(s[1], s[3])
 or_operation %= and_operation, lambda h, s: s[1]
 
-and_operation %= and_operation + and_op + not_operation, lambda h, s: hulk_ast_nodes.AndNode(s[1], s[3])
-and_operation %= not_operation, lambda h, s: s[1]
+and_operation %= and_operation + and_op + is_operation, lambda h, s: hulk_ast_nodes.AndNode(s[1], s[3])
+and_operation %= is_operation, lambda h, s: s[1]
 
 is_operation %= not_operation + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(s[1], s[3])
 is_operation %= not_operation, lambda h, s: s[1]

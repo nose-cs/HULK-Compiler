@@ -105,6 +105,8 @@ class TypeChecker(object):
 
         scope.define_variable(node.id, var_type)
 
+        return var_type
+
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode, scope: Scope):
         # Create a new scope for every new variable declaration to allow redefining symbols
@@ -123,6 +125,7 @@ class TypeChecker(object):
         if not new_type.conforms_to(old_type):
             self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
             return types.ErrorType()
+        return old_type
 
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode, scope: Scope):
@@ -187,7 +190,6 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         expression_type = self.visit(node.expression, scope)
-
         try:
             cast_type = self.context.get_type(node.ttype)
         except SemanticError as e:
@@ -197,7 +199,6 @@ class TypeChecker(object):
         if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
             return types.ErrorType()
-
         return cast_type
 
     @visitor.when(hulk_nodes.ArithmeticExpressionNode)
@@ -294,9 +295,7 @@ class TypeChecker(object):
             self.errors.append(e)
             return types.ErrorType()
 
-        args_types = []
-        for arg in node.args:
-            args_types.append(self.visit(arg, scope))
+        args_types = [self.visit(arg, scope) for arg in node.args]
 
         # Check if the number of arguments is correct
         if len(args_types) != len(ttype.params_types):

@@ -212,7 +212,7 @@ class ObjectType(Type):
         super().__init__('Object')
 
     def __eq__(self, other):
-        return isinstance(other, Type)
+        return isinstance(other, ObjectType) or other.name == self.name
 
 
 class SelfType(Type):

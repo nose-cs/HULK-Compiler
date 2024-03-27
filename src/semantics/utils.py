@@ -99,7 +99,7 @@ class VariableInfo:
 class Scope:
     def __init__(self, parent=None):
         self.locals = []
-        self.parent = parent
+        self.parent: Scope = parent
         self.children = []
         self.index = 0 if parent is None else len(parent)
 
@@ -121,7 +121,7 @@ class Scope:
         try:
             return next(x for x in local_vars if x.name == var_name)
         except StopIteration:
-            return self.parent.find_variable(var_name, self.index) if self.parent is None else None
+            return self.parent.find_variable(var_name, self.index) if self.parent is not None else None
 
     def is_defined(self, var_name: str) -> bool:
         return self.find_variable(var_name) is not None

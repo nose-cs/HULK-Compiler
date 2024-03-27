@@ -19,7 +19,7 @@ def run_code(inp: str, debug=False):
     return ast, errors, context, scope
 
 
-class TestHulkTypeInference(unittest.TestCase):
+class TestHulkSimpleInference(unittest.TestCase):
     def test_string_literal(self):
         inp = 'let x = "Hello, World!" in x;'
         ast, errors, context, scope = run_code(inp)
@@ -46,6 +46,21 @@ class TestHulkTypeInference(unittest.TestCase):
         
         let x = new A() in x;
         '''
+        ast, errors, context, scope = run_code(inp)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_arithmetic_operation(self):
+        inp = 'let x = 42 + 42, y = 4 * 7 in x + y;'
+        ast, errors, context, scope = run_code(inp)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_boolean_operation(self):
+        inp = 'let a = false, b = 4 > 5, c = 8 == 8 in a | b | c;'
+        ast, errors, context, scope = run_code(inp)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_string_operation(self):
+        inp = 'let x="Hello", y = "World" in x @@ y;'
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
