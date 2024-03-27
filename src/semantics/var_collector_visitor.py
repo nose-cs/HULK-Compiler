@@ -8,7 +8,7 @@ from src.semantics.semantic import Scope, Context, ErrorType, AutoType, Method, 
 #  I dont need to check protocols or atomic nodes looking for variable declarations
 
 
-class VariablesCollectorVisitor(object):
+class VarCollector(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
             errors = []

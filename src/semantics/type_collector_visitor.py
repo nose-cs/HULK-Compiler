@@ -5,7 +5,7 @@ from src.errors import SemanticError
 from src.semantics.semantic import Context, StringType, NumberType, BoolType, ObjectType
 
 
-class TypesCollector(object):
+class TypeCollector(object):
 
     def __init__(self, errors) -> None:
         self.context = None
