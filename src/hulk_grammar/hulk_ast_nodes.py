@@ -16,21 +16,17 @@ class ProgramNode(Node):
 
 
 class ExpressionNode(Node):
-    def __init__(self):
-        pass
+    pass
 
 
 class DeclarationNode(Node):
-    def __init__(self):
-        pass
+    pass
 
 
 # ---------------------------------------------------Depth 2---------------------------------------------------------- #
 
-# Statements
 class FunctionDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, expr, return_type=None):
-        super().__init__()
         if len(params) > 0:
             params_ids, params_types = zip(*params)
         else:
@@ -44,7 +40,6 @@ class FunctionDeclarationNode(DeclarationNode):
 
 class TypeDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, body, parent, parent_args=None):
-        super().__init__()
         if parent_args is None:
             parent_args = []
         if len(params) > 0:
@@ -62,7 +57,6 @@ class TypeDeclarationNode(DeclarationNode):
 
 class ProtocolDeclarationNode(DeclarationNode):
     def __init__(self, idx, methods_signature, parent):
-        super().__init__()
         self.idx = idx
         self.methods_signature = methods_signature
         self.parent = parent
@@ -70,7 +64,6 @@ class ProtocolDeclarationNode(DeclarationNode):
 
 class MethodDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, expr, return_type=None):
-        super().__init__()
         if len(params) > 0:
             params_ids, params_types = zip(*params)
         else:
@@ -84,7 +77,6 @@ class MethodDeclarationNode(DeclarationNode):
 
 class MethodSignatureDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, return_type):
-        super().__init__()
         if len(params) > 0:
             params_ids, params_types = zip(*params)
         else:
@@ -97,55 +89,46 @@ class MethodSignatureDeclarationNode(DeclarationNode):
 
 class AttributeDeclarationNode(DeclarationNode):
     def __init__(self, idx, expr, attribute_type=None):
-        super().__init__()
         self.id = idx
         self.expr = expr
         self.attribute_type = attribute_type
 
 
-# Expressions
 class TypeInstantiationNode(ExpressionNode):
     def __init__(self, idx, args):
-        super().__init__()
         self.idx = idx
         self.args = args
 
 
 class ExpressionBlockNode(ExpressionNode):
     def __init__(self, expressions):
-        super().__init__()
         self.expressions = expressions
 
 
 class DestructiveAssignmentNode(ExpressionNode):
     def __init__(self, idx, expr):
-        super().__init__()
         self.id = idx
         self.expr = expr
 
 
 class AtomicNode(ExpressionNode):
     def __init__(self, lex):
-        super().__init__()
         self.lex = lex
 
 
 class BinaryExpressionNode(ExpressionNode):
     def __init__(self, left, right):
-        super().__init__()
         self.left = left
         self.right = right
 
 
 class UnaryExpressionNode(ExpressionNode):
     def __init__(self, operand):
-        super().__init__()
         self.operand = operand
 
 
 class ConditionalNode(ExpressionNode):
     def __init__(self, cond_expr: List[Tuple], default_expr):
-        super().__init__()
         conditions, expressions = zip(*cond_expr)
         self.conditions = conditions
         self.expressions = expressions
@@ -154,14 +137,12 @@ class ConditionalNode(ExpressionNode):
 
 class WhileNode(ExpressionNode):
     def __init__(self, condition, expression):
-        super().__init__()
         self.condition = condition
         self.expression = expression
 
 
 class ForNode(ExpressionNode):
     def __init__(self, var, iterable, expression):
-        super().__init__()
         self.var = var
         self.iterable = iterable
         self.expression = expression
@@ -169,7 +150,6 @@ class ForNode(ExpressionNode):
 
 class VarDeclarationNode(ExpressionNode):
     def __init__(self, idx, expr, var_type=None):
-        super().__init__()
         self.id = idx
         self.expr = expr
         self.var_type = var_type
@@ -177,20 +157,17 @@ class VarDeclarationNode(ExpressionNode):
 
 class LetInNode(ExpressionNode):
     def __init__(self, var_declarations, body):
-        super().__init__()
         self.var_declarations = var_declarations
         self.body = body
 
 
 class VectorInitializationNode(ExpressionNode):
     def __init__(self, elements):
-        super().__init__()
         self.elements = elements
 
 
 class VectorComprehensionNode(ExpressionNode):
     def __init__(self, selector, var, iterable):
-        super().__init__()
         self.selector = selector
         self.var = var
         self.iterable = iterable
@@ -198,35 +175,30 @@ class VectorComprehensionNode(ExpressionNode):
 
 class IsNode(ExpressionNode):
     def __init__(self, expression, ttype):
-        super().__init__()
         self.expression = expression
         self.ttype = ttype
 
 
 class AsNode(ExpressionNode):
     def __init__(self, expression, ttype):
-        super().__init__()
         self.expression = expression
         self.ttype = ttype
 
 
 class FunctionCallNode(ExpressionNode):
     def __init__(self, idx, args):
-        super().__init__()
         self.idx = idx
         self.args = args
 
 
 class AttributeCallNode(ExpressionNode):
     def __init__(self, obj, attribute):
-        super().__init__()
         self.obj = obj
         self.attribute = attribute
 
 
 class MethodCallNode(ExpressionNode):
     def __init__(self, obj, method, args):
-        super().__init__()
         self.obj = obj
         self.method = method
         self.args = args
@@ -234,7 +206,6 @@ class MethodCallNode(ExpressionNode):
 
 # ---------------------------------------------------Depth 3---------------------------------------------------------- #
 
-# Atomic
 class ConstantNumNode(AtomicNode):
     pass
 
@@ -251,17 +222,15 @@ class VariableNode(AtomicNode):
     pass
 
 
-# String
-class ConcatNode(BinaryExpressionNode):
+class StrBinaryExpressionNode(BinaryExpressionNode):
     pass
 
 
-# Boolean
-class OrNode(BinaryExpressionNode):
+class BoolBinaryExpressionNode(BinaryExpressionNode):
     pass
 
 
-class AndNode(BinaryExpressionNode):
+class NumBinaryExpressionNode(BinaryExpressionNode):
     pass
 
 
@@ -269,7 +238,9 @@ class NotNode(UnaryExpressionNode):
     pass
 
 
-# All types
+class NegNode(UnaryExpressionNode):
+    pass
+
 
 class EqualNode(BinaryExpressionNode):
     pass
@@ -279,47 +250,54 @@ class NotEqualNode(BinaryExpressionNode):
     pass
 
 
-# Arithmetic
-
-class LessThanNode(BinaryExpressionNode):
+# ---------------------------------------------------Depth 4---------------------------------------------------------- #
+class ConcatNode(StrBinaryExpressionNode):
     pass
 
 
-class GreaterThanNode(BinaryExpressionNode):
+class OrNode(BoolBinaryExpressionNode):
     pass
 
 
-class LessOrEqualNode(BinaryExpressionNode):
+class AndNode(BoolBinaryExpressionNode):
     pass
 
 
-class GreaterOrEqualNode(BinaryExpressionNode):
+class LessThanNode(NumBinaryExpressionNode):
     pass
 
 
-class PlusNode(BinaryExpressionNode):
+class GreaterThanNode(NumBinaryExpressionNode):
     pass
 
 
-class MinusNode(BinaryExpressionNode):
+class LessOrEqualNode(NumBinaryExpressionNode):
     pass
 
 
-class StarNode(BinaryExpressionNode):
+class GreaterOrEqualNode(NumBinaryExpressionNode):
     pass
 
 
-class DivNode(BinaryExpressionNode):
+class PlusNode(NumBinaryExpressionNode):
     pass
 
 
-class ModNode(BinaryExpressionNode):
+class MinusNode(NumBinaryExpressionNode):
     pass
 
 
-class PowNode(BinaryExpressionNode):
+class StarNode(NumBinaryExpressionNode):
     pass
 
 
-class NegNode(UnaryExpressionNode):
+class DivNode(NumBinaryExpressionNode):
+    pass
+
+
+class ModNode(NumBinaryExpressionNode):
+    pass
+
+
+class PowNode(NumBinaryExpressionNode):
     pass

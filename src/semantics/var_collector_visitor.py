@@ -4,10 +4,6 @@ from src.errors import SemanticError
 from src.semantics.semantic import Scope, Context, ErrorType, AutoType, Method, Function
 
 
-# todo: i am calling scope.define_variable() in a bad way
-#  I dont need to check protocols or atomic nodes looking for variable declarations
-
-
 class VarCollector(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -23,7 +19,7 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode, scope: Scope):
         for declaration in node.declarations:
-            self.visit(declaration, scope)
+            self.visit(declaration, scope.create_child())
 
         self.visit(node.expression, scope)
 
