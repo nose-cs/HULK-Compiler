@@ -31,6 +31,18 @@ class Method:
             other.return_type == self.return_type and \
             other.param_types == self.param_types
 
+    def can_substitute_with(self, other):
+        if self.name != other.name:
+            return False
+        if not other.return_type.conforms_to(self.return_type):
+            return False
+        if len(self.param_types) != len(other.param_types):
+            return False
+        for meth_type, impl_type in zip(self.param_types, other.param_types):
+            if not meth_type.conforms_to(impl_type):
+                return False
+        return True
+
 
 class Protocol:
     def __init__(self, name: str):
@@ -60,6 +72,21 @@ class Protocol:
         method = Method(name, param_names, param_types, return_type)
         self.methods.append(method)
         return method
+
+    def _not_ancestor_conforms_to(self, other):
+        if not isinstance(other, Protocol):
+            return False
+        try:
+            return all(method.can_substitute_with(self.get_method(method.name)) for method in other.methods)
+        # If a method is not defined in the current type (or its ancestors), then it is not conforming
+        except SemanticError:
+            return False
+
+    def conforms_to(self, other):
+        if isinstance(other, Type):
+            return False
+        return self == other or self.parent is not None and self.parent.conforms_to(
+            other) or self._not_ancestor_conforms_to(other)
 
     def __str__(self):
         output = f'protocol {self.name}'
@@ -142,7 +169,14 @@ class Type:
         return plain.values() if clean else plain
 
     def conforms_to(self, other):
-        return other.bypass() or self == other or self.parent is not None and self.parent.conforms_to(other)
+        if isinstance(other, Type):
+            return other.bypass() or self == other or self.parent is not None and self.parent.conforms_to(other)
+        elif isinstance(other, Protocol):
+            try:
+                return all(method.can_substitute_with(self.get_method(method.name)) for method in other.methods)
+            # If a method is not defined in the current type (or its ancestors), then it is not conforming
+            except SemanticError:
+                return False
 
     def bypass(self):
         return False

@@ -16,7 +16,8 @@ class TypeChecker(object):
         self.current_function = None
         self.errors: list = errors
 
-    def assign_auto_type(self, node, scope: Scope, other_type: (types.Type | types.Protocol)):
+    @staticmethod
+    def assign_auto_type(node, scope: Scope, other_type: (types.Type | types.Protocol)):
         # If I am assigning a type for a variable (or parameter), I will assign the most specialized type
         if isinstance(node, hulk_nodes.VariableNode):
             var_info = scope.find_variable(node.lex)
@@ -107,6 +108,24 @@ class TypeChecker(object):
             if method.param_types[i] == types.AutoType():
                 local_var = new_scope.find_variable(method.param_names[i])
                 method.param_types[i] = local_var.type
+
+        if self.current_type.parent is None:
+            return return_type
+
+        # Check if override is correct
+        try:
+            parent_method = self.current_type.parent.get_method(node.id)
+        except SemanticError:
+            parent_method = None
+        if parent_method is not None and parent_method.return_type != return_type:
+            if len(parent_method.param_types) != len(method.param_types):
+                self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
+            elif not parent_method.return_type != return_type:
+                self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
+            else:
+                for parent_param_type, param_type in zip(parent_method.param_types, method.param_types):
+                    if not param_type != parent_param_type:
+                        self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
 
         return return_type
 
