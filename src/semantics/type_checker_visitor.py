@@ -13,7 +13,20 @@ class TypeChecker(object):
         self.context: Context = context
         self.current_type = None
         self.current_method = None
+        self.current_function = None
         self.errors: list = errors
+
+    def assign_auto_type(self, node, scope, other_type):
+        if isinstance(node, hulk_nodes.VariableNode):
+            var_info = scope.find_variable(node.lex)
+            var_info.type = other_type
+        elif isinstance(node, hulk_nodes.FunctionCallNode):
+            func = self.context.get_function(node.idx)
+            func.return_type = other_type
+        elif isinstance(node, hulk_nodes.MethodCallNode):
+            typex = self.visit(node.obj, scope)
+            meth = typex.get_method(node.method)
+            meth.return_type = other_type
 
     @visitor.on('node')
     def visit(self, node, scope):
@@ -36,14 +49,24 @@ class TypeChecker(object):
 
         # Create a new scope that includes the parameters
         new_scope = scope.create_child()
-        for i in range(len(self.current_type.params_names)):
-            new_scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i])
+
+        params = zip(self.current_type.params_names, self.current_type.params_types)
+        for param_name, param_type in params:
+            new_scope.define_variable(param_name, param_type)
 
         for expr in node.parent_args:
             self.visit(expr, new_scope)
 
         for attr in node.attributes:
-            self.visit(attr, new_scope)
+            attr_type = self.visit(attr, new_scope)
+            attr = self.current_type.get_attribute(attr.id)
+            attr.type = attr_type
+
+        # Check if we could infer some types
+        for i in range(len(self.current_type.params_types)):
+            if self.current_type.params_types[i] == types.AutoType():
+                local_var = new_scope.find_variable(self.current_type.params_names[i])
+                self.current_type.params_types[i] = local_var.type
 
         # Create a new scope that includes the self symbol
         methods_scope = scope.create_child()
@@ -53,7 +76,18 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
     def visit(self, node: hulk_nodes.AttributeDeclarationNode, scope: Scope):
-        self.visit(node.expr, scope)
+        inf_type = self.visit(node.expr, scope)
+
+        if node.attribute_type is not None:
+            attr_type = self.context.get_type_or_protocol(node.attribute_type)
+        else:
+            attr_type = inf_type
+
+        if not inf_type.conforms_to(attr_type):
+            self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
+            attr_type = types.ErrorType()
+
+        return attr_type
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode, scope: Scope):
@@ -204,7 +238,15 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.ArithmeticExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
         left_type = self.visit(node.left, scope)
+        if left_type == types.AutoType():
+            self.assign_auto_type(node.left, scope, types.NumberType())
+            left_type = types.NumberType()
+
         right_type = self.visit(node.right, scope)
+        if right_type == types.AutoType():
+            self.assign_auto_type(node.right, scope, types.NumberType())
+            right_type = types.NumberType()
+
         if not left_type == types.NumberType() or not right_type == types.NumberType():
             self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
             return types.ErrorType()
@@ -213,16 +255,33 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.InequalityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
         left_type = self.visit(node.left, scope)
+        if left_type == types.AutoType():
+            self.assign_auto_type(node.left, scope, types.NumberType())
+            left_type = types.NumberType()
+
         right_type = self.visit(node.right, scope)
+        if right_type == types.AutoType():
+            self.assign_auto_type(node.right, scope, types.NumberType())
+            right_type = types.NumberType()
+
         if not left_type == types.NumberType() or not right_type == types.NumberType():
             self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
             return types.ErrorType()
+
         return types.BoolType()
 
     @visitor.when(hulk_nodes.BoolBinaryExpressionNode)
     def visit(self, node: hulk_nodes.BoolBinaryExpressionNode, scope: Scope):
         left_type = self.visit(node.left, scope)
+        if left_type == types.AutoType():
+            self.assign_auto_type(node.left, scope, types.BoolType())
+            left_type = types.BoolType()
+
         right_type = self.visit(node.right, scope)
+        if right_type == types.AutoType():
+            self.assign_auto_type(node.right, scope, types.BoolType())
+            right_type = types.BoolType()
+
         if not left_type == types.BoolType() or not right_type == types.BoolType():
             self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
             return types.ErrorType()
@@ -233,6 +292,18 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.StrBinaryExpressionNode, scope: Scope):
         left_type = self.visit(node.left, scope)
         right_type = self.visit(node.right, scope)
+
+        # todo
+        # left_type = self.visit(node.left, scope)
+        # if left_type == types.AutoType():
+        #     self.assign_auto_type(node.left, scope, types.StringType())
+        #     left_type = types.StringType()
+        #
+        # right_type = self.visit(node.right, scope)
+        # if right_type == types.AutoType():
+        #     self.assign_auto_type(node.right, scope, types.StringType())
+        #     right_type = types.StringType()
+
         if not left_type == types.StringType() or not right_type == types.StringType():
             self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
             return types.ErrorType()
@@ -250,6 +321,10 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.NegNode, scope: Scope):
         operand_type = self.visit(node.operand, scope)
 
+        if operand_type == types.AutoType():
+            self.assign_auto_type(node.operand, scope, types.NumberType())
+            operand_type = types.NumberType()
+
         if operand_type == types.NumberType():
             self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
             return types.NumberType()
@@ -259,6 +334,10 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.NotNode)
     def visit(self, node: hulk_nodes.NotNode, scope: Scope):
         operand_type = self.visit(node.operand, scope)
+
+        if operand_type == types.AutoType():
+            self.assign_auto_type(node.operand, scope, types.BoolType())
+            operand_type = types.BoolType()
 
         if operand_type == types.BoolType():
             self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))

@@ -8,7 +8,7 @@ def semantic_analysis_pipeline(ast, debug=False):
     if debug:
         formatter = FormatterVisitor()
         formatted_ast = formatter.visit(ast)
-        print('============== AST ===============')
+        print('===================== AST =====================')
         print(formatted_ast)
     if debug:
         print('============== COLLECTING TYPES ===============')
@@ -41,6 +41,8 @@ def semantic_analysis_pipeline(ast, debug=False):
         for error in errors:
             print('\t', error)
         print(']')
+        print('Context:')
+        print(context)
         print('Scope:')
         print(scope)
     return ast, errors, context, scope

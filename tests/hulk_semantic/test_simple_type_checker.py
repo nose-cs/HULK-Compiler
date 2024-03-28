@@ -61,7 +61,7 @@ class TestHulkSimpleInference(unittest.TestCase):
 
     def test_string_operation(self):
         inp = 'let x="Hello", y = "World" in x @@ y;'
-        ast, errors, context, scope = run_code(inp, True)
+        ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
     def test_invalid_arithmetic(self):
@@ -76,5 +76,5 @@ class TestHulkSimpleInference(unittest.TestCase):
 
     def test_invalid_assigment_operation(self):
         inp = 'let x = 4 in x := false;'
-        ast, errors, context, scope = run_code(inp, True)
+        ast, errors, context, scope = run_code(inp)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")

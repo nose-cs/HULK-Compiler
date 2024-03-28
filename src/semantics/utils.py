@@ -27,7 +27,7 @@ class Context:
         self.protocols = {}
         self.functions = {}
 
-    def create_type(self, name: str):
+    def create_type(self, name: str) -> Type:
         if name in self.types:
             raise SemanticError(f'Type with the same name ({name}) already in context.')
         if name in self.protocols:
@@ -35,13 +35,13 @@ class Context:
         typex = self.types[name] = Type(name)
         return typex
 
-    def get_type(self, name: str):
+    def get_type(self, name: str) -> Type:
         try:
             return self.types[name]
         except KeyError:
             raise SemanticError(f'Type "{name}" is not defined.')
 
-    def create_protocol(self, name: str):
+    def create_protocol(self, name: str) -> Protocol:
         if name in self.protocols:
             raise SemanticError(f'Protocol with the same name ({name}) already in context.')
         if name in self.types:
@@ -49,25 +49,25 @@ class Context:
         protocol = self.protocols[name] = Protocol(name)
         return protocol
 
-    def get_protocol(self, name: str):
+    def get_protocol(self, name: str) -> Protocol:
         try:
             return self.protocols[name]
         except KeyError:
             raise SemanticError(f'Protocol "{name}" is not defined.')
 
-    def get_type_or_protocol(self, name: str):
+    def get_type_or_protocol(self, name: str) -> (Type, Protocol):
         try:
             return self.get_protocol(name)
         except SemanticError:
             return self.get_type(name)
 
-    def create_function(self, name: str, params_names: list, params_types: list, return_type):
+    def create_function(self, name: str, params_names: list, params_types: list, return_type)-> Function:
         if name in self.functions:
             raise SemanticError(f'Function with the same name ({name}) already in context.')
         function = self.functions[name] = Function(name, params_names, params_types, return_type)
         return function
 
-    def get_function(self, name: str):
+    def get_function(self, name: str) -> Function:
         try:
             return self.functions[name]
         except KeyError:

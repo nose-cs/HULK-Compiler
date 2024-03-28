@@ -91,13 +91,13 @@ class Type:
             raise SemanticError(f'Parent type is already set for {self.name}.')
         self.parent = parent
 
-    def get_attribute(self, name: str):
+    def get_attribute(self, name: str) -> Attribute:
         try:
             return next(attr for attr in self.attributes if attr.name == name)
         except StopIteration:
             raise SemanticError(f'Attribute "{name}" is not defined in {self.name}.')
 
-    def define_attribute(self, name: str, typex):
+    def define_attribute(self, name: str, typex) -> Attribute:
         try:
             self.get_attribute(name)
         except SemanticError:
@@ -107,7 +107,7 @@ class Type:
         else:
             raise SemanticError(f'Attribute "{name}" is already defined in {self.name}.')
 
-    def get_method(self, name: str):
+    def get_method(self, name: str) -> Method:
         try:
             return next(method for method in self.methods if method.name == name)
         except StopIteration:
@@ -118,14 +118,14 @@ class Type:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type):
+    def define_method(self, name: str, param_names: list, param_types: list, return_type) -> Method:
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
         method = Method(name, param_names, param_types, return_type)
         self.methods.append(method)
         return method
 
-    def set_params(self, params_names, params_types):
+    def set_params(self, params_names, params_types) -> None:
         self.params_names = params_names
         self.params_types = params_types
 
@@ -181,6 +181,9 @@ class ErrorType(Type):
 class AutoType(Type):
     def __init__(self):
         Type.__init__(self, '<auto>')
+
+    def __eq__(self, other):
+        return isinstance(other, AutoType) or other.name == self.name
 
 
 class StringType(Type):

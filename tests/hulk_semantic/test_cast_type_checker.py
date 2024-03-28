@@ -40,5 +40,5 @@ class TestHulkCastTypeInference(unittest.TestCase):
         type A {}
         let a = "Hola" as A in a;
         '''
-        ast, errors, context, scope = run_code(inp, True)
+        ast, errors, context, scope = run_code(inp)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
