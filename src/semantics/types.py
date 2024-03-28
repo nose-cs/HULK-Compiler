@@ -221,3 +221,32 @@ class ObjectType(Type):
 class SelfType(Type):
     def __init__(self) -> None:
         super().__init__('Self')
+
+
+def get_most_specialized_type(types):
+    if not types or any(isinstance(t, ErrorType) for t in types):
+        return ErrorType()
+    most_specialized = types[0]
+    for typex in types[1:]:
+        if typex.conforms_to(most_specialized):
+            most_specialized = typex
+        elif not most_specialized.conforms_to(typex):
+            return ErrorType()
+    return most_specialized
+
+
+def get_lowest_common_ancestor(types):
+    if not types or any(isinstance(t, ErrorType) for t in types):
+        return ErrorType()
+    lca = types[0]
+    for typex in types[1:]:
+        lca = _get_lca(lca, typex)
+    return lca
+
+
+def _get_lca(type1, type2):
+    if type1.conforms_to(type2):
+        return type2
+    if type2.conforms_to(type1):
+        return type1
+    return _get_lca(type1.parent, type2.parent)

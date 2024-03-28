@@ -45,4 +45,6 @@ def semantic_analysis_pipeline(ast, debug=False):
         print(context)
         print('Scope:')
         print(scope)
+        if scope.there_is_auto_type_in_scope():
+            print('There is an auto type in the scope')
     return ast, errors, context, scope

@@ -1,7 +1,7 @@
 import itertools as itt
 
 from src.errors import SemanticError
-from src.semantics.types import Type, Protocol
+from src.semantics.types import Type, Protocol, AutoType
 
 
 class Function:
@@ -61,7 +61,7 @@ class Context:
         except SemanticError:
             return self.get_type(name)
 
-    def create_function(self, name: str, params_names: list, params_types: list, return_type)-> Function:
+    def create_function(self, name: str, params_names: list, params_types: list, return_type) -> Function:
         if name in self.functions:
             raise SemanticError(f'Function with the same name ({name}) already in context.')
         function = self.functions[name] = Function(name, params_names, params_types, return_type)
@@ -139,3 +139,7 @@ class Scope:
 
     def __repr__(self):
         return str(self)
+
+    def there_is_auto_type_in_scope(self) -> bool:
+        return any(True for x in self.locals if x.type == AutoType()) or \
+            any(True for child in self.children if child.there_is_auto_type_in_scope())
