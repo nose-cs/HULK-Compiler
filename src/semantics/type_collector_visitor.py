@@ -2,7 +2,8 @@ import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 from src.errors import SemanticError
 
-from src.semantics.semantic import Context, StringType, NumberType, BoolType, ObjectType
+from src.semantics.types import StringType, NumberType, BoolType, ObjectType
+from src.semantics.utils import Context
 
 
 class TypeCollector(object):
@@ -47,7 +48,6 @@ class TypeCollector(object):
             self.context.create_type(node.idx)
         except SemanticError as e:
             self.errors.append(e)
-            # todo what happens here when I discover an error in the type declaration
 
     @visitor.when(hulk_nodes.ProtocolDeclarationNode)
     def visit(self, node: hulk_nodes.ProtocolDeclarationNode):

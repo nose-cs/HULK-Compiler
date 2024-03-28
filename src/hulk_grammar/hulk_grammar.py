@@ -27,8 +27,8 @@ func_call, obj_method_or_attribute_call, type_instantiation = G.NonTerminals(
 declarations, type_declaration, protocol_declaration, function_declaration = G.NonTerminals(
     '<declarations> <type_declaration> <protocol_declaration> <function_declaration>')
 
-typed_params, typed_params_or_empty, protocol_body, optional_params_for_type, type_body = G.NonTerminals(
-    '<typed_params> <typed_params_or_empty> <protocol_body> <optional_params_for_type> <type_body>')
+typed_params, typed_params_or_empty, protocol_body, optional_params_for_type, type_body, type_body_or_empty = G.NonTerminals(
+    '<typed_params> <typed_params_or_empty> <protocol_body> <optional_params_for_type> <type_body> <type_body_or_empty>')
 
 method_declaration, method_signature, attribute, optional_inheritance, params_list, params_list_or_empty = (
     G.NonTerminals('<method_declaration> <method_signature> <attribute> <inheritance> <params> <params_or_empty>'))
@@ -130,8 +130,8 @@ concat_operation %= or_operation, lambda h, s: s[1]
 or_operation %= or_operation + or_op + and_operation, lambda h, s: hulk_ast_nodes.OrNode(s[1], s[3])
 or_operation %= and_operation, lambda h, s: s[1]
 
-and_operation %= and_operation + and_op + not_operation, lambda h, s: hulk_ast_nodes.AndNode(s[1], s[3])
-and_operation %= not_operation, lambda h, s: s[1]
+and_operation %= and_operation + and_op + is_operation, lambda h, s: hulk_ast_nodes.AndNode(s[1], s[3])
+and_operation %= is_operation, lambda h, s: s[1]
 
 is_operation %= not_operation + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(s[1], s[3])
 is_operation %= not_operation, lambda h, s: s[1]
@@ -266,10 +266,10 @@ for_loop %= (for_ + opar + idx + in_ + expr + cpar + expr,
 
 # Type declaration
 type_declaration %= (
-    word_type + idx + optional_params_for_type + optional_inheritance + obracket + type_body + cbracket,
+    word_type + idx + optional_params_for_type + optional_inheritance + obracket + type_body_or_empty + cbracket,
     lambda h, s: hulk_ast_nodes.TypeDeclarationNode(s[2], s[3], s[6], s[4]))
 type_declaration %= (
-    word_type + idx + optional_params_for_type + inherits + idx + opar + expr_list_comma_sep_or_empty + cpar + obracket + type_body + cbracket,
+    word_type + idx + optional_params_for_type + inherits + idx + opar + expr_list_comma_sep_or_empty + cpar + obracket + type_body_or_empty + cbracket,
     lambda h, s: hulk_ast_nodes.TypeDeclarationNode(s[2], s[3], s[10], s[5], s[7]))
 
 optional_inheritance %= inherits + idx, lambda h, s: s[2]
@@ -277,6 +277,9 @@ optional_inheritance %= G.Epsilon, lambda h, s: None
 
 optional_params_for_type %= opar + params_list_or_empty + cpar, lambda h, s: s[2]
 optional_params_for_type %= G.Epsilon, lambda h, s: []
+
+type_body_or_empty %= G.Epsilon, lambda h, s: []
+type_body_or_empty %= type_body, lambda h, s: s[1]
 
 type_body %= type_body + attribute, lambda h, s: s[1] + [s[2]]
 type_body %= type_body + method_declaration, lambda h, s: s[1] + [s[2]]

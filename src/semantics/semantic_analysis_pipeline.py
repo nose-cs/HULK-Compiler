@@ -1,10 +1,15 @@
-from src.semantics.semantic import Scope
+from src.semantics.formatter_visitor import FormatterVisitor
 from src.semantics.type_builder_visitor import TypeBuilder
+from src.semantics.type_checker_visitor import TypeChecker
 from src.semantics.type_collector_visitor import TypeCollector
-from src.semantics.var_collector_visitor import VarCollector
 
 
 def semantic_analysis_pipeline(ast, debug=False):
+    if debug:
+        formatter = FormatterVisitor()
+        formatted_ast = formatter.visit(ast)
+        print('===================== AST =====================')
+        print(formatted_ast)
     if debug:
         print('============== COLLECTING TYPES ===============')
     errors = []
@@ -28,15 +33,16 @@ def semantic_analysis_pipeline(ast, debug=False):
         print(']')
         print('Context:')
         print(context)
-        print('=============== VAR COLLECTOR ================')
-    checker = VarCollector(context, errors)
-    scope = Scope()
-    checker.visit(ast, scope)
+        print('=============== CHECKING TYPES ================')
+    checker = TypeChecker(context, errors)
+    scope = checker.visit(ast)
     if debug:
         print('Errors: [')
         for error in errors:
             print('\t', error)
         print(']')
-        print('Scopes:')
+        print('Context:')
+        print(context)
+        print('Scope:')
         print(scope)
     return ast, errors, context, scope
