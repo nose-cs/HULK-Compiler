@@ -62,7 +62,7 @@ class TypeChecker(object):
             attr = self.current_type.get_attribute(attr.id)
             attr.type = attr_type
 
-        # Check if we could infer some types
+        # Check if we could infer some params types
         for i in range(len(self.current_type.params_types)):
             if self.current_type.params_types[i] == types.AutoType():
                 local_var = new_scope.find_variable(self.current_type.params_names[i])
@@ -98,7 +98,15 @@ class TypeChecker(object):
         for i in range(len(method.param_names)):
             new_scope.define_variable(method.param_names[i], method.param_types[i])
 
-        self.visit(node.expr, new_scope)
+        return_type = self.visit(node.expr, new_scope)
+
+        # Check if we could infer some params types
+        for i in range(len(method.param_types)):
+            if method.param_types[i] == types.AutoType():
+                local_var = new_scope.find_variable(method.param_names[i])
+                method.param_types[i] = local_var.type
+
+        return return_type
 
     @visitor.when(hulk_nodes.FunctionDeclarationNode)
     def visit(self, node: hulk_nodes.FunctionDeclarationNode, scope: Scope):
