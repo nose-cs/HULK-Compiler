@@ -19,6 +19,8 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode, scope: Scope):
+        node.scope = scope
+
         for declaration in node.declarations:
             self.visit(declaration, scope.create_child())
 
@@ -26,6 +28,8 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode, scope: Scope):
+        node.scope = scope
+
         self.current_type = self.context.get_type(node.idx)
 
         # Create a new scope that includes the parameters
@@ -47,10 +51,14 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
     def visit(self, node: hulk_nodes.AttributeDeclarationNode, scope: Scope):
+        node.scope = scope
+
         self.visit(node.expr, scope)
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode, scope: Scope):
+        node.scope = scope
+
         method: Method = self.current_type.get_method(node.id)
 
         new_scope = scope.create_child()
@@ -62,6 +70,8 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.FunctionDeclarationNode)
     def visit(self, node: hulk_nodes.FunctionDeclarationNode, scope: Scope):
+        node.scope = scope
+
         function: Function = self.context.get_function(node.id)
 
         new_scope = scope.create_child()
@@ -73,11 +83,15 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
     def visit(self, node: hulk_nodes.ExpressionBlockNode, scope: Scope):
+        node.scope = scope
+
         for expr in node.expressions:
             self.visit(expr, scope)
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope: Scope):
+        node.scope = scope
+
         # I don't want to include the var before to avoid let a = a in print(a);
         self.visit(node.expr, scope)
 
@@ -95,6 +109,7 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode, scope: Scope):
+        node.scope = scope
         # Create a new scope for every new variable declaration to follow scoping rules
         # https://matcom.in/hulk/guide/variables/#redefining-symbols
         old_scope = scope
@@ -107,19 +122,23 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, scope: Scope):
+        node.scope = scope
         self.visit(node.expr, scope)
 
     @visitor.when(hulk_nodes.BinaryExpressionNode)
     def visit(self, node: hulk_nodes.BinaryExpressionNode, scope: Scope):
+        node.scope = scope
         self.visit(node.left, scope)
         self.visit(node.right, scope)
 
     @visitor.when(hulk_nodes.UnaryExpressionNode)
     def visit(self, node: hulk_nodes.UnaryExpressionNode, scope: Scope):
+        node.scope = scope
         self.visit(node.operand, scope)
 
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode, scope: Scope):
+        node.scope = scope
         for condition in node.conditions:
             self.visit(condition, scope.create_child())
 
@@ -130,30 +149,30 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, scope: Scope):
+        node.scope = scope
         self.visit(node.condition, scope.create_child())
         self.visit(node.expression, scope.create_child())
 
-    @visitor.when(hulk_nodes.ForNode)
-    def visit(self, node: hulk_nodes.ForNode, scope: Scope):
-        new_scope = scope.create_child()
-        # todo: fill this
-
-    # todo vector initialization
+    # todo vector initialization and for
 
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
+        node.scope = scope
         self.visit(node.expression, scope)
 
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
+        node.scope = scope
         self.visit(node.expression, scope)
 
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode, scope: Scope):
+        node.scope = scope
         for arg in node.args:
             self.visit(arg, scope)
 
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, scope: Scope):
+        node.scope = scope
         for arg in node.args:
             self.visit(arg, scope)

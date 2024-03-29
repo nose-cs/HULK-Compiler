@@ -2,7 +2,6 @@ import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 from src.errors import SemanticError
 
-from src.semantics.types import StringType, NumberType, BoolType, ObjectType
 from src.semantics.utils import Context
 
 
@@ -22,21 +21,25 @@ class TypeCollector(object):
         self.context = Context()
 
         # Add the basic types
-        self.context.types['String'] = StringType()
-        self.context.types['Number'] = NumberType()
-        self.context.types['Bool'] = BoolType()
-        self.context.types['Object'] = ObjectType()
+        object_type = self.context.create_type('Object')
+
+        string_type = self.context.create_type('String')
+        string_type.set_parent(object_type)
+
+        number_type = self.context.create_type('Number')
+        number_type.set_parent(object_type)
+
+        bool_type = self.context.create_type('Bool')
+        bool_type.set_parent(object_type)
 
         # Add the built-in functions
-        self.context.create_function('print', ['value'], [self.context.types['Object']], self.context.types['Object'])
-        self.context.create_function('sqrt', ['value'], [self.context.types['Number']], self.context.types['Number'])
-        self.context.create_function('sin', ['angle'], [self.context.types['Number']], self.context.types['Number'])
-        self.context.create_function('cos', ['angle'], [self.context.types['Number']], self.context.types['Number'])
-        self.context.create_function('exp', ['value'], [self.context.types['Number']], self.context.types['Number'])
-        self.context.create_function('log', ['base', 'value'],
-                                     [self.context.types['Number'], self.context.types['Number']],
-                                     self.context.types['Number'])
-        self.context.create_function('rand', [], [], self.context.types['Number'])
+        self.context.create_function('print', ['value'], [object_type], string_type)
+        self.context.create_function('sqrt', ['value'], [number_type], number_type)
+        self.context.create_function('sin', ['angle'], [number_type], number_type)
+        self.context.create_function('cos', ['angle'], [number_type], number_type)
+        self.context.create_function('exp', ['value'], [number_type], number_type)
+        self.context.create_function('log', ['base', 'value'], [number_type, number_type], number_type)
+        self.context.create_function('rand', [], [], number_type)
 
         for decl in node.declarations:
             self.visit(decl)

@@ -27,7 +27,7 @@ class TestHulkTypeInference(unittest.TestCase):
             }
             let x = 9 in new A(x);
         '''
-        ast, errors, context, scope = run_code(inp, True)
+        ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
     def test_function_params_inference(self):
@@ -37,5 +37,16 @@ class TestHulkTypeInference(unittest.TestCase):
             }
             let x = false in x;
             '''
-        ast, errors, context, scope = run_code(inp, True)
+        ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_invalid_type_params(self):
+        inp = '''
+            function a(x, y, z) {
+                x | y;
+                y + z;
+            }
+            let x = false in x;
+            '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")

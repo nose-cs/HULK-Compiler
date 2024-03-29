@@ -99,7 +99,7 @@ eol_expr %= expr_block, lambda h, s: s[1]
 # An expression block is a sequence of expressions between brackets
 expr_block %= obracket + expr_list + cbracket, lambda h, s: hulk_ast_nodes.ExpressionBlockNode(s[2])
 
-expr_list %= eol_expr + expr_list, lambda h, s: [s[1]] + s[3]
+expr_list %= eol_expr + expr_list, lambda h, s: [s[1]] + s[2]
 expr_list %= eol_expr, lambda h, s: [s[1]]
 
 # An expression is a simple expression or an expression block

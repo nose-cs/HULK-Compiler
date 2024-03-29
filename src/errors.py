@@ -49,6 +49,7 @@ class SemanticError(HulkError):
     INCOMPATIBLE_TYPES = 'Cannot convert "%s" into "%s".'
     VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined in "%s".'
     INVALID_OPERATION = 'Operation is not defined between "%s" and "%s".'
+    INCONSISTENT_USE = 'Inconsistent use of "%s".'
 
     @property
     def error_type(self):
