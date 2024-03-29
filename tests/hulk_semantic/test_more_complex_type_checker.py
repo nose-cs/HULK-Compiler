@@ -40,6 +40,17 @@ class TestHulkTypeInference(unittest.TestCase):
         ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
+    def test_get_most_specialized(self):
+        inp = '''
+            function a(x, y, z) {
+                x | y;
+                y @ z;
+            }
+            let x = false in x;
+            '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
     def test_invalid_type_params(self):
         inp = '''
             function a(x, y, z) {
@@ -50,3 +61,18 @@ class TestHulkTypeInference(unittest.TestCase):
             '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_type_params_inference_with_func_call(self):
+        inp = '''
+            function sum(x, y) {
+                x + y;
+            }
+            
+            type A(x) {
+                x = sum(x, x + 5);
+            }
+            
+            let x = 9 in new A(x);
+        '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

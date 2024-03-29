@@ -201,7 +201,7 @@ expr_list_comma_sep_or_empty %= G.Epsilon, lambda h, s: []
 expr_list_comma_sep_or_empty %= expr_list_comma_sep, lambda h, s: s[1]
 
 expr_list_comma_sep %= expr, lambda h, s: [s[1]]
-expr_list_comma_sep %= expr + comma + expr_list, lambda h, s: [s[1]] + s[3]
+expr_list_comma_sep %= expr + comma + expr_list_comma_sep, lambda h, s: [s[1]] + s[3]
 
 # Vector initialization
 vector_initialization %= (o_square_bracket + expr_list_comma_sep_or_empty + c_square_bracket,
