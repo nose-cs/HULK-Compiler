@@ -20,14 +20,14 @@ class TestHulkFunctions(unittest.TestCase):
 
     def test_functions_and_expression(self):
         expected = [hulk_grammar.function, hulk_grammar.idx, hulk_grammar.opar, hulk_grammar.idx, hulk_grammar.cpar,
-                    hulk_grammar.arrow, hulk_grammar.number, hulk_grammar.div, hulk_grammar.idx, hulk_grammar.opar,
+                    hulk_grammar.arrow, hulk_grammar.number_literal, hulk_grammar.div, hulk_grammar.idx, hulk_grammar.opar,
                     hulk_grammar.idx, hulk_grammar.cpar, hulk_grammar.semicolon, hulk_grammar.function,
                     hulk_grammar.idx, hulk_grammar.opar, hulk_grammar.idx, hulk_grammar.cpar, hulk_grammar.arrow,
                     hulk_grammar.idx, hulk_grammar.opar, hulk_grammar.idx, hulk_grammar.cpar, hulk_grammar.div,
                     hulk_grammar.idx, hulk_grammar.opar, hulk_grammar.idx, hulk_grammar.cpar, hulk_grammar.semicolon,
                     hulk_grammar.idx, hulk_grammar.opar, hulk_grammar.idx, hulk_grammar.opar, hulk_grammar.idx,
-                    hulk_grammar.cpar, hulk_grammar.power2, hulk_grammar.number, hulk_grammar.plus, hulk_grammar.idx,
-                    hulk_grammar.opar, hulk_grammar.idx, hulk_grammar.cpar, hulk_grammar.power2, hulk_grammar.number,
+                    hulk_grammar.cpar, hulk_grammar.power2, hulk_grammar.number_literal, hulk_grammar.plus, hulk_grammar.idx,
+                    hulk_grammar.opar, hulk_grammar.idx, hulk_grammar.cpar, hulk_grammar.power2, hulk_grammar.number_literal,
                     hulk_grammar.cpar, hulk_grammar.semicolon, hulk_grammar.G.EOF]
 
         tokens, errors = lexer(

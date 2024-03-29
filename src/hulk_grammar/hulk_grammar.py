@@ -18,7 +18,7 @@ concat_operation, or_operation, and_operation, not_operation = G.NonTerminals(
 plus_or_minus_operation, star_div_or_mod_operation, pow_operation, sign_operation, factor, atom = G.NonTerminals(
     '<plus_or_minus_operation> <star_div_or_mod_operation> <pow_operation> <sign_operation> <factor> <atom>')
 
-destructive_assignment, is_operation, as_operation = G.NonTerminals("<destructive_ass> <is_operation> <as_operation>")
+destructive_assignment, is_or_as_operation = G.NonTerminals("<destructive_ass> <is_or_as_operation>")
 
 func_call, obj_method_or_attribute_call, type_instantiation = G.NonTerminals(
     '<func-call> <object_method_or_attribute_call> <type_instantiation>')
@@ -71,13 +71,13 @@ while_, for_ = G.Terminals('while for')
 
 function = G.Terminal('function')
 
-plus, minus, star, div, power, mod, power2, number = G.Terminals('+ - * / ^ % ** <number>')
+plus, minus, star, div, power, mod, power2, number_literal = G.Terminals('+ - * / ^ % ** <number>')
 
 eq, neq, leq, geq, lt, gt = G.Terminals('== != <= >= < >')
 
-and_op, or_op, not_op, bool_term = G.Terminals('& | ! <bool>')
+and_op, or_op, not_op, bool_literal = G.Terminals('& | ! <bool>')
 
-amper, double_amp, str_term = G.Terminals('@ @@ <string>')
+amper, double_amp, string_literal = G.Terminals('@ @@ <string>')
 
 # -----------------------------------------------Productions---------------------------------------------------------- #
 
@@ -110,51 +110,46 @@ simple_expr %= conditional, lambda h, s: s[1]
 simple_expr %= let_in, lambda h, s: s[1]
 simple_expr %= while_loop, lambda h, s: s[1]
 simple_expr %= for_loop, lambda h, s: s[1]
-simple_expr %= as_operation, lambda h, s: s[1]
-
-# todo check destructive assignment and type instantiation precedence
 simple_expr %= destructive_assignment, lambda h, s: s[1]
-simple_expr %= type_instantiation, lambda h, s: s[1]
 
-as_operation %= concat_operation + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(s[1], s[3])
-as_operation %= concat_operation, lambda h, s: s[1]
-
-concat_operation %= concat_operation + amper + or_operation, lambda h, s: hulk_ast_nodes.ConcatNode(s[1], s[3])
-
-concat_operation %= (concat_operation + double_amp + or_operation,
-                     lambda h, s: hulk_ast_nodes.ConcatNode(
-                         hulk_ast_nodes.ConcatNode(s[1], hulk_ast_nodes.ConstantStringNode(" ")),
-                         s[3]))
-concat_operation %= or_operation, lambda h, s: s[1]
+destructive_assignment %= (obj_method_or_attribute_call + dest_eq + expr,
+                           lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3]))
+destructive_assignment %= or_operation, lambda h, s: s[1]
 
 or_operation %= or_operation + or_op + and_operation, lambda h, s: hulk_ast_nodes.OrNode(s[1], s[3])
 or_operation %= and_operation, lambda h, s: s[1]
 
-and_operation %= and_operation + and_op + is_operation, lambda h, s: hulk_ast_nodes.AndNode(s[1], s[3])
-and_operation %= is_operation, lambda h, s: s[1]
+and_operation %= and_operation + and_op + equality, lambda h, s: hulk_ast_nodes.AndNode(s[1], s[3])
+and_operation %= equality, lambda h, s: s[1]
 
-is_operation %= not_operation + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(s[1], s[3])
-is_operation %= not_operation, lambda h, s: s[1]
-
-not_operation %= not_op + equality, lambda h, s: hulk_ast_nodes.NotNode(s[2])
-not_operation %= equality, lambda h, s: s[1]
-
-# todo makes sense 5 == 5 == 5 ?
+# todo dejarlo pasar y que de error en el type checker
 equality %= inequality + eq + inequality, lambda h, s: hulk_ast_nodes.EqualNode(s[1], s[3])
 equality %= inequality + neq + inequality, lambda h, s: hulk_ast_nodes.NotEqualNode(s[1], s[3])
 equality %= inequality, lambda h, s: s[1]
 
 # makes sense 3 <= 8 <= 11 ?
 # No, compilers book page 148
-inequality %= (plus_or_minus_operation + leq + plus_or_minus_operation,
+inequality %= (is_or_as_operation + leq + is_or_as_operation,
                lambda h, s: hulk_ast_nodes.LessOrEqualNode(s[1], s[3]))
-inequality %= (plus_or_minus_operation + geq + plus_or_minus_operation,
+inequality %= (is_or_as_operation + geq + is_or_as_operation,
                lambda h, s: hulk_ast_nodes.GreaterOrEqualNode(s[1], s[3]))
-inequality %= (plus_or_minus_operation + lt + plus_or_minus_operation,
+inequality %= (is_or_as_operation + lt + is_or_as_operation,
                lambda h, s: hulk_ast_nodes.LessThanNode(s[1], s[3]))
-inequality %= (plus_or_minus_operation + gt + plus_or_minus_operation,
+inequality %= (is_or_as_operation + gt + is_or_as_operation,
                lambda h, s: hulk_ast_nodes.GreaterThanNode(s[1], s[3]))
-inequality %= plus_or_minus_operation, lambda h, s: s[1]
+inequality %= is_or_as_operation, lambda h, s: s[1]
+
+is_or_as_operation %= concat_operation + is_ + idx, lambda h, s: hulk_ast_nodes.IsNode(s[1], s[3])
+is_or_as_operation %= concat_operation + as_ + idx, lambda h, s: hulk_ast_nodes.AsNode(s[1], s[3])
+is_or_as_operation %= concat_operation, lambda h, s: s[1]
+
+concat_operation %= (concat_operation + amper + plus_or_minus_operation,
+                     lambda h, s: hulk_ast_nodes.ConcatNode(s[1], s[3]))
+concat_operation %= (concat_operation + double_amp + plus_or_minus_operation,
+                     lambda h, s: hulk_ast_nodes.ConcatNode(
+                         hulk_ast_nodes.ConcatNode(s[1], hulk_ast_nodes.ConstantStringNode(" ")),
+                         s[3]))
+concat_operation %= plus_or_minus_operation, lambda h, s: s[1]
 
 plus_or_minus_operation %= (plus_or_minus_operation + plus + star_div_or_mod_operation,
                             lambda h, s: hulk_ast_nodes.PlusNode(s[1], s[3]))
@@ -174,9 +169,16 @@ sign_operation %= plus + pow_operation, lambda h, s: s[2]
 sign_operation %= minus + pow_operation, lambda h, s: hulk_ast_nodes.NegNode(s[2])
 sign_operation %= pow_operation, lambda h, s: s[1]
 
-pow_operation %= obj_method_or_attribute_call + power + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
-pow_operation %= obj_method_or_attribute_call + power2 + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
-pow_operation %= obj_method_or_attribute_call, lambda h, s: s[1]
+pow_operation %= type_instantiation + power + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
+pow_operation %= type_instantiation + power2 + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
+pow_operation %= type_instantiation, lambda h, s: s[1]
+
+type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
+                       lambda h, s: hulk_ast_nodes.TypeInstantiationNode(s[2], s[4]))
+type_instantiation %= not_operation, lambda h, s: s[1]
+
+not_operation %= not_op + obj_method_or_attribute_call, lambda h, s: hulk_ast_nodes.NotNode(s[2])
+not_operation %= obj_method_or_attribute_call, lambda h, s: s[1]
 
 obj_method_or_attribute_call %= (obj_method_or_attribute_call + dot + idx + opar + expr_list_comma_sep_or_empty + cpar,
                                  lambda h, s: hulk_ast_nodes.MethodCallNode(s[1], s[3], s[5]))
@@ -187,9 +189,9 @@ obj_method_or_attribute_call %= factor, lambda h, s: s[1]
 factor %= opar + expr + cpar, lambda h, s: s[2]
 factor %= atom, lambda h, s: s[1]
 
-atom %= number, lambda h, s: hulk_ast_nodes.ConstantNumNode(s[1])
-atom %= bool_term, lambda h, s: hulk_ast_nodes.ConstantBoolNode(s[1])
-atom %= str_term, lambda h, s: hulk_ast_nodes.ConstantStringNode(s[1])
+atom %= number_literal, lambda h, s: hulk_ast_nodes.ConstantNumNode(s[1])
+atom %= bool_literal, lambda h, s: hulk_ast_nodes.ConstantBoolNode(s[1])
+atom %= string_literal, lambda h, s: hulk_ast_nodes.ConstantStringNode(s[1])
 atom %= idx, lambda h, s: hulk_ast_nodes.VariableNode(s[1])
 atom %= func_call, lambda h, s: s[1]
 atom %= vector_initialization, lambda h, s: s[1]
@@ -218,11 +220,6 @@ assignments %= optional_typing_var, lambda h, s: [s[1]]
 optional_typing_var %= idx + equal + expr, lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[3])
 optional_typing_var %= (idx + colon + idx + equal + expr,
                         lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[5], s[3]))
-
-# Todo check if this is correct
-# Destructive assigment
-destructive_assignment %= (obj_method_or_attribute_call + dest_eq + expr,
-                           lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3]))
 
 # Functions can be declared using lambda notation or classic notation
 function_declaration %= (function + idx + opar + params_list_or_empty + cpar + arrow + simple_expr + semicolon,
@@ -306,10 +303,6 @@ method_declaration %= (idx + opar + params_list_or_empty + cpar + colon + idx + 
 attribute %= idx + equal + eol_expr, lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[3])
 attribute %= (idx + colon + idx + equal + eol_expr,
               lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[5], s[3]))
-
-# Type instantiation
-type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
-                       lambda h, s: hulk_ast_nodes.TypeInstantiationNode(s[2], s[4]))
 
 # Protocol declaration
 protocol_declaration %= (protocol + idx + obracket + protocol_body + cbracket,
