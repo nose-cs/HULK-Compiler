@@ -135,15 +135,17 @@ class FormatterVisitor(object):
 
         conditions = [self.visit(cond, tabs + 1) for cond in node.conditions]
         expressions = [self.visit(expr, tabs + 1) for expr in node.expressions]
-        cond_expr = zip(conditions, expressions)
 
-        if_cond, if_expr = cond_expr[0]
+        if_cond, if_expr = conditions[0], expressions[0]
         if_clause = '\t' * tabs + f'\\__ if(<expr>) <expr>\n{if_cond}\n{if_expr}'
 
-        cond_exp = cond_expr[1:]
+        elif_clauses = []
+        for i in range(1, len(conditions)):
+            elif_clauses.append('\t' * tabs + f'\\__ elif(<expr>) <expr>\n{conditions[i]}\n{expressions[i]}')
 
-        elif_clauses = ['\t' * tabs + f'\\__ elif(<expr>) <expr>\n{cond}\n{expr}' for (cond, expr) in cond_exp]
-        elif_clauses = '\n' + '\n'.join(elif_clauses) if len(elif_clauses) > 0 else ''
+        elif_clauses = '\n'.join(elif_clauses) if elif_clauses else ''
+        if len(elif_clauses) > 0:
+            elif_clauses = '\n' + elif_clauses
 
         else_clause = '\t' * tabs + f'\\__ else <expr>\n{self.visit(node.default_expr, tabs + 1)}'
 
