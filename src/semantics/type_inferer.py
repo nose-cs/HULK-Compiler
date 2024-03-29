@@ -192,16 +192,12 @@ class TypeInfer(object):
     def visit(self, node: hulk_nodes.ConditionalNode, scope: Scope):
         cond_types = [self.visit(cond, child_scope) for cond, child_scope in zip(node.conditions, scope.children)]
 
-        # for cond_type in cond_types:
-        #     if cond_type != types.BoolType():
-        #         self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
-
-        expr_types = [self.visit(expression, scope.create_child()) for expression in
+        expr_types = [self.visit(expression, child_scope) for expression, child_scope in
                       zip(node.expressions, scope.children[len(cond_types):])]
 
         else_type = self.visit(node.default_expr, scope.children[-1])
 
-        return types.get_lowest_common_ancestor(expr_types + else_type)
+        return types.get_lowest_common_ancestor(expr_types + [else_type])
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, scope: Scope):
@@ -250,8 +246,6 @@ class TypeInfer(object):
             obj_type = self.visit(node.obj, scope)
         else:
             obj_type = scope.find_variable(node.obj).type
-
-        print(obj_type)
 
         if obj_type == types.SelfType():
             try:

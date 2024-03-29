@@ -165,7 +165,7 @@ class TypeChecker(object):
 
         else_type = self.visit(node.default_expr, scope.children[-1])
 
-        return types.get_lowest_common_ancestor(expr_types + else_type)
+        return types.get_lowest_common_ancestor(expr_types + [else_type])
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, scope: Scope):
