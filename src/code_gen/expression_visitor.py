@@ -10,7 +10,6 @@ class CodeGenC(object):
         self.index_var = 0
         self.context: Context = context
 
-
     @visitor.on('node')
     def visit(self, node):
         pass
@@ -54,6 +53,14 @@ class CodeGenC(object):
 
         assert ltype.name == rtype.name
         return "numberSum(" + lc + ", " + rc + ")", ltype
+    
+    @visitor.when(hulk_nodes.MinusNode)
+    def visit(self, node: hulk_nodes.MinusNode):
+        lc, ltype = self.visit(node.left)
+        rc, rtype = self.visit(node.right)
+
+        assert ltype.name == rtype.name
+        return "numberMinus(" + lc + ", " + rc + ")", ltype
 
     @visitor.when(hulk_nodes.StarNode)
     def visit(self, node: hulk_nodes.StarNode):
