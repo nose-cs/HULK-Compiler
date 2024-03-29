@@ -9,7 +9,7 @@ lexer = HulkLexer()
 class TestHulkStrings(unittest.TestCase):
     def test_simple_string(self):
         inp = '"Hello, World!"'
-        expected = [hulk_grammar.str_term, hulk_grammar.G.EOF]
+        expected = [hulk_grammar.string_literal, hulk_grammar.G.EOF]
         tokens, errors = lexer(inp)
         gotten = [token.token_type for token in tokens]
         self.assertEqual(expected, gotten)
@@ -17,7 +17,7 @@ class TestHulkStrings(unittest.TestCase):
 
     def test_string_with_escape(self):
         inp = '"Hello, \"World!\""'
-        expected = [hulk_grammar.str_term, hulk_grammar.G.EOF]
+        expected = [hulk_grammar.string_literal, hulk_grammar.G.EOF]
         tokens, errors = lexer(inp)
         gotten = [token.token_type for token in tokens]
         self.assertEqual(expected, gotten)
@@ -25,7 +25,7 @@ class TestHulkStrings(unittest.TestCase):
 
     def test_unfinished_string(self):
         inp = '"Hello, World!'
-        expected = [hulk_grammar.str_term, hulk_grammar.G.EOF]
+        expected = [hulk_grammar.string_literal, hulk_grammar.G.EOF]
         tokens, errors = lexer(inp)
         gotten = [token.token_type for token in tokens]
         self.assertNotEqual(expected, gotten)
@@ -33,7 +33,7 @@ class TestHulkStrings(unittest.TestCase):
 
     def test_boolean(self):
         inp = 'true false'
-        expected = [hulk_grammar.bool_term, hulk_grammar.bool_term, hulk_grammar.G.EOF]
+        expected = [hulk_grammar.bool_literal, hulk_grammar.bool_literal, hulk_grammar.G.EOF]
         tokens, errors = lexer(inp)
         gotten = [token.token_type for token in tokens]
         self.assertEqual(expected, gotten)
@@ -41,7 +41,7 @@ class TestHulkStrings(unittest.TestCase):
 
     def test_boolean_with_string(self):
         inp = 'true "false"'
-        expected = [hulk_grammar.bool_term, hulk_grammar.str_term, hulk_grammar.G.EOF]
+        expected = [hulk_grammar.bool_literal, hulk_grammar.string_literal, hulk_grammar.G.EOF]
         tokens, errors = lexer(inp)
         gotten = [token.token_type for token in tokens]
         self.assertEqual(expected, gotten)
