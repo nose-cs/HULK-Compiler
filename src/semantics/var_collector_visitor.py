@@ -175,6 +175,11 @@ class VarCollector(object):
         for arg in node.args:
             self.visit(arg, scope)
 
+    @visitor.when(hulk_nodes.AttributeCallNode)
+    def visit(self, node: hulk_nodes.AttributeCallNode, scope: Scope):
+        node.scope = scope
+        self.visit(node.obj, scope)
+
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, scope: Scope):
         node.scope = scope

@@ -122,7 +122,7 @@ class CodeGenC(object):
             code = "function_" + node.idx + "("
 
             for arg in node.args:
-                code += self.visit(arg) + ", "
+                code += self.visit(arg)[0] + ", "
 
             if len(node.args) > 0:
                 code = code[:-2]
@@ -138,3 +138,10 @@ class CodeGenC(object):
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode):
         return self.visit(node.expression)[0], self.context.get_type(node.ttype)
+    
+    @visitor.when(hulk_nodes.AttributeCallNode)
+    def visit(self, node: hulk_nodes.AttributeCallNode):
+        c, type = self.visit(node.obj)
+
+        att_type = type.get_attribute(node.attribute).type
+        return "getAttributeValue(" + c + ", \"" + type.name + "_" + node.attribute + "\")", att_type

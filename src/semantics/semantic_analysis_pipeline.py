@@ -49,15 +49,15 @@ def semantic_analysis_pipeline(ast, debug=False):
         print('Scope:')
         print(scope)
         print('---------------- TYPE INFERENCE ------------------')
-    type_inference = TypeInfer(context, errors)
-    type_inference.visit(ast, scope)
-    if debug:
-        print('Errors: [')
-        for error in errors:
-            print('\t', error)
-        print(']')
-        print('Context:')
-        print(context)
-        print('Scope:')
-        print(scope)
+    # type_inference = TypeInfer(context, errors)
+    # type_inference.visit(ast, scope)
+    # if debug:
+    #     print('Errors: [')
+    #     for error in errors:
+    #         print('\t', error)
+    #     print(']')
+    #     print('Context:')
+    #     print(context)
+    #     print('Scope:')
+    #     print(scope)
     return ast, errors, context, scope
