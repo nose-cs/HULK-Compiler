@@ -22,12 +22,10 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode, scope: Scope = None):
-        scope = Scope()
+        for declaration, child_scope in zip(node.declarations, scope.children):
+            self.visit(declaration, child_scope)
 
-        for declaration in node.declarations:
-            self.visit(declaration, scope.create_child())
-
-        self.visit(node.expression, scope)
+        self.visit(node.expression, scope.children[-1])
 
         return scope
 
@@ -36,23 +34,20 @@ class TypeChecker(object):
         self.current_type = self.context.get_type(node.idx)
 
         # Create a new scope that includes the parameters
-        new_scope = scope.create_child()
+        new_scope = scope.children[0]
 
-        params = zip(self.current_type.params_names, self.current_type.params_types)
-        for param_name, param_type in params:
-            new_scope.define_variable(param_name, param_type)
+        parent_args = [self.visit(expr, new_scope) for expr in node.parent_args]
 
-        for expr in node.parent_args:
-            self.visit(expr, new_scope)
+        parent_params_types = self.current_type.parent.params_types
+        for parent_arg, parent_param_type in zip(parent_args, parent_params_types):
+            if not parent_arg.conforms_to(parent_param_type):
+                self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
 
         for attr in node.attributes:
-            attr_type = self.visit(attr, new_scope)
-            attr = self.current_type.get_attribute(attr.id)
-            attr.type = attr_type
+            self.visit(attr, new_scope)
 
         # Create a new scope that includes the self symbol
-        methods_scope = scope.create_child()
-        methods_scope.define_variable('self', self.current_type)
+        methods_scope = scope.children[1]
         for method in node.methods:
             self.visit(method, methods_scope)
 
@@ -60,10 +55,12 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.AttributeDeclarationNode, scope: Scope):
         inf_type = self.visit(node.expr, scope)
 
-        if node.attribute_type is not None:
-            attr_type = self.context.get_type_or_protocol(node.attribute_type)
-        else:
-            attr_type = inf_type
+        attr_type = self.current_type.get_attribute(node.id).type
+
+        # if node.attribute_type is not None:
+        #     attr_type = self.context.get_type_or_protocol(node.attribute_type)
+        # else:
+        #     attr_type = inf_type
 
         if not inf_type.conforms_to(attr_type):
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
@@ -75,10 +72,7 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.MethodDeclarationNode, scope: Scope):
         method: Method = self.current_type.get_method(node.id)
 
-        new_scope = scope.create_child()
-
-        for i in range(len(method.param_names)):
-            new_scope.define_variable(method.param_names[i], method.param_types[i])
+        new_scope = scope.children[0]
 
         return_type = self.visit(node.expr, new_scope)
 
@@ -90,6 +84,7 @@ class TypeChecker(object):
             parent_method = self.current_type.parent.get_method(node.id)
         except SemanticError:
             parent_method = None
+
         if parent_method is not None and parent_method.return_type != return_type:
             if len(parent_method.param_types) != len(method.param_types):
                 self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
@@ -106,21 +101,20 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.FunctionDeclarationNode, scope: Scope):
         function: Function = self.context.get_function(node.id)
 
-        new_scope = scope.create_child()
+        new_scope = scope.children[0]
 
-        for i in range(len(function.param_names)):
-            new_scope.define_variable(function.param_names[i], function.param_types[i])
+        inf_return_type = self.visit(node.expr, new_scope)
 
-        return_type = self.visit(node.expr, new_scope)
+        if not inf_return_type.conforms_to(function.return_type):
+            self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
+            return types.ErrorType()
 
-        if not function.return_type.conforms_to(return_type):
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
-
-        return return_type
+        return function.return_type
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
     def visit(self, node: hulk_nodes.ExpressionBlockNode, scope: Scope):
         expr_type = types.ErrorType()
+
         for expr in node.expressions:
             expr_type = self.visit(expr, scope)
         return expr_type
@@ -129,21 +123,11 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope: Scope):
         # I don't want to include the var before to avoid let a = a in print(a);
         inf_type = self.visit(node.expr, scope)
-
-        if node.var_type is not None:
-            try:
-                var_type = self.context.get_type_or_protocol(node.var_type)
-            except SemanticError as e:
-                self.errors.append(e)
-                var_type = types.ErrorType()
-        else:
-            var_type = inf_type
+        var_type = scope.find_variable(node.id).type
 
         if not inf_type.conforms_to(var_type):
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
             var_type = types.ErrorType()
-
-        scope.define_variable(node.id, var_type)
 
         return var_type
 
@@ -153,7 +137,7 @@ class TypeChecker(object):
         old_scope = scope
 
         for declaration in node.var_declarations:
-            new_scope = old_scope.create_child()
+            new_scope = old_scope.children[0]
             self.visit(declaration, new_scope)
             old_scope = new_scope
 
@@ -170,26 +154,27 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode, scope: Scope):
-        cond_types = [self.visit(cond, scope.create_child()) for cond in node.conditions]
+        cond_types = [self.visit(cond, child_scope) for cond, child_scope in zip(node.conditions, scope.children)]
 
         for cond_type in cond_types:
             if cond_type != types.BoolType():
                 self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
 
-        expr_types = [self.visit(expression, scope.create_child()) for expression in node.expressions]
+        expr_types = [self.visit(expression, child_scope) for expression, child_scope in
+                      zip(node.expressions, scope.children[len(cond_types):])]
 
-        else_type = self.visit(node.default_expr, scope.create_child())
+        else_type = self.visit(node.default_expr, scope.children[-1])
 
         return types.get_lowest_common_ancestor(expr_types + else_type)
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, scope: Scope):
-        cond_type = self.visit(node.condition, scope.create_child())
+        cond_type = self.visit(node.condition, scope.children[0])
 
         if cond_type != types.BoolType():
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
 
-        return self.visit(node.expression, scope.create_child())
+        return self.visit(node.expression, scope.children[1])
 
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode, scope: Scope):
@@ -225,6 +210,24 @@ class TypeChecker(object):
 
         return method.return_type
 
+    @visitor.when(hulk_nodes.AttributeCallNode)
+    def visit(self, node: hulk_nodes.AttributeCallNode, scope: Scope):
+        if not scope.is_defined(node.obj):
+            obj_type = self.visit(node.obj, scope)
+        else:
+            obj_type = scope.find_variable(node.obj).type
+
+        if obj_type == types.SelfType():
+            try:
+                attr = self.current_type.get_attribute(node.attribute)
+                return attr.type
+            except SemanticError as e:
+                self.errors.append(e)
+                return types.ErrorType()
+        else:
+            self.errors.append(SemanticError("Cannot access an attribute from a non-self object"))
+            return types.ErrorType()
+
     # todo for loop
 
     # todo vector initialization
@@ -233,30 +236,25 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
         expression_type = self.visit(node.expression, scope)
+        bool_type = self.context.get_type('Bool')
 
-        try:
-            cast_type = self.context.get_type(node.ttype)
-        except SemanticError as e:
-            self.errors.append(e)
-            cast_type = types.ErrorType()
+        cast_type = self.context.get_type(node.ttype)
 
         if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
-            return types.BoolType()
+            return bool_type
 
-        return types.BoolType()
+        return bool_type
 
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         expression_type = self.visit(node.expression, scope)
-        try:
-            cast_type = self.context.get_type(node.ttype)
-        except SemanticError as e:
-            self.errors.append(e)
-            cast_type = types.ErrorType()
+
+        cast_type = self.context.get_type(node.ttype)
 
         if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
             return types.ErrorType()
+
         return cast_type
 
     @visitor.when(hulk_nodes.ArithmeticExpressionNode)
@@ -264,30 +262,22 @@ class TypeChecker(object):
         number_type = self.context.get_type('Number')
 
         left_type = self.visit(node.left, scope)
-        if left_type == types.AutoType():
-            left_type = self.assign_auto_type(node.left, scope, number_type)
 
         right_type = self.visit(node.right, scope)
-        if right_type == types.AutoType():
-            left_type = self.assign_auto_type(node.right, scope, number_type)
 
         if not left_type == types.NumberType() or not right_type == types.NumberType():
             self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
             return types.ErrorType()
+
         return number_type
 
     @visitor.when(hulk_nodes.InequalityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
         bool_type = self.context.get_type('Bool')
-        number_type = self.context.get_type('Number')
 
         left_type = self.visit(node.left, scope)
-        if left_type == types.AutoType():
-            self.assign_auto_type(node.left, scope, number_type)
 
         right_type = self.visit(node.right, scope)
-        if right_type == types.AutoType():
-            self.assign_auto_type(node.right, scope, number_type)
 
         if not left_type == types.NumberType() or not right_type == types.NumberType():
             self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
@@ -300,16 +290,13 @@ class TypeChecker(object):
         bool_type = self.context.get_type('Bool')
 
         left_type = self.visit(node.left, scope)
-        if left_type == types.AutoType():
-            self.assign_auto_type(node.left, scope, bool_type)
 
         right_type = self.visit(node.right, scope)
-        if right_type == types.AutoType():
-            self.assign_auto_type(node.right, scope, bool_type)
 
         if not left_type == types.BoolType() or not right_type == types.BoolType():
             self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
             return types.ErrorType()
+
         return bool_type
 
     # todo change is instance for a "has_implicit_cast" to accept print("The meaning of life is" @@ 42)
@@ -319,16 +306,13 @@ class TypeChecker(object):
         object_type = self.context.get_type('Object')
 
         left_type = self.visit(node.left, scope)
-        if left_type == types.AutoType():
-            self.assign_auto_type(node.left, scope, object_type)
 
         right_type = self.visit(node.right, scope)
-        if right_type == types.AutoType():
-            self.assign_auto_type(node.right, scope, object_type)
 
         if not left_type.conforms_to(object_type) or not right_type.conforms_to(object_type):
             self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
             return types.ErrorType()
+
         return string_type
 
     # todo be more specific with True and False
@@ -344,9 +328,6 @@ class TypeChecker(object):
         operand_type = self.visit(node.operand, scope)
         number_type = self.context.get_type('Number')
 
-        if operand_type == types.AutoType():
-            self.assign_auto_type(node.operand, scope, number_type)
-
         if operand_type == types.NumberType():
             self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
             return number_type
@@ -357,9 +338,6 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.NotNode, scope: Scope):
         operand_type = self.visit(node.operand, scope)
         bool_type = self.context.get_type('Bool')
-
-        if operand_type == types.AutoType():
-            self.assign_auto_type(node.operand, scope, bool_type)
 
         if operand_type == types.BoolType():
             self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
@@ -390,11 +368,7 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
-        try:
-            ttype = self.context.get_type(node.idx)
-        except SemanticError as e:
-            self.errors.append(e)
-            return types.ErrorType()
+        ttype = self.context.get_type(node.idx)
 
         args_types = [self.visit(arg, scope) for arg in node.args]
 
