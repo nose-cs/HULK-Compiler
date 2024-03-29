@@ -1,35 +1,28 @@
 import src.visitor as visitor
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
-from src.semantics.semantic import Context, Type
+from src.semantics.types import Type
+from src.semantics.utils import Context
+from src.semantics.types import NumberType, StringType, BoolType
 
 class CodeGenC(object):
 
     def __init__(self, context) -> None:
+        self.index_var = 0
         self.context: Context = context
+
 
     @visitor.on('node')
     def visit(self, node):
         pass
 
+    @visitor.when(hulk_nodes.ProgramNode)
+    def visit(self, node: hulk_nodes.ProgramNode):
+        return self.visit(node.expression)
+
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode):
-        code = "create" + node.idx + "("
-        before = len(code)
-
-        for arg in node.args:
-            code += self.visit(arg) + ", "
-
-        current: Type = self.context.get_type(node.idx)
-
-        while current is not None:
-            if len(current.node.parent_args) > 0:
-                for arg in current.node.parent_args:
-                    code += self.visit(arg) + ", "
-            elif current.parent is not None:
-                for i in range(len(current.parent.params_names)):
-                    code += "NULL" + ", "
-
-            current = current.parent
+        code = "create" + node.idx + " ("
+        before = len(code)        
 
         if before != len(code):
             code = code[:-2]
@@ -49,14 +42,92 @@ class CodeGenC(object):
         code = ""
 
         for expression in node.expressions:
-            code += self.visit(expression) + ";\n"
+            c, type = self.visit(expression)
+            code += c + ";\n"
 
-        return code
+        return code, type
     
     @visitor.when(hulk_nodes.PlusNode)
     def visit(self, node: hulk_nodes.PlusNode):
-        return "numberSum(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+        lc, ltype = self.visit(node.left)
+        rc, rtype = self.visit(node.right)
+
+        assert ltype.name == rtype.name
+        return "numberSum(" + lc + ", " + rc + ")", ltype
+
+    @visitor.when(hulk_nodes.StarNode)
+    def visit(self, node: hulk_nodes.StarNode):
+        lc, ltype = self.visit(node.left)
+        rc, rtype = self.visit(node.right)
+
+        assert ltype.name == rtype.name
+        return "numberMultiply(" + lc + ", " + rc + ")", ltype
+
+    @visitor.when(hulk_nodes.DivNode)
+    def visit(self, node: hulk_nodes.DivNode):
+        lc, ltype = self.visit(node.left)
+        rc, rtype = self.visit(node.right)
+
+        assert ltype.name == rtype.name
+        return "numberDivision(" + lc + ", " + rc + ")", ltype
 
     @visitor.when(hulk_nodes.VariableNode)
     def visit(self, node: hulk_nodes.VariableNode):
-        return self.context[node.lex]
+        return node.scope.find_variable(node.lex).nameC, node.scope.find_variable(node.lex).type
+
+    @visitor.when(hulk_nodes.VarDeclarationNode)
+    def visit(self, node: hulk_nodes.VarDeclarationNode):
+        var = "v" + str(self.index_var)
+        self.index_var += 1
+        
+        node.scope.find_variable(node.id).setNameC(var)
+
+        c, type = self.visit(node.expr)
+        return "Object* " + var + " = " + c, type
+        
+    @visitor.when(hulk_nodes.ConstantNumNode)
+    def visit(self, node: hulk_nodes.ConstantNumNode):
+        return "createNumber(" + node.lex + ")", NumberType()
+
+    @visitor.when(hulk_nodes.ConstantBoolNode)
+    def visit(self, node: hulk_nodes.ConstantBoolNode):
+        return "createBool(" + node.lex + ")", BoolType()
+
+    @visitor.when(hulk_nodes.ConstantStringNode)
+    def visit(self, node: hulk_nodes.ConstantStringNode):
+        return "createString(" + node.lex + ")", StringType()
+    
+    @visitor.when(hulk_nodes.LetInNode)
+    def visit(self, node: hulk_nodes.LetInNode):
+        code = ""
+
+        for var_declaration in node.var_declarations:
+            code += self.visit(var_declaration)[0] + ";\n"
+
+        c, type = self.visit(node.body)
+        code += c
+
+        return code, type
+    
+    @visitor.when(hulk_nodes.FunctionCallNode)
+    def visit(self, node: hulk_nodes.FunctionCallNode):
+        if node.idx != "print":
+            code = "function_" + node.idx + "("
+
+            for arg in node.args:
+                code += self.visit(arg) + ", "
+
+            if len(node.args) > 0:
+                code = code[:-2]
+
+            code += ")"
+        else:
+            assert len(node.args) == 1
+            c, type = self.visit(node.args[0])
+            code = "print(" + c + ", " + "\"fun_" + type.name + "_toString\")"; 
+
+        return code, self.context.functions[node.idx].return_type
+
+    @visitor.when(hulk_nodes.AsNode)
+    def visit(self, node: hulk_nodes.AsNode):
+        return self.visit(node.expression)[0], self.context.get_type(node.ttype)

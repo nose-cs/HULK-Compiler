@@ -1,11 +1,11 @@
 from abc import ABC
 from typing import List, Tuple
-
+from src.semantics.utils import Scope
 
 # ---------------------------------------------------Depth 0---------------------------------------------------------- #
 class Node(ABC):
     def __init__(self):
-        self.scope = None
+        self.scope : Scope = None
 
 
 # ---------------------------------------------------Depth 1---------------------------------------------------------- #

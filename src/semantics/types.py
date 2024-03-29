@@ -16,8 +16,9 @@ class Attribute:
 
 
 class Method:
-    def __init__(self, name, param_names, params_types, return_type):
+    def __init__(self, name, param_names, params_types, return_type, node=None):
         self.name = name
+        self.node = node
         self.param_names = param_names
         self.param_types = params_types
         self.return_type = return_type
@@ -45,8 +46,9 @@ class Method:
 
 
 class Protocol:
-    def __init__(self, name: str):
+    def __init__(self, name: str, node=None):
         self.name = name
+        self.node = node
         self.methods = []
         self.parent = None
 
@@ -66,10 +68,10 @@ class Protocol:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type):
+    def define_method(self, name: str, param_names: list, param_types: list, return_type, node=None):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        method = Method(name, param_names, param_types, return_type)
+        method = Method(name, param_names, param_types, return_type, node)
         self.methods.append(method)
         return method
 
@@ -104,8 +106,9 @@ class Protocol:
 
 
 class Type:
-    def __init__(self, name: str):
+    def __init__(self, name: str, node=None):
         self.name = name
+        self.node = node
         self.params_names = []
         self.params_types = []
         self.attributes = []
@@ -145,10 +148,10 @@ class Type:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type) -> Method:
+    def define_method(self, name: str, param_names: list, param_types: list, return_type, node=None) -> Method:
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        method = Method(name, param_names, param_types, return_type)
+        method = Method(name, param_names, param_types, return_type, node)
         self.methods.append(method)
         return method
 
