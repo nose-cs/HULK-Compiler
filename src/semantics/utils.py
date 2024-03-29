@@ -89,6 +89,9 @@ class VariableInfo:
     def __init__(self, name, vtype):
         self.name = name
         self.type = vtype
+        self.inferred_types = []
+        if not isinstance(vtype, AutoType):
+            self.inferred_types.append(vtype)
         self.nameC = None
 
     def setNameC(self, name: str):
@@ -135,7 +138,7 @@ class Scope:
         return any(True for x in self.locals if x.name == var_name)
 
     def __str__(self):
-        return self.tab_level(1, '', 1)
+        return self.tab_level(1, 1, 1)
 
     def tab_level(self, tabs, name, num) -> str:
         res = ('\t' * tabs) + ('\n' + ('\t' * tabs)).join(str(local) for local in self.locals)

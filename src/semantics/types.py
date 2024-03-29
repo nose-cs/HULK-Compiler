@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from typing import List
 
 from src.errors import SemanticError
 
@@ -181,6 +182,9 @@ class Type:
             except SemanticError:
                 return False
 
+    def is_error(self):
+        return False
+
     def bypass(self):
         return False
 
@@ -209,6 +213,9 @@ class ErrorType(Type):
         return True
 
     def bypass(self):
+        return True
+
+    def is_error(self):
         return True
 
     def __eq__(self, other):
@@ -260,13 +267,14 @@ class SelfType(Type):
         super().__init__('Self')
 
 
-def get_most_specialized_type(types):
+def get_most_specialized_type(types: List):
     if not types or any(isinstance(t, ErrorType) for t in types):
         return ErrorType()
     most_specialized = types[0]
     for typex in types[1:]:
         if typex.conforms_to(most_specialized):
             most_specialized = typex
+
         elif not most_specialized.conforms_to(typex):
             return ErrorType()
     return most_specialized

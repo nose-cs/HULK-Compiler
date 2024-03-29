@@ -18,13 +18,16 @@ class VarCollector(object):
         pass
 
     @visitor.when(hulk_nodes.ProgramNode)
-    def visit(self, node: hulk_nodes.ProgramNode, scope: Scope):
+    def visit(self, node: hulk_nodes.ProgramNode, scope: Scope = None):
+        scope = Scope()
         node.scope = scope
 
         for declaration in node.declarations:
             self.visit(declaration, scope.create_child())
 
-        self.visit(node.expression, scope)
+        self.visit(node.expression, scope.create_child())
+
+        return scope
 
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode, scope: Scope):
@@ -83,10 +86,11 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
     def visit(self, node: hulk_nodes.ExpressionBlockNode, scope: Scope):
-        node.scope = scope
+        block_scope = scope.create_child()
+        node.scope = block_scope
 
         for expr in node.expressions:
-            self.visit(expr, scope)
+            self.visit(expr, block_scope)
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope: Scope):
