@@ -1,4 +1,3 @@
-import itertools as itt
 from collections import OrderedDict
 
 from src.errors import SemanticError
@@ -17,9 +16,8 @@ class Attribute:
 
 
 class Method:
-    def __init__(self, name, param_names, params_types, return_type, node=None):
+    def __init__(self, name, param_names, params_types, return_type):
         self.name = name
-        self.node = node
         self.param_names = param_names
         self.param_types = params_types
         self.return_type = return_type
@@ -33,29 +31,22 @@ class Method:
             other.return_type == self.return_type and \
             other.param_types == self.param_types
 
-
-class Function:
-    def __init__(self, name, param_names, param_types, return_type, node=None):
-        self.name = name
-        self.node = node
-        self.param_names = param_names
-        self.param_types = param_types
-        self.return_type = return_type
-
-    def __str__(self):
-        params = ', '.join(f'{n}:{t.name}' for n, t in zip(self.param_names, self.param_types))
-        return '\n' + f'function {self.name}({params}): {self.return_type.name};' + '\n'
-
-    def __eq__(self, other):
-        return other.name == self.name and \
-            other.return_type == self.return_type and \
-            other.param_types == self.param_types
+    def can_substitute_with(self, other):
+        if self.name != other.name:
+            return False
+        if not other.return_type.conforms_to(self.return_type):
+            return False
+        if len(self.param_types) != len(other.param_types):
+            return False
+        for meth_type, impl_type in zip(self.param_types, other.param_types):
+            if not meth_type.conforms_to(impl_type):
+                return False
+        return True
 
 
 class Protocol:
-    def __init__(self, name: str, node=None):
+    def __init__(self, name: str):
         self.name = name
-        self.node = node
         self.methods = []
         self.parent = None
 
@@ -75,12 +66,27 @@ class Protocol:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type, node=None):
+    def define_method(self, name: str, param_names: list, param_types: list, return_type):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        method = Method(name, param_names, param_types, return_type, node)
+        method = Method(name, param_names, param_types, return_type)
         self.methods.append(method)
         return method
+
+    def _not_ancestor_conforms_to(self, other):
+        if not isinstance(other, Protocol):
+            return False
+        try:
+            return all(method.can_substitute_with(self.get_method(method.name)) for method in other.methods)
+        # If a method is not defined in the current type (or its ancestors), then it is not conforming
+        except SemanticError:
+            return False
+
+    def conforms_to(self, other):
+        if isinstance(other, Type):
+            return False
+        return self == other or self.parent is not None and self.parent.conforms_to(
+            other) or self._not_ancestor_conforms_to(other)
 
     def __str__(self):
         output = f'protocol {self.name}'
@@ -98,9 +104,8 @@ class Protocol:
 
 
 class Type:
-    def __init__(self, name: str, node=None):
+    def __init__(self, name: str):
         self.name = name
-        self.node = node
         self.params_names = []
         self.params_types = []
         self.attributes = []
@@ -113,13 +118,13 @@ class Type:
             raise SemanticError(f'Parent type is already set for {self.name}.')
         self.parent = parent
 
-    def get_attribute(self, name: str):
+    def get_attribute(self, name: str) -> Attribute:
         try:
             return next(attr for attr in self.attributes if attr.name == name)
         except StopIteration:
             raise SemanticError(f'Attribute "{name}" is not defined in {self.name}.')
 
-    def define_attribute(self, name: str, typex):
+    def define_attribute(self, name: str, typex) -> Attribute:
         try:
             self.get_attribute(name)
         except SemanticError:
@@ -129,7 +134,7 @@ class Type:
         else:
             raise SemanticError(f'Attribute "{name}" is already defined in {self.name}.')
 
-    def get_method(self, name: str):
+    def get_method(self, name: str) -> Method:
         try:
             return next(method for method in self.methods if method.name == name)
         except StopIteration:
@@ -140,14 +145,14 @@ class Type:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type, node=None):
+    def define_method(self, name: str, param_names: list, param_types: list, return_type) -> Method:
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        method = Method(name, param_names, param_types, return_type, node)
+        method = Method(name, param_names, param_types, return_type)
         self.methods.append(method)
         return method
 
-    def set_params(self, params_names, params_types):
+    def set_params(self, params_names, params_types) -> None:
         self.params_names = params_names
         self.params_types = params_types
 
@@ -164,7 +169,14 @@ class Type:
         return plain.values() if clean else plain
 
     def conforms_to(self, other):
-        return other.bypass() or self == other or self.parent is not None and self.parent.conforms_to(other)
+        if isinstance(other, Type):
+            return other.bypass() or self == other or self.parent is not None and self.parent.conforms_to(other)
+        elif isinstance(other, Protocol):
+            try:
+                return all(method.can_substitute_with(self.get_method(method.name)) for method in other.methods)
+            # If a method is not defined in the current type (or its ancestors), then it is not conforming
+            except SemanticError:
+                return False
 
     def bypass(self):
         return False
@@ -204,6 +216,9 @@ class AutoType(Type):
     def __init__(self):
         Type.__init__(self, '<auto>')
 
+    def __eq__(self, other):
+        return isinstance(other, AutoType) or other.name == self.name
+
 
 class StringType(Type):
     def __init__(self):
@@ -234,7 +249,7 @@ class ObjectType(Type):
         super().__init__('Object')
 
     def __eq__(self, other):
-        return isinstance(other, Type)
+        return isinstance(other, ObjectType) or other.name == self.name
 
 
 class SelfType(Type):
@@ -242,121 +257,30 @@ class SelfType(Type):
         super().__init__('Self')
 
 
-class Context:
-    def __init__(self):
-        self.types = {}
-        self.protocols = {}
-        self.functions = {}
-
-    def create_type(self, name: str, node=None):
-        if name in self.types:
-            raise SemanticError(f'Type with the same name ({name}) already in context.')
-        if name in self.protocols:
-            raise SemanticError(f'Protocol with the same name ({name}) already in context.')
-        typex = self.types[name] = Type(name, node)
-        return typex
-
-    def get_type(self, name: str):
-        try:
-            return self.types[name]
-        except KeyError:
-            raise SemanticError(f'Type "{name}" is not defined.')
-
-    def create_protocol(self, name: str, node=None):
-        if name in self.protocols:
-            raise SemanticError(f'Protocol with the same name ({name}) already in context.')
-        if name in self.types:
-            raise SemanticError(f'Type with the same name ({name}) already in context.')
-        protocol = self.protocols[name] = Protocol(name, node)
-        return protocol
-
-    def get_protocol(self, name: str):
-        try:
-            return self.protocols[name]
-        except KeyError:
-            raise SemanticError(f'Protocol "{name}" is not defined.')
-
-    def get_type_or_protocol(self, name: str):
-        try:
-            return self.get_protocol(name)
-        except SemanticError:
-            return self.get_type(name)
-
-    def create_function(self, name: str, params_names: list, params_types: list, return_type, node=None):
-        if name in self.functions:
-            raise SemanticError(f'Function with the same name ({name}) already in context.')
-        function = self.functions[name] = Function(name, params_names, params_types, return_type, node)
-        return function
-
-    def get_function(self, name: str):
-        try:
-            return self.functions[name]
-        except KeyError:
-            raise SemanticError(f'Function "{name}" is not defined.')
-
-    def __str__(self):
-        return ('{\n\t' +
-                '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) +
-                '\n\t'.join(y for x in self.protocols.values() for y in str(x).split('\n')) +
-                '\n\t'.join(y for x in self.functions.values() for y in str(x).split('\n')) +
-                '\n}')
-
-    def __repr__(self):
-        return str(self)
+def get_most_specialized_type(types):
+    if not types or any(isinstance(t, ErrorType) for t in types):
+        return ErrorType()
+    most_specialized = types[0]
+    for typex in types[1:]:
+        if typex.conforms_to(most_specialized):
+            most_specialized = typex
+        elif not most_specialized.conforms_to(typex):
+            return ErrorType()
+    return most_specialized
 
 
-class VariableInfo:
-    def __init__(self, name, vtype):
-        self.name = name
-        self.type = vtype
-
-    def __str__(self):
-        return f'{self.name} : {self.type.name}'
-
-    def __repr__(self):
-        return str(self)
+def get_lowest_common_ancestor(types):
+    if not types or any(isinstance(t, ErrorType) for t in types):
+        return ErrorType()
+    lca = types[0]
+    for typex in types[1:]:
+        lca = _get_lca(lca, typex)
+    return lca
 
 
-class Scope:
-    def __init__(self, parent=None):
-        self.locals = []
-        self.parent = parent
-        self.children = []
-        self.index = 0 if parent is None else len(parent)
-
-    def __len__(self):
-        return len(self.locals)
-
-    def create_child(self):
-        child = Scope(self)
-        self.children.append(child)
-        return child
-
-    def define_variable(self, var_name, var_type):
-        info = VariableInfo(var_name, var_type)
-        self.locals.append(info)
-        return info
-
-    def find_variable(self, var_name, index=None):
-        locals = self.locals if index is None else itt.islice(self.locals, index)
-        try:
-            return next(x for x in locals if x.name == var_name)
-        except StopIteration:
-            return self.parent.find_variable(var_name, self.index) if self.parent is None else None
-
-    def is_defined(self, var_name):
-        return self.find_variable(var_name) is not None
-
-    def is_local(self, var_name):
-        return any(True for x in self.locals if x.name == var_name)
-
-    def __str__(self):
-        return self.tab_level(1, '', 1)
-
-    def tab_level(self, tabs, name, num) -> str:
-        res = ('\t' * tabs) + ('\n' + ('\t' * tabs)).join(str(local) for local in self.locals)
-        children = '\n'.join(child.tab_level(tabs + 1, num, num + 1) for child in self.children)
-        return "\t" * (tabs - 1) + f'{name}' + "\t" * tabs + f'\n{res}\n{children}'
-
-    def __repr__(self):
-        return str(self)
+def _get_lca(type1, type2):
+    if type1.conforms_to(type2):
+        return type2
+    if type2.conforms_to(type1):
+        return type1
+    return _get_lca(type1.parent, type2.parent)

@@ -1,7 +1,8 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 from src.errors import SemanticError
-from src.semantics.semantic import Context, ErrorType, AutoType
+from src.semantics.types import ErrorType, AutoType
+from src.semantics.utils import Context
 
 
 # todo By default, a type inherits its parent type arguments, which means that to construct a PolarPoint
@@ -78,7 +79,7 @@ class TypeBuilder(object):
 
         # Check if the type is inheriting from a forbidden type
         if node.parent in ['Number', 'Bool', 'String', 'Self']:
-            self.errors.append(SemanticError(f'Type {node.idx} is inheriting from a forbidden type  -_- '))
+            self.errors.append(SemanticError(f'Type {node.idx} is inheriting from a forbidden type  -_-'))
         elif node.parent is not None:
             try:
                 # Look for a circular dependency
