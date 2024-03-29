@@ -17,8 +17,9 @@ class Attribute:
 
 
 class Method:
-    def __init__(self, name, param_names, params_types, return_type):
+    def __init__(self, name, param_names, params_types, return_type, node=None):
         self.name = name
+        self.node = node
         self.param_names = param_names
         self.param_types = params_types
         self.return_type = return_type
@@ -34,8 +35,9 @@ class Method:
 
 
 class Function:
-    def __init__(self, name, param_names, param_types, return_type):
+    def __init__(self, name, param_names, param_types, return_type, node=None):
         self.name = name
+        self.node = node
         self.param_names = param_names
         self.param_types = param_types
         self.return_type = return_type
@@ -51,8 +53,9 @@ class Function:
 
 
 class Protocol:
-    def __init__(self, name: str):
+    def __init__(self, name: str, node=None):
         self.name = name
+        self.node = node
         self.methods = []
         self.parent = None
 
@@ -72,10 +75,10 @@ class Protocol:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type):
+    def define_method(self, name: str, param_names: list, param_types: list, return_type, node=None):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        method = Method(name, param_names, param_types, return_type)
+        method = Method(name, param_names, param_types, return_type, node)
         self.methods.append(method)
         return method
 
@@ -95,8 +98,9 @@ class Protocol:
 
 
 class Type:
-    def __init__(self, name: str):
+    def __init__(self, name: str, node=None):
         self.name = name
+        self.node = node
         self.params_names = []
         self.params_types = []
         self.attributes = []
@@ -136,10 +140,10 @@ class Type:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type):
+    def define_method(self, name: str, param_names: list, param_types: list, return_type, node=None):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        method = Method(name, param_names, param_types, return_type)
+        method = Method(name, param_names, param_types, return_type, node)
         self.methods.append(method)
         return method
 
@@ -244,12 +248,12 @@ class Context:
         self.protocols = {}
         self.functions = {}
 
-    def create_type(self, name: str):
+    def create_type(self, name: str, node=None):
         if name in self.types:
             raise SemanticError(f'Type with the same name ({name}) already in context.')
         if name in self.protocols:
             raise SemanticError(f'Protocol with the same name ({name}) already in context.')
-        typex = self.types[name] = Type(name)
+        typex = self.types[name] = Type(name, node)
         return typex
 
     def get_type(self, name: str):
@@ -258,12 +262,12 @@ class Context:
         except KeyError:
             raise SemanticError(f'Type "{name}" is not defined.')
 
-    def create_protocol(self, name: str):
+    def create_protocol(self, name: str, node=None):
         if name in self.protocols:
             raise SemanticError(f'Protocol with the same name ({name}) already in context.')
         if name in self.types:
             raise SemanticError(f'Type with the same name ({name}) already in context.')
-        protocol = self.protocols[name] = Protocol(name)
+        protocol = self.protocols[name] = Protocol(name, node)
         return protocol
 
     def get_protocol(self, name: str):
@@ -278,10 +282,10 @@ class Context:
         except SemanticError:
             return self.get_type(name)
 
-    def create_function(self, name: str, params_names: list, params_types: list, return_type):
+    def create_function(self, name: str, params_names: list, params_types: list, return_type, node=None):
         if name in self.functions:
             raise SemanticError(f'Function with the same name ({name}) already in context.')
-        function = self.functions[name] = Function(name, params_names, params_types, return_type)
+        function = self.functions[name] = Function(name, params_names, params_types, return_type, node)
         return function
 
     def get_function(self, name: str):

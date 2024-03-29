@@ -38,7 +38,7 @@ class TypeBuilder(object):
                 return_type = ErrorType()
 
         try:
-            return self.context.create_function(node.id, params_names, params_types, return_type)
+            return self.context.create_function(node.id, params_names, params_types, return_type, node)
         except SemanticError as e:
             self.errors.append(e)
 
@@ -123,7 +123,7 @@ class TypeBuilder(object):
                 return_type = ErrorType()
 
         try:
-            return self.current_type.define_method(node.id, params_names, params_types, return_type)
+            return self.current_type.define_method(node.id, params_names, params_types, return_type, node)
         except SemanticError as e:
             self.errors.append(e)
 
@@ -184,6 +184,6 @@ class TypeBuilder(object):
             return_type = ErrorType()
 
         try:
-            return self.current_type.define_method(node.id, params_names, params_types, return_type)
+            return self.current_type.define_method(node.id, params_names, params_types, return_type, node)
         except SemanticError as e:
             self.errors.append(e)

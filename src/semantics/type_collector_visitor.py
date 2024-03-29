@@ -44,7 +44,7 @@ class TypeCollector(object):
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         try:
-            self.context.create_type(node.idx)
+            self.context.create_type(node.idx, node)
         except SemanticError as e:
             self.errors.append(e)
             # todo what happens here when I discover an error in the type declaration
@@ -52,6 +52,6 @@ class TypeCollector(object):
     @visitor.when(hulk_nodes.ProtocolDeclarationNode)
     def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
         try:
-            self.context.create_protocol(node.idx)
+            self.context.create_protocol(node.idx, node)
         except SemanticError as e:
             self.errors.append(e)
