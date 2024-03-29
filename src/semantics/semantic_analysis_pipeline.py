@@ -2,6 +2,8 @@ from src.semantics.formatter_visitor import FormatterVisitor
 from src.semantics.type_builder_visitor import TypeBuilder
 from src.semantics.type_checker_visitor import TypeChecker
 from src.semantics.type_collector_visitor import TypeCollector
+from src.semantics.utils import Scope
+from src.semantics.var_collector_visitor import VarCollector
 
 
 def semantic_analysis_pipeline(ast, debug=False):
@@ -34,8 +36,9 @@ def semantic_analysis_pipeline(ast, debug=False):
         print('Context:')
         print(context)
         print('=============== CHECKING TYPES ================')
-    checker = TypeChecker(context, errors)
-    scope = checker.visit(ast)
+    checker = VarCollector(context, errors)
+    scope = Scope()
+    checker.visit(ast, scope)
     if debug:
         print('Errors: [')
         for error in errors:
@@ -44,7 +47,7 @@ def semantic_analysis_pipeline(ast, debug=False):
         print('Context:')
         print(context)
         print('Scope:')
-        print(scope)
+        print(ast.scope)
         if scope.there_is_auto_type_in_scope():
             print('There is an auto type in the scope')
     return ast, errors, context, scope
