@@ -92,5 +92,5 @@ class HulkLexer(Lexer):
     def __call__(self, text):
         tokens = super().__call__(text)
         errors = self.find_errors(tokens)
-        return [token for token in tokens if
-                token.token_type.Name not in {spaces.Name, escaped_char.Name, unterminated_string.Name} and token.is_valid], errors
+        return [token for token in tokens if token.is_valid and
+                token.token_type.Name not in {spaces.Name, escaped_char.Name, unterminated_string.Name} ], errors
