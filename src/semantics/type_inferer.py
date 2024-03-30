@@ -18,13 +18,18 @@ class TypeInfer(object):
 
     @staticmethod
     def assign_auto_type(node, scope: Scope, other_type: (types.Type | types.Protocol)):
-        # If I am asked for assign a variable auto type, I ignore it
+        """
+        Add the inferred type to the variable in the scope
+        :param node: The node that was inferred
+        :param scope: The scope where the variable is
+        :param other_type: The inferred type
+        :return: None
+        """
         if other_type == types.AutoType():
-            return other_type
+            return
         if isinstance(node, hulk_nodes.VariableNode):
             var_info = scope.find_variable(node.lex)
             var_info.inferred_types.append(other_type)
-        return other_type
 
     @visitor.on('node')
     def visit(self, node, scope):
@@ -50,18 +55,26 @@ class TypeInfer(object):
 
         for attr in node.attributes:
             attr_type = self.visit(attr, new_scope)
-            attr = self.current_type.get_attribute(attr.id)
-            attr.type = attr_type
+            attribute = self.current_type.get_attribute(attr.id)
+            if attribute.type == types.AutoType():
+                if attr_type == types.AutoType():
+                    self.errors.append(SemanticError("Cannot infer the type of the attribute, please specify it."))
+                    attr_type = types.ErrorType()
+                attribute.type = attr_type
 
         # Check if we could infer some params types
         for i in range(len(self.current_type.params_types)):
             if self.current_type.params_types[i] == types.AutoType():
                 local_var = new_scope.find_variable(self.current_type.params_names[i])
-                new_type = types.get_most_specialized_type(local_var.inferred_types)
-                self.current_type.params_types[i] = new_type
-                local_var.type = new_type
-                if new_type.is_error():
-                    self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
+                if local_var.inferred_types:
+                    new_type = types.get_most_specialized_type(local_var.inferred_types)
+                    self.current_type.params_types[i] = new_type
+                    local_var.type = new_type
+                    if new_type.is_error():
+                        self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
+                else:
+                    self.errors.append(SemanticError("Cannot infer the type of the param, please specify it."))
+                    local_var.type = types.ErrorType()
 
         # Infer the params types and return type of the methods
         methods_scope = scope.children[1]
@@ -97,11 +110,15 @@ class TypeInfer(object):
         for i in range(len(method.param_types)):
             if method.param_types[i] == types.AutoType():
                 local_var = method_scope.find_variable(method.param_names[i])
-                new_type = types.get_most_specialized_type(local_var.inferred_types)
-                method.param_types[i] = new_type
-                local_var.type = new_type
-                if new_type.is_error():
-                    self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
+                if local_var.inferred_types:
+                    new_type = types.get_most_specialized_type(local_var.inferred_types)
+                    method.param_types[i] = new_type
+                    local_var.type = new_type
+                    if new_type.is_error():
+                        self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
+                else:
+                    self.errors.append(SemanticError("Cannot infer the type of the param, please specify it."))
+                    local_var.type = types.ErrorType()
 
         return return_type
 
@@ -119,11 +136,15 @@ class TypeInfer(object):
         for i in range(len(function.param_types)):
             if function.param_types[i] == types.AutoType():
                 local_var = new_scope.find_variable(function.param_names[i])
-                new_type = types.get_most_specialized_type(local_var.inferred_types)
-                function.param_types[i] = new_type
-                local_var.type = new_type
-                if new_type.is_error():
-                    self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
+                if local_var.inferred_types:
+                    new_type = types.get_most_specialized_type(local_var.inferred_types)
+                    function.param_types[i] = new_type
+                    local_var.type = new_type
+                    if new_type.is_error():
+                        self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
+                else:
+                    self.errors.append(SemanticError("Cannot infer the type of the param, please specify it."))
+                    local_var.type = types.ErrorType()
 
         return return_type
 
@@ -171,16 +192,12 @@ class TypeInfer(object):
     def visit(self, node: hulk_nodes.ConditionalNode, scope: Scope):
         cond_types = [self.visit(cond, child_scope) for cond, child_scope in zip(node.conditions, scope.children)]
 
-        # for cond_type in cond_types:
-        #     if cond_type != types.BoolType():
-        #         self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
-
-        expr_types = [self.visit(expression, scope.create_child()) for expression in
+        expr_types = [self.visit(expression, child_scope) for expression, child_scope in
                       zip(node.expressions, scope.children[len(cond_types):])]
 
         else_type = self.visit(node.default_expr, scope.children[-1])
 
-        return types.get_lowest_common_ancestor(expr_types + else_type)
+        return types.get_lowest_common_ancestor(expr_types + [else_type])
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, scope: Scope):
@@ -207,16 +224,38 @@ class TypeInfer(object):
 
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, scope: Scope):
-        try:
-            method = self.current_type.get_method(node.method)
+        if not scope.is_defined(node.obj):
+            obj_type = self.visit(node.obj, scope)
+        else:
+            obj_type = scope.find_variable(node.obj).type
 
+        try:
+            method = self.current_type.get_method(node.method) if obj_type == types.SelfType() else obj_type.get_method(
+                node.method)
             for arg, param_type in zip(node.args, method.param_types):
                 self.visit(arg, scope)
                 self.assign_auto_type(arg, scope, param_type)
-
             return method.return_type
         except SemanticError as e:
             self.errors.append(e)
+            return types.ErrorType()
+
+    @visitor.when(hulk_nodes.AttributeCallNode)
+    def visit(self, node: hulk_nodes.AttributeCallNode, scope: Scope):
+        if not scope.is_defined(node.obj):
+            obj_type = self.visit(node.obj, scope)
+        else:
+            obj_type = scope.find_variable(node.obj).type
+
+        if obj_type == types.SelfType():
+            try:
+                attr = self.current_type.get_attribute(node.attribute)
+                return attr.type
+            except SemanticError as e:
+                self.errors.append(e)
+                return types.ErrorType()
+        else:
+            self.errors.append(SemanticError("Cannot access an attribute from a non-self object"))
             return types.ErrorType()
 
     # todo for loop

@@ -1,7 +1,7 @@
 from src.semantics.formatter_visitor import FormatterVisitor
 from src.semantics.type_builder_visitor import TypeBuilder
+from src.semantics.type_checker_visitor import TypeChecker
 from src.semantics.type_collector_visitor import TypeCollector
-from src.semantics.utils import Scope
 from src.semantics.var_collector_visitor import VarCollector
 from src.semantics.type_inferer import TypeInfer
 
@@ -49,15 +49,27 @@ def semantic_analysis_pipeline(ast, debug=False):
         print('Scope:')
         print(scope)
         print('---------------- TYPE INFERENCE ------------------')
-    # type_inference = TypeInfer(context, errors)
-    # type_inference.visit(ast, scope)
-    # if debug:
-    #     print('Errors: [')
-    #     for error in errors:
-    #         print('\t', error)
-    #     print(']')
-    #     print('Context:')
-    #     print(context)
-    #     print('Scope:')
-    #     print(scope)
+    type_inference = TypeInfer(context, errors)
+    type_inference.visit(ast, scope)
+    if debug:
+        print('Errors: [')
+        for error in errors:
+            print('\t', error)
+        print(']')
+        print('Context:')
+        print(context)
+        print('Scope:')
+        print(scope)
+        print('---------------- TYPE CHECKER ------------------')
+    type_checker = TypeChecker(context, errors)
+    type_checker.visit(ast, scope)
+    if debug:
+        print('Errors: [')
+        for error in errors:
+            print('\t', error)
+        print(']')
+        print('Context:')
+        print(context)
+        print('Scope:')
+        print(scope)
     return ast, errors, context, scope
