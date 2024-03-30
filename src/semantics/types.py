@@ -1,8 +1,9 @@
 from collections import OrderedDict
-from typing import List
+from typing import List, Union
 
-from src.errors import SemanticError
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
+from src.errors import SemanticError
+
 
 class Attribute:
     def __init__(self, name, typex, node=None):
@@ -101,6 +102,10 @@ class Protocol:
             return False
         return self == other or self.parent is not None and self.parent.conforms_to(
             other) or self._not_ancestor_conforms_to(other)
+
+    @staticmethod
+    def is_error():
+        return False
 
     def __str__(self):
         output = f'protocol {self.name}'
@@ -309,20 +314,43 @@ class SelfType(Type):
         return isinstance(other, SelfType) or other.name == self.name
 
 
-def get_most_specialized_type(types: List):
+def get_most_specialized_type(types: List[Union[Type, Protocol]]):
+    """
+    Get the most specialized type in a list of types.
+    If there is some ErrorType in the list, it will return an ErrorType.
+    If there is some AutoType in the list, it will return an AutoType.
+    If there is no specialized type, it will return an ErrorType.
+
+    :param types: List of types or protocols
+    :type types: List[Union[Type, Protocol]]
+    :return: The most specialized type in the list.
+    :rtype: Type or Protocol
+    """
     if not types or any(isinstance(t, ErrorType) for t in types):
         return ErrorType()
+    if any(isinstance(t, AutoType) for t in types):
+        return AutoType()
     most_specialized = types[0]
     for typex in types[1:]:
         if typex.conforms_to(most_specialized):
             most_specialized = typex
-
         elif not most_specialized.conforms_to(typex):
             return ErrorType()
     return most_specialized
 
 
-def get_lowest_common_ancestor(types):
+# todo define lca with protocols
+def get_lowest_common_ancestor(types: List[Type]):
+    """
+    Get the lowest common ancestor of a list of types.
+    If there is some ErrorType in the list, it will return an ErrorType.
+    If there is some AutoType in the list, it will return an AutoType.
+
+    :param types: List of types
+    :type types: List[Type]
+    :return: The lca of the types.
+    :rtype: Type
+    """
     if not types or any(isinstance(t, ErrorType) for t in types):
         return ErrorType()
     if any(t == AutoType() for t in types):
@@ -333,7 +361,7 @@ def get_lowest_common_ancestor(types):
     return lca
 
 
-def _get_lca(type1, type2):
+def _get_lca(type1: Type, type2: Type):
     if type1.conforms_to(type2):
         return type2
     if type2.conforms_to(type1):

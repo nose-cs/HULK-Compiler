@@ -8,7 +8,7 @@ from src.semantics.types import Method
 from src.semantics.utils import Scope, Context, Function
 
 
-class TypeInfer(object):
+class TypeInferrer(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
             errors = []
@@ -17,22 +17,22 @@ class TypeInfer(object):
         self.errors: List[SemanticError] = errors
 
     @staticmethod
-    def assign_auto_type(node, scope: Scope, other_type: (types.Type | types.Protocol)):
+    def assign_auto_type(node: hulk_nodes.Node, scope: Scope, inf_type: types.Type | types.Protocol):
         """
         Add the inferred type to the variable in the scope
         :param node: The node that was inferred
         :param scope: The scope where the variable is
-        :param other_type: The inferred type
-        :return: None
+        :param inf_type: The inferred type
+        :rtype: None
         """
-        if other_type == types.AutoType():
+        if inf_type == types.AutoType():
             return
         if isinstance(node, hulk_nodes.VariableNode):
             var_info = scope.find_variable(node.lex)
-            var_info.inferred_types.append(other_type)
+            var_info.inferred_types.append(inf_type)
 
     @visitor.on('node')
-    def visit(self, node, scope):
+    def visit(self, node: hulk_nodes.Node, scope: Scope):
         pass
 
     @visitor.when(hulk_nodes.ProgramNode)
@@ -100,6 +100,9 @@ class TypeInfer(object):
         return_type = self.visit(node.expr, method_scope)
 
         if method.return_type == types.AutoType():
+            if return_type == types.AutoType():
+                self.errors.append(SemanticError("Cannot infer the return type of the method, please specify it."))
+                return_type = types.ErrorType()
             method.return_type = return_type
 
         # Check if we could infer some params types
@@ -126,6 +129,9 @@ class TypeInfer(object):
         return_type = self.visit(node.expr, new_scope)
 
         if function.return_type == types.AutoType():
+            if return_type == types.AutoType():
+                self.errors.append(SemanticError("Cannot infer the return type of the function, please specify it."))
+                return_type = types.ErrorType()
             function.return_type = return_type
 
         # Check if we could infer some params types
@@ -159,6 +165,10 @@ class TypeInfer(object):
 
         var = scope.find_variable(node.id)
         var.type = var.type if var.type != types.AutoType() else inf_type
+
+        if var.type == types.AutoType():
+            self.errors.append(SemanticError("Cannot infer the type of the variable, please specify it."))
+            var.type = types.ErrorType()
 
         return var.type
 
@@ -307,10 +317,9 @@ class TypeInfer(object):
 
         return bool_type
 
-    # todo change is instance for a "has_implicit_cast" to accept print("The meaning of life is" @@ 42)
     @visitor.when(hulk_nodes.StrBinaryExpressionNode)
     def visit(self, node: hulk_nodes.StrBinaryExpressionNode, scope: Scope):
-        string_type = self.context.get_type('Number')
+        string_type = self.context.get_type('String')
         object_type = self.context.get_type('Object')
 
         left_type = self.visit(node.left, scope)
@@ -327,9 +336,10 @@ class TypeInfer(object):
     # todo l_type != r_type is error or false
     @visitor.when(hulk_nodes.EqualityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
+        bool_type = self.context.get_type('Bool')
         self.visit(node.left, scope)
         self.visit(node.right, scope)
-        return self.context.get_type('Bool')
+        return bool_type
 
     @visitor.when(hulk_nodes.NegNode)
     def visit(self, node: hulk_nodes.NegNode, scope: Scope):
