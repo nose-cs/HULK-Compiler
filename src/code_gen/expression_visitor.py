@@ -9,15 +9,27 @@ class CodeGenC(object):
     def __init__(self, context) -> None:
         self.index_var = 0
         self.context: Context = context
+        
+        self.blocks_defs = ""
+
+        self.condition_blocks = ""
+        self.index_condition_blocks = 0
+
         self.if_else_blocks = ""
         self.index_if_else_blocks = 0
 
-    def getlinesindented(self, code: str, add_return=False):
+        self.while_blocks = ""
+        self.index_while_blocks = 0
+
+    def getlinesindented(self, code: str, add_return=False, collect_last_exp=False):
         lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
         
         if add_return:
             lines[-1] = "   return " + lines[-1][3:]
         
+        if collect_last_exp:
+            lines[-1] = "   return_obj = " + lines[-1][3:]
+
         return '\n'.join(lines)
 
     @visitor.on('node')
@@ -173,34 +185,7 @@ class CodeGenC(object):
     
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode):
-        code = "Object* ifElseBlock" + str(self.index_if_else_blocks) + "("
-        index = self.index_if_else_blocks
-        self.index_if_else_blocks += 1
-
         vars = node.scope.get_variables(True)
-
-        for var in vars:
-            code += "Object* " + var.nameC + ", "
-
-        if len(vars) > 0:
-            code = code[:-2]
-
-        code += ") {\n"
-        
-        code += "   if(*((bool*)getAttributeValue(" + self.visit(node.conditions[0]) + ", \"value\"))) {\n"
-
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[0]), True)) + ";\n   }\n"
-
-        for i in range(1, len(node.conditions)):
-            code += "   else if(*((bool*)getAttributeValue(" + self.visit(node.conditions[i]) + ", \"value\"))) {\n"
-            code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[i]), True)) + ";\n   }\n"
-
-        code += "   else {\n"
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.default_expr), True)) + ";\n   }\n"
-
-        code += "}"
-
-        self.if_else_blocks += code + "\n\n"
 
         params = "("
 
@@ -210,7 +195,62 @@ class CodeGenC(object):
         if len(vars) > 0:
             params = params[:-2]     
 
-        params += ")"   
+        params += ")"
+
+        conditions_codes = []
+
+        for condition in node.conditions:
+            condition_code = "Object* condition" + str(self.index_condition_blocks) + "("
+            index_condition = self.index_condition_blocks
+            self.index_condition_blocks += 1
+
+            for var in vars:
+                condition_code += "Object* " + var.nameC + ", "
+
+            if len(vars) > 0:
+                condition_code = condition_code[:-2]
+
+            condition_code += ")"
+            self.blocks_defs += condition_code + ";\n\n"
+
+            condition_code += " {\n"
+
+            condition_code += self.getlinesindented(self.visit(condition), True) + ";\n}"
+
+            self.condition_blocks += condition_code + "\n\n"
+            conditions_codes.append("condition" + str(index_condition) + params)
+
+
+        code = "Object* ifElseBlock" + str(self.index_if_else_blocks) + "("
+        index = self.index_if_else_blocks
+        self.index_if_else_blocks += 1
+
+        for var in vars:
+            code += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            code = code[:-2]
+
+        code += ")"
+
+        self.blocks_defs += code + ";\n\n"
+
+        code += " {\n"
+        
+        code += "   if(*((bool*)getAttributeValue(" + conditions_codes[0] + ", \"value\"))) {\n"
+
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[0]), True)) + ";\n   }\n"
+
+        for i in range(1, len(node.conditions)):
+            code += "   else if(*((bool*)getAttributeValue(" + conditions_codes[i] + ", \"value\"))) {\n"
+            code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[i]), True)) + ";\n   }\n"
+
+        code += "   else {\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.default_expr), True)) + ";\n   }\n"
+
+        code += "}"
+
+        self.if_else_blocks += code + "\n\n"
 
         return "ifElseBlock" + str(index) + params
 
@@ -252,6 +292,65 @@ class CodeGenC(object):
     
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode):
-        code = "while (" + self.visit(node.condition) + ") {\n"
-        code += self.getlinesindented(self.visit(node.expression))
-        code += "\n}\n"
+        vars = node.scope.get_variables(True)
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        if len(vars) > 0:
+            params = params[:-2]     
+
+        params += ")"
+
+        condition_code = "Object* condition" + str(self.index_condition_blocks) + "("
+        index_condition = self.index_condition_blocks
+        self.index_condition_blocks += 1
+
+        for var in vars:
+            condition_code += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            condition_code = condition_code[:-2]
+
+        condition_code += ")"
+        self.blocks_defs += condition_code + ";\n\n"
+
+        condition_code += " {\n"
+
+        condition_code += self.getlinesindented(self.visit(node.condition), True) + ";\n}"
+
+        self.condition_blocks += condition_code + "\n\n"
+
+
+        code = "Object* whileBlock" + str(self.index_while_blocks) + "("
+        index = self.index_while_blocks
+        self.index_while_blocks += 1
+
+        for var in vars:
+            code += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            code = code[:-2]
+
+        code += ")"
+
+        self.blocks_defs += code + ";\n\n"
+
+        code += " {\n"
+        code += "   Object* return_obj = NULL;\n"
+
+        code += "   while(*((bool*)getAttributeValue(condition" + str(index_condition) + params + ", \"value\"))) {\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + ";\n"
+        code += "   }\n"
+
+        code += "   return return_obj;\n}"
+
+        self.while_blocks += code + "\n\n"
+
+        return "whileBlock" + str(index) + params
+    
+    @visitor.when(hulk_nodes.DestructiveAssignmentNode)
+    def visit(self, node: hulk_nodes.DestructiveAssignmentNode):
+        return "replaceObject(" + self.visit(node.target) + ", " + self.visit(node.expr) + ")"
