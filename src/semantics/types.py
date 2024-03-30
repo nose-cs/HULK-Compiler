@@ -263,6 +263,9 @@ class SelfType(Type):
     def __init__(self) -> None:
         super().__init__('Self')
 
+    def __eq__(self, other):
+        return isinstance(other, SelfType) or other.name == self.name
+
 
 def get_most_specialized_type(types: List):
     if not types or any(isinstance(t, ErrorType) for t in types):
