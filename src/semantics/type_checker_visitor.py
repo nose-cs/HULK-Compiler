@@ -321,11 +321,15 @@ class TypeChecker(object):
 
         return string_type
 
-    # todo l_type != r_type is error or false
     @visitor.when(hulk_nodes.EqualityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
-        self.visit(node.left, scope)
-        self.visit(node.right, scope)
+        left_type = self.visit(node.left, scope)
+        right_type = self.visit(node.right, scope)
+
+        if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
+            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
+            return types.ErrorType()
+
         return self.context.get_type('Bool')
 
     @visitor.when(hulk_nodes.NegNode)
