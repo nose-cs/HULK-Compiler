@@ -140,6 +140,14 @@ class Scope:
         except StopIteration:
             return self.parent.find_variable(var_name, self.index) if self.parent is not None else None
 
+    def get_variables(self, all=False):
+        vars = [x for x in self.locals]
+
+        if all and self.parent is not None:
+            vars.extend(self.parent.get_variables(True))
+
+        return vars
+
     def is_defined(self, var_name: str) -> bool:
         return self.find_variable(var_name) is not None
 

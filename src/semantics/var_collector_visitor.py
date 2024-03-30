@@ -127,6 +127,7 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, scope: Scope):
         node.scope = scope
+        self.visit(node.target, scope)
         self.visit(node.expr, scope)
 
     @visitor.when(hulk_nodes.BinaryExpressionNode)
