@@ -51,13 +51,24 @@ class TestMiscelaneous(unittest.TestCase):
         tokens = lexer._tokenize(inp)
         return assert_without_exception(parser, tokens)
     
+    def sucesiveMinsOrd(self):
+        inp = '''
+            function Sort(A) => 
+            let  aux = 0 in for i in range(0, A.size())
+                for j in range(i, A.size())
+                 if(A[j] < A[i])
+                 {
+                    aux := A[i];
+                    A[i] := A[j];
+                    A[j] := aux;
+                    A
+                }
+                else A;
+
+        '''
+    
     def HeapSort(self):
         inp = '''
-            
-            Type Heap(A)
-            {
-                Heap = BuildHeap(A)
-            } 
             '''
     
 

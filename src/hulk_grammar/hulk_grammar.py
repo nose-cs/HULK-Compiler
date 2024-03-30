@@ -184,10 +184,9 @@ obj_indexing_or_method_or_attribute_call %= (obj_indexing_or_method_or_attribute
                                  lambda h, s: hulk_ast_nodes.MethodCallNode(s[1], s[3], s[5]))
 obj_indexing_or_method_or_attribute_call %= (obj_indexing_or_method_or_attribute_call + dot + idx,
                                  lambda h, s: hulk_ast_nodes.AttributeCallNode(s[1], s[3]))
+obj_indexing_or_method_or_attribute_call %= (obj_indexing_or_method_or_attribute_call + o_square_bracket + expr + c_square_bracket, 
+                                 lambda h,s: hulk_ast_nodes.IndexingNNode(s[1] , s[3]))
 obj_indexing_or_method_or_attribute_call %= factor, lambda h, s: s[1]
-
-obj_indexing_or_method_or_attribute_call %= obj_indexing_or_method_or_attribute_call + o_square_bracket + expr + c_square_bracket, 
-lambda h,s: hulk_ast_nodes.IndexingNNode(s[1] , s[3])
 
 
 factor %= opar + expr + cpar, lambda h, s: s[2]
