@@ -142,7 +142,7 @@ class TypeBuilder(object):
             attribute_type = AutoType()
 
         try:
-            return self.current_type.define_attribute(node.id, attribute_type)
+            return self.current_type.define_attribute(node.id, attribute_type, node)
         except SemanticError as e:
             self.errors.append(e)
 

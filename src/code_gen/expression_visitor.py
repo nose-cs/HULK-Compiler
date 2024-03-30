@@ -23,10 +23,25 @@ class CodeGenC(object):
         code = "create" + node.idx + " ("
         before = len(code)        
 
+        classs = self.context.get_type(node.idx)
+        args = node.args
+
+        while classs is not None and classs.name != "Object":
+            for i, param in enumerate(classs.get_params()[0]):
+                classs.node.scope.children[0].find_variable(param).setNameC(self.visit(args[i])[0])
+
+            for att in classs.attributes:
+                code += self.visit(att.node.expr)[0] + ", "
+
+            args = classs.node.parent_args
+            classs = classs.parent
+
         if before != len(code):
             code = code[:-2]
         
-        return code
+        code += ")"
+
+        return code, self.context.get_type(node.idx)
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
@@ -145,3 +160,16 @@ class CodeGenC(object):
 
         att_type = type.get_attribute(node.attribute).type
         return "getAttributeValue(" + c + ", \"" + type.name + "_" + node.attribute + "\")", att_type
+    
+    @visitor.when(hulk_nodes.MethodCallNode)
+    def visit(self, node: hulk_nodes.MethodCallNode):
+        obj, obj_type = self.visit(node.obj)
+
+        code = "method_" + obj_type.name + "_" + node.method.name + "(" + obj
+
+        for arg in node.args:
+            code += ", " + self.visit(arg)[0]
+
+        code += ")"
+
+        return code, node.method.return_type

@@ -189,3 +189,9 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.VariableNode)
     def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
         node.scope = scope
+
+    @visitor.when(hulk_nodes.TypeInstantiationNode)
+    def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
+        node.scope = scope
+        for arg in node.args:
+            self.visit(arg, scope)

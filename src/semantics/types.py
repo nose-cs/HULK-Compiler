@@ -2,12 +2,13 @@ from collections import OrderedDict
 from typing import List
 
 from src.errors import SemanticError
-
+import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 
 class Attribute:
-    def __init__(self, name, typex):
+    def __init__(self, name, typex, node=None):
         self.name = name
         self.type = typex
+        self.node = node
 
     def __str__(self):
         return f'[attrib] {self.name} : {self.type.name};'
@@ -111,6 +112,7 @@ class Type:
         self.name = name
         self.node = node
         self.params_names = []
+        self.looked_for_parent_params = False
         self.params_types = []
         self.attributes = []
         self.attributes_types = []
@@ -128,11 +130,11 @@ class Type:
         except StopIteration:
             raise SemanticError(f'Attribute "{name}" is not defined in {self.name}.')
 
-    def define_attribute(self, name: str, typex) -> Attribute:
+    def define_attribute(self, name: str, typex, node=None) -> Attribute:
         try:
             self.get_attribute(name)
         except SemanticError:
-            attribute = Attribute(name, typex)
+            attribute = Attribute(name, typex, node)
             self.attributes.append(attribute)
             return attribute
         else:
@@ -159,6 +161,26 @@ class Type:
     def set_params(self, params_names, params_types) -> None:
         self.params_names = params_names
         self.params_types = params_types
+
+    def get_params(self):
+        if not self.looked_for_parent_params and len(self.params_names) == 0:
+            if self.parent is not None:
+                params_names, params_types = self.parent.get_params()
+                self.params_names.extend(params_names)
+                self.params_types.extend(params_types)
+
+                self.node.args = []
+                self.node.parent_args = []
+                for param_name, param_type in zip(self.params_names, self.params_types):
+                    self.node.scope.children[0].define_variable(param_name, param_type)
+                    self.node.args.append(hulk_nodes.VariableNode(param_name))
+
+                    p_arg = hulk_nodes.VariableNode(param_name)
+                    p_arg.scope = self.node.scope.children[0]
+                    self.node.parent_args.append(p_arg)
+
+            self.looked_for_parent_params = True
+        return self.params_names, self.params_types
 
     def all_attributes(self, clean=True):
         plain = OrderedDict() if self.parent is None else self.parent.all_attributes(False)
