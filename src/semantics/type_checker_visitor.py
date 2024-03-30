@@ -218,6 +218,9 @@ class TypeChecker(object):
         else:
             obj_type = scope.find_variable(node.obj).type
 
+        if isinstance(obj_type, types.ErrorType):
+            return types.ErrorType()
+
         try:
             if obj_type == types.SelfType():
                 method = self.current_type.get_method(node.method)
@@ -245,6 +248,9 @@ class TypeChecker(object):
             obj_type = self.visit(node.obj, scope)
         else:
             obj_type = scope.find_variable(node.obj).type
+
+        if isinstance(obj_type, types.ErrorType):
+            return types.ErrorType()
 
         if obj_type == types.SelfType():
             try:
@@ -399,7 +405,11 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
-        ttype = self.context.get_type(node.idx)
+        try:
+            ttype = self.context.get_type(node.idx)
+        except SemanticError as e:
+            self.errors.append(e)
+            return types.ErrorType()
 
         args_types = [self.visit(arg, scope) for arg in node.args]
 

@@ -195,12 +195,6 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
-        try:
-            self.context.get_type(node.idx)
-        except SemanticError as e:
-            self.errors.append(e)
-            self.context.create_error_type(node.idx)
-
         node.scope = scope
         for arg in node.args:
             self.visit(arg, scope)

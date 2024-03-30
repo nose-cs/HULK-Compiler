@@ -166,7 +166,7 @@ class TypeInferrer(object):
         var = scope.find_variable(node.id)
         var.type = var.type if var.type != types.AutoType() else inf_type
 
-        if var.type == types.AutoType():
+        if var.type == types.AutoType() and not isinstance(var.type, types.ErrorType):
             self.errors.append(SemanticError("Cannot infer the type of the variable, please specify it."))
             var.type = types.ErrorType()
 
@@ -227,6 +227,9 @@ class TypeInferrer(object):
         else:
             obj_type = scope.find_variable(node.obj).type
 
+        if isinstance(obj_type, types.ErrorType):
+            return types.ErrorType()
+
         try:
             if obj_type == types.SelfType():
                 method = self.current_type.get_method(node.method)
@@ -238,6 +241,7 @@ class TypeInferrer(object):
         for arg, param_type in zip(node.args, method.param_types):
             self.visit(arg, scope)
             self.assign_auto_type(arg, scope, param_type)
+
         return method.return_type
 
     @visitor.when(hulk_nodes.AttributeCallNode)
@@ -246,6 +250,9 @@ class TypeInferrer(object):
             obj_type = self.visit(node.obj, scope)
         else:
             obj_type = scope.find_variable(node.obj).type
+
+        if isinstance(obj_type, types.ErrorType):
+            return types.ErrorType()
 
         if obj_type == types.SelfType():
             try:
@@ -382,5 +389,12 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
-        ttype = self.context.get_type(node.idx)
+        try:
+            ttype = self.context.get_type(node.idx)
+        except SemanticError:
+            return types.ErrorType()
+
+        for arg in node.args:
+            self.visit(arg, scope)
+
         return ttype
