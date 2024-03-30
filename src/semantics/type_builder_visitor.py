@@ -101,7 +101,8 @@ class TypeBuilder(object):
                 # If the parent type is already set
                 self.errors.append(e)
         else:
-            self.current_type.set_parent(self.context.get_type('Object'))
+            object_type = self.context.get_type('Object')
+            self.current_type.set_parent(object_type)
 
         for attribute in node.attributes:
             self.visit(attribute)
