@@ -153,6 +153,10 @@ class TypeChecker(object):
         new_type = self.visit(node.expr, scope)
         old_type = self.visit(node.target, scope)
 
+        if old_type == types.SelfType():
+            self.errors.append(SemanticError(SemanticError.SELF_IS_READONLY))
+            return types.ErrorType()
+
         if not new_type.conforms_to(old_type):
             self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
             return types.ErrorType()
@@ -186,7 +190,12 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode, scope: Scope):
         args_types = [self.visit(arg, scope) for arg in node.args]
-        function = self.context.get_function(node.idx)
+
+        try:
+            function = self.context.get_function(node.idx)
+        except SemanticError as e:
+            self.errors.append(e)
+            return types.ErrorType()
 
         if len(args_types) != len(function.param_types):
             self.errors.append(
@@ -203,7 +212,23 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, scope: Scope):
         args_types = [self.visit(arg, scope) for arg in node.args]
-        method = self.current_type.get_method(node.method)
+
+        if not scope.is_defined(node.obj):
+            obj_type = self.visit(node.obj, scope)
+        else:
+            obj_type = scope.find_variable(node.obj).type
+
+        if isinstance(obj_type, types.ErrorType):
+            return types.ErrorType()
+
+        try:
+            if obj_type == types.SelfType():
+                method = self.current_type.get_method(node.method)
+            else:
+                method = obj_type.get_method(node.method)
+        except SemanticError as e:
+            self.errors.append(e)
+            return types.ErrorType()
 
         if len(args_types) != len(method.param_types):
             self.errors.append(
@@ -223,6 +248,9 @@ class TypeChecker(object):
             obj_type = self.visit(node.obj, scope)
         else:
             obj_type = scope.find_variable(node.obj).type
+
+        if isinstance(obj_type, types.ErrorType):
+            return types.ErrorType()
 
         if obj_type == types.SelfType():
             try:
@@ -321,11 +349,15 @@ class TypeChecker(object):
 
         return string_type
 
-    # todo l_type != r_type is error or false
     @visitor.when(hulk_nodes.EqualityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
-        self.visit(node.left, scope)
-        self.visit(node.right, scope)
+        left_type = self.visit(node.left, scope)
+        right_type = self.visit(node.right, scope)
+
+        if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
+            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION))
+            return types.ErrorType()
+
         return self.context.get_type('Bool')
 
     @visitor.when(hulk_nodes.NegNode)
@@ -373,7 +405,11 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
-        ttype = self.context.get_type(node.idx)
+        try:
+            ttype = self.context.get_type(node.idx)
+        except SemanticError as e:
+            self.errors.append(e)
+            return types.ErrorType()
 
         args_types = [self.visit(arg, scope) for arg in node.args]
 
