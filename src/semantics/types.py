@@ -285,8 +285,15 @@ class ObjectType(Type):
 
 
 class SelfType(Type):
-    def __init__(self) -> None:
+    def __init__(self, referred_type: Type = None) -> None:
         super().__init__('Self')
+        self.referred_type = referred_type
+
+    def get_attribute(self, name: str) -> Attribute:
+        if self.referred_type:
+            return self.referred_type.get_attribute(name)
+
+        return super().get_attribute(name)
 
     def __eq__(self, other):
         return isinstance(other, SelfType) or other.name == self.name

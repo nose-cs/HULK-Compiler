@@ -48,7 +48,7 @@ class VarCollector(object):
 
         # Create a new scope that includes the self symbol
         methods_scope = scope.create_child()
-        methods_scope.define_variable('self', SelfType())
+        methods_scope.define_variable('self', SelfType(self.current_type))
         for method in node.methods:
             self.visit(method, methods_scope)
 
