@@ -105,7 +105,7 @@ class TestHulkLoops(unittest.TestCase):
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
     def test(self):
-        type_test = """
+        inp = """
         type A(q : Number, r : Number) {
         f : Number = q;
         p : Number = r;
@@ -121,15 +121,16 @@ class TestHulkLoops(unittest.TestCase):
         let b : Number = a * 7, c : Object = b in
         print(operate(a, b));
         """
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-        assert run_code(type_test, True)
-
-    def test_(self):
-        type_test = """
-        function IsPrime(n) => let a = false in 
-        for (i in range(1,sqrt(n))
-            if(n % i == 0) a := true else a);
-        IsPrime(17)
+    def test10(self):
+        inp = """
+         function IsPrime(n) => 
+         let a = false in for(i in range(2,sqrt(n)))
+            if(n % i == 0) a := true else a;
+        IsPrime(23);
         """
 
-        assert run_code(type_test, True)
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

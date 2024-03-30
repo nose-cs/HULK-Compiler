@@ -111,9 +111,11 @@ class Formatter(object):
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ DestructiveAssignmentNode: {node.target} := <expr>'
+
+        ans = '\t' * tabs + f'\\__ DestructiveAssignmentNode: <expr> := <expr>'
+        target = self.visit(node.target, tabs + 1)
         expr = self.visit(node.expr, tabs + 1)
-        return f'{ans}\n{expr}'
+        return f'{ans}\n{target}\n{expr}'
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, tabs=0):
@@ -125,7 +127,7 @@ class Formatter(object):
     @visitor.when(hulk_nodes.ForNode)
     def visit(self, node: hulk_nodes.ForNode, tabs=0):
         ans = '\t' * tabs + f'\\__ ForNode: for({node.var} in <expr>) <expr>'
-        iterable = self.visit(node.iterable)
+        iterable = self.visit(node.iterable, tabs + 1)
         expr = self.visit(node.expression, tabs + 1)
         return f'{ans}\n{iterable}\n{expr}'
 
@@ -137,17 +139,17 @@ class Formatter(object):
         expressions = [self.visit(expr, tabs + 1) for expr in node.expressions]
 
         if_cond, if_expr = conditions[0], expressions[0]
-        if_clause = '\t' * tabs + f'\\__ if(<expr>) <expr>\n{if_cond}\n{if_expr}'
+        if_clause = '\t' * tabs + f'if(<expr>) <expr>\n{if_cond}\n{if_expr}'
 
         elif_clauses = []
         for i in range(1, len(conditions)):
-            elif_clauses.append('\t' * tabs + f'\\__ elif(<expr>) <expr>\n{conditions[i]}\n{expressions[i]}')
+            elif_clauses.append('\t' * tabs + f'elif(<expr>) <expr>\n{conditions[i]}\n{expressions[i]}')
 
         elif_clauses = '\n'.join(elif_clauses) if elif_clauses else ''
         if len(elif_clauses) > 0:
             elif_clauses = '\n' + elif_clauses
 
-        else_clause = '\t' * tabs + f'\\__ else <expr>\n{self.visit(node.default_expr, tabs + 1)}'
+        else_clause = '\t' * tabs + f'else <expr>\n{self.visit(node.default_expr, tabs + 1)}'
 
         return f'{ans}\n{if_clause}{elif_clauses}\n{else_clause}'
 
