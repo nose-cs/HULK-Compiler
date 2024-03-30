@@ -193,3 +193,23 @@ class CodeGenC(object):
         code += ")"
 
         return code, obj_type.get_method(node.method).return_type
+    
+    @visitor.when(hulk_nodes.ConditionalNode)
+    def visit(self, node: hulk_nodes.ConditionalNode):
+        code = "if(" + self.visit(node.conditions[0])[0] + ") {\n"
+
+        c, type = self.visit(node.expressions[0])
+        code += "   return " + c + ";\n}\n"
+
+        for i in range(1, len(node.conditions)):
+            code += "else if(" + self.visit(node.conditions[i])[0] + ") {\n"
+            code += "   return " + self.visit(node.expressions[i])[0] + ";\n}\n"
+
+        code += "else {\n"
+        code += "   return " + self.visit(node.default_expr)[0] + ";\n}\n"
+
+        return code, type
+
+    @visitor.when(hulk_nodes.GreaterThanNode)
+    def visit(self, node: hulk_nodes.GreaterThanNode):
+        return "numberGreaterThan(" + self.visit(node.left)[0] + ", " + self.visit(node.right)[0] + ")", BoolType()

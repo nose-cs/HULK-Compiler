@@ -10,12 +10,12 @@ class CCodeGenerator:
         self.lexer = HulkLexer()
         self.parser = LR1Parser(G)
 
-    def __call__(self, hulk_code: str) -> Any:
+    def __call__(self, hulk_code: str, debug=False) -> Any:
         tokens, errors = self.lexer(hulk_code)
 
         derivation, operations = self.parser([t.token_type for t in tokens])
         ast = evaluate_reverse_parse(derivation, operations, tokens)
-        ast, errors, context, scope = semantic_analysis_pipeline(ast, debug=False)
+        ast, errors, context, scope = semantic_analysis_pipeline(ast, debug)
 
         return self.generate(ast, context)
 
