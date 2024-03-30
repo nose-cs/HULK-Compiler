@@ -204,10 +204,3 @@ class VarCollector(object):
         node.scope = scope
         for arg in node.args:
             self.visit(arg, scope)
-
-    @visitor.when(hulk_nodes.VariableNode)
-    def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
-        node.scope = scope
-        if not scope.is_defined(node.lex):
-            self.errors.append(SemanticError(SemanticError.VARIABLE_NOT_DEFINED))
-            scope.define_variable(node.lex, ErrorType())

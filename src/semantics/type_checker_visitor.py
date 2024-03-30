@@ -190,7 +190,12 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode, scope: Scope):
         args_types = [self.visit(arg, scope) for arg in node.args]
-        function = self.context.get_function(node.idx)
+
+        try:
+            function = self.context.get_function(node.idx)
+        except SemanticError as e:
+            self.errors.append(e)
+            return types.ErrorType()
 
         if len(args_types) != len(function.param_types):
             self.errors.append(
@@ -207,7 +212,20 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, scope: Scope):
         args_types = [self.visit(arg, scope) for arg in node.args]
-        method = self.current_type.get_method(node.method)
+
+        if not scope.is_defined(node.obj):
+            obj_type = self.visit(node.obj, scope)
+        else:
+            obj_type = scope.find_variable(node.obj).type
+
+        try:
+            if obj_type == types.SelfType():
+                method = self.current_type.get_method(node.method)
+            else:
+                method = obj_type.get_method(node.method)
+        except SemanticError as e:
+            self.errors.append(e)
+            return types.ErrorType()
 
         if len(args_types) != len(method.param_types):
             self.errors.append(

@@ -27,7 +27,7 @@ class TypeInferrer(object):
         """
         if inf_type == types.AutoType():
             return
-        if isinstance(node, hulk_nodes.VariableNode):
+        if isinstance(node, hulk_nodes.VariableNode) and scope.is_defined(node.lex):
             var_info = scope.find_variable(node.lex)
             var_info.inferred_types.append(inf_type)
 
@@ -211,15 +211,14 @@ class TypeInferrer(object):
     def visit(self, node: hulk_nodes.FunctionCallNode, scope: Scope):
         try:
             function = self.context.get_function(node.idx)
-
-            for arg, param_type in zip(node.args, function.param_types):
-                self.visit(arg, scope)
-                self.assign_auto_type(arg, scope, param_type)
-
-            return function.return_type
-        except SemanticError as e:
-            self.errors.append(e)
+        except SemanticError:
             return types.ErrorType()
+
+        for arg, param_type in zip(node.args, function.param_types):
+            self.visit(arg, scope)
+            self.assign_auto_type(arg, scope, param_type)
+
+        return function.return_type
 
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, scope: Scope):
@@ -229,15 +228,17 @@ class TypeInferrer(object):
             obj_type = scope.find_variable(node.obj).type
 
         try:
-            method = self.current_type.get_method(node.method) if obj_type == types.SelfType() else obj_type.get_method(
-                node.method)
-            for arg, param_type in zip(node.args, method.param_types):
-                self.visit(arg, scope)
-                self.assign_auto_type(arg, scope, param_type)
-            return method.return_type
-        except SemanticError as e:
-            self.errors.append(e)
+            if obj_type == types.SelfType():
+                method = self.current_type.get_method(node.method)
+            else:
+                method = obj_type.get_method(node.method)
+        except SemanticError:
             return types.ErrorType()
+
+        for arg, param_type in zip(node.args, method.param_types):
+            self.visit(arg, scope)
+            self.assign_auto_type(arg, scope, param_type)
+        return method.return_type
 
     @visitor.when(hulk_nodes.AttributeCallNode)
     def visit(self, node: hulk_nodes.AttributeCallNode, scope: Scope):
@@ -250,11 +251,10 @@ class TypeInferrer(object):
             try:
                 attr = self.current_type.get_attribute(node.attribute)
                 return attr.type
-            except SemanticError as e:
-                self.errors.append(e)
+            except SemanticError:
                 return types.ErrorType()
         else:
-            self.errors.append(SemanticError("Cannot access an attribute from a non-self object"))
+            # Can't access to a non-self attribute
             return types.ErrorType()
 
     # todo for loop
@@ -333,7 +333,6 @@ class TypeInferrer(object):
         return string_type
 
     # todo be more specific with True and False
-    # todo l_type != r_type is error or false
     @visitor.when(hulk_nodes.EqualityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
         bool_type = self.context.get_type('Bool')
@@ -375,6 +374,9 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.VariableNode)
     def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
+        if not scope.is_defined(node.lex):
+            return types.ErrorType()
+
         var = scope.find_variable(node.lex)
         return var.type
 
