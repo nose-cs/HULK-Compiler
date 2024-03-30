@@ -113,7 +113,7 @@ class CCodeGenerator:
 
                 current = type
                 index = 0
-                while current is not None and current.name != "Object":
+                while current is not None:
                     code += "   addAttribute(obj, \"parent_type" + str(index) + "\",\"" + current.name + "\");\n"
 
                     if current.name in method_defs:
@@ -131,17 +131,17 @@ class CCodeGenerator:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
                         code += method_def + " {\n"
-                        code += getlinesindented(codgen.visit(method.node)[0], True) + ";\n"
+                        code += getlinesindented(codgen.visit(method.node), True) + ";\n"
                         code += "}\n\n"
                 
         for function_def, function_name, function in function_defs:
             code += function_def + " {\n"
-            code += getlinesindented(codgen.visit(function.node)[0], True) + "\n"
+            code += getlinesindented(codgen.visit(function.node), True) + "\n"
             code += "}\n\n"
 
         code += "\nint main() {\n"
 
-        code += getlinesindented(codgen.visit(ast.expression)[0]) + ";\n"
+        code += getlinesindented(codgen.visit(ast.expression)) + ";\n"
 
         code += "   return 0; \n}"
 
