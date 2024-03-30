@@ -22,8 +22,12 @@ class CCodeGenerator:
     def generate(self, ast, context):
         from src.code_gen.expression_visitor import CodeGenC
 
-        def getlinesindented(code: str):
+        def getlinesindented(code: str, add_return=False):
             lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
+            
+            if add_return:
+                lines[-1] = "   return " + lines[-1][3:]
+            
             return '\n'.join(lines)
             
 
@@ -116,7 +120,8 @@ class CCodeGenerator:
                             code += "   addAttribute(obj, \"" + method[1] + "\", *" + method[1] + ");\n"
 
                     current = current.parent
-
+                
+                code += "   return obj;\n"
                 code += "}\n\n"
 
         for type in context.types.values():
@@ -124,17 +129,17 @@ class CCodeGenerator:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
                         code += method_def + " {\n"
-                        code += getlinesindented(codgen.visit(method.node)[0]) + "\n"
+                        code += getlinesindented(codgen.visit(method.node)[0], True) + ";\n"
                         code += "}\n\n"
                 
         for function_def, function_name, function in function_defs:
             code += function_def + " {\n"
-            code += getlinesindented(codgen.visit(function.node)[0]) + "\n"
+            code += getlinesindented(codgen.visit(function.node)[0], True) + "\n"
             code += "}\n\n"
 
         code += "\nint main() {\n"
 
-        code += getlinesindented(codgen.visit(ast.expression)[0]) + "\n"
+        code += getlinesindented(codgen.visit(ast.expression)[0]) + ";\n"
 
         code += "   return 0; \n}"
 

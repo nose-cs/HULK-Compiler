@@ -158,18 +158,30 @@ class CodeGenC(object):
     def visit(self, node: hulk_nodes.AttributeCallNode):
         c, type = self.visit(node.obj)
 
+        type_name = type.name if type.name != "Self" else type.referred_type.name
+
         att_type = type.get_attribute(node.attribute).type
-        return "getAttributeValue(" + c + ", \"" + type.name + "_" + node.attribute + "\")", att_type
+        return "getAttributeValue(" + c + ", \"" + type_name + "_" + node.attribute + "\")", att_type
     
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode):
         obj, obj_type = self.visit(node.obj)
 
-        code = "method_" + obj_type.name + "_" + node.method.name + "(" + obj
+        if isinstance(obj_type, Type):
+            code = "method_" + obj_type.name + "_" + node.method + "(" + obj
+        else:
+            args = ','.join(["Object*" for i in range(len(node.args))])
+
+            if len(args) > 0:
+                args = ',' + args
+
+            code = "((Object* (*)(Object*" + args + "))getAttributeValue(" + obj + ", " + \
+                    "getMethodNameForCurrentType(" + obj + ", \"" + node.method + "\")" + \
+                    "))(" + obj
 
         for arg in node.args:
             code += ", " + self.visit(arg)[0]
 
         code += ")"
 
-        return code, node.method.return_type
+        return code, obj_type.get_method(node.method).return_type
