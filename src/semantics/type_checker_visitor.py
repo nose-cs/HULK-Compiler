@@ -85,15 +85,21 @@ class TypeChecker(object):
         except SemanticError:
             parent_method = None
 
-        if parent_method is not None and parent_method.return_type != return_type:
-            if len(parent_method.param_types) != len(method.param_types):
+        if parent_method is None:
+            return return_type
+
+        if parent_method.return_type != return_type:
+            self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
+            return_type = types.ErrorType()
+        if len(parent_method.param_types) != len(method.param_types):
+            self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
+            return_type = types.ErrorType()
+
+        for i in range(len(parent_method.param_types)):
+            if parent_method.param_types[i] != method.param_types[i]:
                 self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
-            elif not parent_method.return_type != return_type:
-                self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
-            else:
-                for parent_param_type, param_type in zip(parent_method.param_types, method.param_types):
-                    if not param_type != parent_param_type:
-                        self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE))
+                method.param_types[i] = types.ErrorType()
+                return_type = types.ErrorType()
 
         return return_type
 
