@@ -167,6 +167,12 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         node.scope = scope
+        try:
+            self.context.get_type(node.ttype)
+        except SemanticError as e:
+            self.errors.append(e)
+            self.context.create_error_type(node.ttype)
+
         self.visit(node.expression, scope)
 
     @visitor.when(hulk_nodes.FunctionCallNode)
@@ -189,6 +195,12 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
+        try:
+            self.context.get_type(node.idx)
+        except SemanticError as e:
+            self.errors.append(e)
+            self.context.create_error_type(node.idx)
+
         node.scope = scope
         for arg in node.args:
             self.visit(arg, scope)
@@ -198,3 +210,4 @@ class VarCollector(object):
         node.scope = scope
         if not scope.is_defined(node.lex):
             self.errors.append(SemanticError(SemanticError.VARIABLE_NOT_DEFINED))
+            scope.define_variable(node.lex, ErrorType())

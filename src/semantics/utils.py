@@ -1,7 +1,7 @@
 import itertools as itt
 
 from src.errors import SemanticError
-from src.semantics.types import Type, Protocol, AutoType
+from src.semantics.types import Type, Protocol, AutoType, ErrorType
 
 
 class Function:
@@ -28,6 +28,14 @@ class Context:
         self.protocols = {}
         self.functions = {}
 
+    def create_error_type(self, name: str) -> Type:
+        if name in self.types:
+            raise SemanticError(f'Type with the same name ({name}) already in context.')
+        if name in self.protocols:
+            raise SemanticError(f'Protocol with the same name ({name}) already in context.')
+        typex = self.types[name] = ErrorType()
+        return typex
+      
     def create_type(self, name: str, node=None) -> Type:
         if name in self.types:
             raise SemanticError(f'Type with the same name ({name}) already in context.')

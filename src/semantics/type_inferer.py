@@ -90,10 +90,6 @@ class TypeInfer(object):
         else:
             attr_type = inf_type
 
-        # if not inf_type.conforms_to(attr_type):
-        #     self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
-        #     attr_type = types.ErrorType()
-
         return attr_type
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
@@ -181,11 +177,8 @@ class TypeInfer(object):
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, scope: Scope):
-        new_type = self.visit(node.expr, scope)
+        self.visit(node.expr, scope)
         old_type = self.visit(node.target, scope)
-        # if not new_type.conforms_to(old_type):
-        #     self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
-        #     return types.ErrorType()
         return old_type
 
     @visitor.when(hulk_nodes.ConditionalNode)
@@ -201,11 +194,7 @@ class TypeInfer(object):
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, scope: Scope):
-        cond_type = self.visit(node.condition, scope.children[0])
-
-        # if cond_type != types.BoolType():
-        #     self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
-
+        self.visit(node.condition, scope.children[0])
         return self.visit(node.expression, scope.children[1])
 
     @visitor.when(hulk_nodes.FunctionCallNode)
@@ -272,13 +261,7 @@ class TypeInfer(object):
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         self.visit(node.expression, scope)
-
-        try:
-            cast_type = self.context.get_type(node.ttype)
-        except SemanticError as e:
-            self.errors.append(e)
-            cast_type = types.ErrorType()
-
+        cast_type = self.context.get_type(node.ttype)
         return cast_type
 
     @visitor.when(hulk_nodes.ArithmeticExpressionNode)
@@ -382,19 +365,10 @@ class TypeInfer(object):
 
     @visitor.when(hulk_nodes.VariableNode)
     def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
-        if not scope.is_defined(node.lex):
-            self.errors.append(SemanticError(SemanticError.VARIABLE_NOT_DEFINED))
-            return types.ErrorType()
-
         var = scope.find_variable(node.lex)
         return var.type
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
-        try:
-            ttype = self.context.get_type(node.idx)
-        except SemanticError as e:
-            self.errors.append(e)
-            return types.ErrorType()
-
+        ttype = self.context.get_type(node.idx)
         return ttype

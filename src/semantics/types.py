@@ -47,6 +47,16 @@ class Method:
         return True
 
 
+class ErrorMethod(Method):
+    def __init__(self, name, params_length: int = 10):
+        params = [('<error>', ErrorType()) for _ in range(params_length)]
+        param_names, param_types = zip(*params)
+        super().__init__(name, param_names, param_types, ErrorType())
+
+    def can_substitute_with(self, other):
+        return True
+
+
 class Protocol:
     def __init__(self, name: str, node=None):
         self.name = name
@@ -315,6 +325,8 @@ def get_most_specialized_type(types: List):
 def get_lowest_common_ancestor(types):
     if not types or any(isinstance(t, ErrorType) for t in types):
         return ErrorType()
+    if any(t == AutoType() for t in types):
+        return AutoType()
     lca = types[0]
     for typex in types[1:]:
         lca = _get_lca(lca, typex)
