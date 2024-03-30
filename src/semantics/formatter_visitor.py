@@ -28,7 +28,7 @@ class FormatterVisitor(object):
         params = ', '.join(
             [f'{node.params_ids[i]}' + f': {node.params_types[i]}' if node.params_types[i] is not None else '' for i in
              range(len(node.params_ids))])
-        parent = f": {node.parent}({', '.join(node.parent_args)})" if node.parent else ""
+        parent = f": {node.parent}({', '.join([self.visit(arg, 0) for arg in node.parent_args])})" if node.parent else ""
         ans = '\t' * tabs + f'\\__ TypeDeclarationNode: type {node.idx}({params}){parent} -> <body>'
         attributes = '\n'.join([self.visit(attr, tabs + 1) for attr in node.attributes])
         methods = '\n'.join([self.visit(method, tabs + 1) for method in node.methods])
