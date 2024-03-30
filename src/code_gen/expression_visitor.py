@@ -168,6 +168,14 @@ class CodeGenC(object):
         obj, obj_type = self.visit(node.obj)
 
         if isinstance(obj_type, Type):
+            while obj_type is not None:
+                try:
+                    obj_type.get_method(node.method, False)
+                    break
+                except:
+                    obj_type = obj_type.parent
+
+            assert obj_type is not None
             code = "method_" + obj_type.name + "_" + node.method + "(" + obj
         else:
             args = ','.join(["Object*" for i in range(len(node.args))])
@@ -175,9 +183,9 @@ class CodeGenC(object):
             if len(args) > 0:
                 args = ',' + args
 
-            code = "((Object* (*)(Object*" + args + "))getAttributeValue(" + obj + ", " + \
-                    "getMethodNameForCurrentType(" + obj + ", \"" + node.method + "\")" + \
-                    "))(" + obj
+            code = "((Object* (*)(Object*" + args + "))" + \
+                    "getMethodForCurrentType(" + obj + ", \"" + node.method + "\")" + \
+                    ")(" + obj
 
         for arg in node.args:
             code += ", " + self.visit(arg)[0]

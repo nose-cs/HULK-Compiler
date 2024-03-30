@@ -104,7 +104,6 @@ class CCodeGenerator:
             if type.name not in ["Number", "Bool", "String", "Object"]:
                 code += create_defs[type.name][0] + " {\n"
                 code += "   Object* obj = createObject();\n"
-                code += "   addAttribute(obj, \"type\",\"" + type.name + "\");\n"
 
                 code += "\n"
                 for param in create_defs[type.name][1]:
@@ -113,13 +112,16 @@ class CCodeGenerator:
                 code += "\n"
 
                 current = type
-
+                index = 0
                 while current is not None and current.name != "Object":
+                    code += "   addAttribute(obj, \"parent_type" + str(index) + "\",\"" + current.name + "\");\n"
+
                     if current.name in method_defs:
                         for method in method_defs[current.name]:
                             code += "   addAttribute(obj, \"" + method[1] + "\", *" + method[1] + ");\n"
 
                     current = current.parent
+                    index += 1
                 
                 code += "   return obj;\n"
                 code += "}\n\n"
