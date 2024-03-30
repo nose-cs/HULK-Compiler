@@ -9,6 +9,16 @@ class CodeGenC(object):
     def __init__(self, context) -> None:
         self.index_var = 0
         self.context: Context = context
+        self.if_else_blocks = ""
+        self.index_if_else_blocks = 0
+
+    def getlinesindented(self, code: str, add_return=False):
+        lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
+        
+        if add_return:
+            lines[-1] = "   return " + lines[-1][3:]
+        
+        return '\n'.join(lines)
 
     @visitor.on('node')
     def visit(self, node):
@@ -163,18 +173,46 @@ class CodeGenC(object):
     
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode):
-        code = "if(" + self.visit(node.conditions[0]) + ") {\n"
+        code = "Object* ifElseBlock" + str(self.index_if_else_blocks) + "("
+        index = self.index_if_else_blocks
+        self.index_if_else_blocks += 1
 
-        code += "   return " + self.visit(node.expressions[0]) + ";\n}\n"
+        vars = node.scope.get_variables(True)
+
+        for var in vars:
+            code += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            code = code[:-2]
+
+        code += ") {\n"
+        
+        code += "   if(*((bool*)getAttributeValue(" + self.visit(node.conditions[0]) + ", \"value\"))) {\n"
+
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[0]), True)) + ";\n   }\n"
 
         for i in range(1, len(node.conditions)):
-            code += "else if(" + self.visit(node.conditions[i]) + ") {\n"
-            code += "   return " + self.visit(node.expressions[i]) + ";\n}\n"
+            code += "   else if(*((bool*)getAttributeValue(" + self.visit(node.conditions[i]) + ", \"value\"))) {\n"
+            code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[i]), True)) + ";\n   }\n"
 
-        code += "else {\n"
-        code += "   return " + self.visit(node.default_expr) + ";\n}\n"
+        code += "   else {\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.default_expr), True)) + ";\n   }\n"
 
-        return code
+        code += "}"
+
+        self.if_else_blocks += code + "\n\n"
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        if len(vars) > 0:
+            params = params[:-2]     
+
+        params += ")"   
+
+        return "ifElseBlock" + str(index) + params
 
     @visitor.when(hulk_nodes.GreaterThanNode)
     def visit(self, node: hulk_nodes.GreaterThanNode):
@@ -211,3 +249,9 @@ class CodeGenC(object):
     @visitor.when(hulk_nodes.LessOrEqualNode)
     def visit(self, node: hulk_nodes.LessOrEqualNode):
         return "numberLessOrEqualThan(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.WhileNode)
+    def visit(self, node: hulk_nodes.WhileNode):
+        code = "while (" + self.visit(node.condition) + ") {\n"
+        code += self.getlinesindented(self.visit(node.expression))
+        code += "\n}\n"

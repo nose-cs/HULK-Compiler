@@ -33,7 +33,11 @@ class CCodeGenerator:
 
         codgen = CodeGenC(context)
 
-        code = ""
+        declarations = ""
+        type_create = ""
+        methods_code = ""
+        functions_code = ""
+        main = ""
 
         create_defs = {}
         method_defs = {}
@@ -60,7 +64,7 @@ class CCodeGenerator:
 
                 create_defs[type.name] = (create_def, create_params)
 
-                code += create_def + ";\n"
+                declarations += create_def + ";\n"
 
                 method_defs[type.name] = []
 
@@ -77,9 +81,9 @@ class CCodeGenerator:
 
                     method_def += ")"
                     method_defs[type.name].append((method_def, method_name, method))
-                    code += method_def + ";\n"
+                    declarations += method_def + ";\n"
                         
-                code += "\n"
+                declarations += "\n"
 
         for function in context.functions.values():
             if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand']:
@@ -96,53 +100,53 @@ class CCodeGenerator:
 
                     function_def += ")"
                     function_defs.append((function_def, function_name, function))
-                    code += function_def + ";\n"
+                    declarations += function_def + ";\n"
 
-        code += '\n'
+        declarations += '\n'
 
         for type in context.types.values():
             if type.name not in ["Number", "Bool", "String", "Object"]:
-                code += create_defs[type.name][0] + " {\n"
-                code += "   Object* obj = createObject();\n"
+                type_create += create_defs[type.name][0] + " {\n"
+                type_create += "   Object* obj = createObject();\n"
 
-                code += "\n"
+                type_create += "\n"
                 for param in create_defs[type.name][1]:
-                    code += "   addAttribute(obj, \"" + param + "\", " + param + ");\n"
+                    type_create += "   addAttribute(obj, \"" + param + "\", " + param + ");\n"
 
-                code += "\n"
+                type_create += "\n"
 
                 current = type
                 index = 0
                 while current is not None:
-                    code += "   addAttribute(obj, \"parent_type" + str(index) + "\",\"" + current.name + "\");\n"
+                    type_create += "   addAttribute(obj, \"parent_type" + str(index) + "\",\"" + current.name + "\");\n"
 
                     if current.name in method_defs:
                         for method in method_defs[current.name]:
-                            code += "   addAttribute(obj, \"" + method[1] + "\", *" + method[1] + ");\n"
+                            type_create += "   addAttribute(obj, \"" + method[1] + "\", *" + method[1] + ");\n"
 
                     current = current.parent
                     index += 1
                 
-                code += "   return obj;\n"
-                code += "}\n\n"
+                type_create += "   return obj;\n"
+                type_create += "}\n\n"
 
         for type in context.types.values():
             if type.name not in ["Number", "Bool", "String", "Object"]:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
-                        code += method_def + " {\n"
-                        code += getlinesindented(codgen.visit(method.node), True) + ";\n"
-                        code += "}\n\n"
+                        methods_code += method_def + " {\n"
+                        methods_code += getlinesindented(codgen.visit(method.node), True) + ";\n"
+                        methods_code += "}\n\n"
                 
         for function_def, function_name, function in function_defs:
-            code += function_def + " {\n"
-            code += getlinesindented(codgen.visit(function.node), True) + "\n"
-            code += "}\n\n"
+            functions_code += function_def + " {\n"
+            functions_code += getlinesindented(codgen.visit(function.node), True) + "\n"
+            functions_code += "}\n\n"
 
-        code += "\nint main() {\n"
+        main += "\nint main() {\n"
 
-        code += getlinesindented(codgen.visit(ast.expression)) + ";\n"
+        main += getlinesindented(codgen.visit(ast.expression)) + ";\n"
 
-        code += "   return 0; \n}"
+        main += "   return 0; \n}"
 
-        return code
+        return declarations + type_create + codgen.if_else_blocks + methods_code + functions_code + main
