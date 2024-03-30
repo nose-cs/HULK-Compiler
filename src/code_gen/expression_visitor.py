@@ -186,4 +186,28 @@ class CodeGenC(object):
     
     @visitor.when(hulk_nodes.EqualNode)
     def visit(self, node: hulk_nodes.EqualNode):
-        return "numberGreaterOrEqualThan(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+        left = self.visit(node.left)
+
+        code = "((Object* (*)(Object*, Object*))" + \
+                "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
+                ")(" + left + ", " + self.visit(node.right) + ")"
+
+        return code
+    
+    @visitor.when(hulk_nodes.NotEqualNode)
+    def visit(self, node: hulk_nodes.NotEqualNode):
+        left = self.visit(node.left)
+
+        code = "invertBool(((Object* (*)(Object*, Object*))" + \
+                "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
+                ")(" + left + ", " + self.visit(node.right) + "))"
+
+        return code
+    
+    @visitor.when(hulk_nodes.LessThanNode)
+    def visit(self, node: hulk_nodes.LessThanNode):
+        return "numberLessThan(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.LessOrEqualNode)
+    def visit(self, node: hulk_nodes.LessOrEqualNode):
+        return "numberLessOrEqualThan(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
