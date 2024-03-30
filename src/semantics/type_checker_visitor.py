@@ -153,6 +153,10 @@ class TypeChecker(object):
         new_type = self.visit(node.expr, scope)
         old_type = self.visit(node.target, scope)
 
+        if old_type == types.SelfType():
+            self.errors.append(SemanticError(SemanticError.SELF_IS_READONLY))
+            return types.ErrorType()
+
         if not new_type.conforms_to(old_type):
             self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
             return types.ErrorType()
