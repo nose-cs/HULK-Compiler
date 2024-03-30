@@ -198,3 +198,7 @@ class VarCollector(object):
         node.scope = scope
         for arg in node.args:
             self.visit(arg, scope)
+
+    @visitor.when(hulk_nodes.VariableNode)
+    def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
+        node.scope = scope
