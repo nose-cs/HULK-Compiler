@@ -2,7 +2,7 @@ import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 
 
-class FormatterVisitor(object):
+class Formatter(object):
     @visitor.on('node')
     def visit(self, node, tabs):
         pass

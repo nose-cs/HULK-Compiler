@@ -1,4 +1,5 @@
 import itertools as itt
+from typing import Union
 
 from src.errors import SemanticError
 from src.semantics.types import Type, Protocol, AutoType, ErrorType
@@ -35,7 +36,7 @@ class Context:
             raise SemanticError(f'Protocol with the same name ({name}) already in context.')
         typex = self.types[name] = ErrorType()
         return typex
-      
+
     def create_type(self, name: str, node=None) -> Type:
         if name in self.types:
             raise SemanticError(f'Type with the same name ({name}) already in context.')
@@ -64,7 +65,7 @@ class Context:
         except KeyError:
             raise SemanticError(f'Protocol "{name}" is not defined.')
 
-    def get_type_or_protocol(self, name: str) -> tuple[Type, Protocol]:
+    def get_type_or_protocol(self, name: str) -> Union[Type, Protocol]:
         try:
             return self.get_protocol(name)
         except SemanticError:

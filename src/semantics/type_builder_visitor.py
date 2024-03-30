@@ -5,8 +5,6 @@ from src.semantics.types import ErrorType, AutoType
 from src.semantics.utils import Context
 
 
-# todo By default, a type inherits its parent type arguments, which means that to construct a PolarPoint
-#  you have to pass the x and y that Point is expecting:
 class TypeBuilder(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:

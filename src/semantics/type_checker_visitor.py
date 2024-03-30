@@ -17,7 +17,7 @@ class TypeChecker(object):
         self.errors: List[SemanticError] = errors
 
     @visitor.on('node')
-    def visit(self, node, scope):
+    def visit(self, node: hulk_nodes.Node, scope: Scope):
         pass
 
     @visitor.when(hulk_nodes.ProgramNode)
@@ -33,12 +33,16 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.TypeDeclarationNode, scope: Scope):
         self.current_type = self.context.get_type(node.idx)
 
-        # Create a new scope that includes the parameters
         new_scope = scope.children[0]
-
         parent_args = [self.visit(expr, new_scope) for expr in node.parent_args]
 
         parent_params_types = self.current_type.parent.params_types
+
+        if len(parent_args) != len(parent_params_types):
+            self.errors.append(SemanticError(
+                f"Expected {len(parent_params_types)} arguments, but {len(parent_args)} were given."))
+            return types.ErrorType()
+
         for parent_arg, parent_param_type in zip(parent_args, parent_params_types):
             if not parent_arg.conforms_to(parent_param_type):
                 self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
@@ -46,7 +50,6 @@ class TypeChecker(object):
         for attr in node.attributes:
             self.visit(attr, new_scope)
 
-        # Create a new scope that includes the self symbol
         methods_scope = scope.children[1]
         for method in node.methods:
             self.visit(method, methods_scope)
@@ -56,11 +59,6 @@ class TypeChecker(object):
         inf_type = self.visit(node.expr, scope)
 
         attr_type = self.current_type.get_attribute(node.id).type
-
-        # if node.attribute_type is not None:
-        #     attr_type = self.context.get_type_or_protocol(node.attribute_type)
-        # else:
-        #     attr_type = inf_type
 
         if not inf_type.conforms_to(attr_type):
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
@@ -115,6 +113,8 @@ class TypeChecker(object):
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
             return types.ErrorType()
 
+        # todo cannot infer the return type of a function
+
         return function.return_type
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
@@ -139,7 +139,6 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode, scope: Scope):
-        # Create a new scope for every new variable declaration to allow redefining symbols
         old_scope = scope
 
         for declaration in node.var_declarations:
@@ -153,9 +152,11 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, scope: Scope):
         new_type = self.visit(node.expr, scope)
         old_type = self.visit(node.target, scope)
+
         if not new_type.conforms_to(old_type):
             self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
             return types.ErrorType()
+
         return old_type
 
     @visitor.when(hulk_nodes.ConditionalNode)
@@ -305,10 +306,9 @@ class TypeChecker(object):
 
         return bool_type
 
-    # todo change is instance for a "has_implicit_cast" to accept print("The meaning of life is" @@ 42)
     @visitor.when(hulk_nodes.StrBinaryExpressionNode)
     def visit(self, node: hulk_nodes.StrBinaryExpressionNode, scope: Scope):
-        string_type = self.context.get_type('Number')
+        string_type = self.context.get_type('String')
         object_type = self.context.get_type('Object')
 
         left_type = self.visit(node.left, scope)
@@ -321,7 +321,6 @@ class TypeChecker(object):
 
         return string_type
 
-    # todo be more specific with True and False
     # todo l_type != r_type is error or false
     @visitor.when(hulk_nodes.EqualityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
@@ -378,7 +377,6 @@ class TypeChecker(object):
 
         args_types = [self.visit(arg, scope) for arg in node.args]
 
-        # Check if the number of arguments is correct
         if len(args_types) != len(ttype.params_types):
             self.errors.append(SemanticError(
                 f"Expected {len(ttype.params_types)} arguments, but {len(args_types)} were given."))
