@@ -5,8 +5,9 @@ from src.semantics.types import Type, Protocol, AutoType, ErrorType
 
 
 class Function:
-    def __init__(self, name, param_names, param_types, return_type):
+    def __init__(self, name, param_names, param_types, return_type, node=None):
         self.name = name
+        self.node = node
         self.param_names = param_names
         self.param_types = param_types
         self.return_type = return_type
@@ -34,13 +35,13 @@ class Context:
             raise SemanticError(f'Protocol with the same name ({name}) already in context.')
         typex = self.types[name] = ErrorType()
         return typex
-
-    def create_type(self, name: str) -> Type:
+      
+    def create_type(self, name: str, node=None) -> Type:
         if name in self.types:
             raise SemanticError(f'Type with the same name ({name}) already in context.')
         if name in self.protocols:
             raise SemanticError(f'Protocol with the same name ({name}) already in context.')
-        typex = self.types[name] = Type(name)
+        typex = self.types[name] = Type(name, node)
         return typex
 
     def get_type(self, name: str) -> Type:
@@ -49,12 +50,12 @@ class Context:
         except KeyError:
             raise SemanticError(f'Type "{name}" is not defined.')
 
-    def create_protocol(self, name: str) -> Protocol:
+    def create_protocol(self, name: str, node=None) -> Protocol:
         if name in self.protocols:
             raise SemanticError(f'Protocol with the same name ({name}) already in context.')
         if name in self.types:
             raise SemanticError(f'Type with the same name ({name}) already in context.')
-        protocol = self.protocols[name] = Protocol(name)
+        protocol = self.protocols[name] = Protocol(name, node)
         return protocol
 
     def get_protocol(self, name: str) -> Protocol:
@@ -63,16 +64,16 @@ class Context:
         except KeyError:
             raise SemanticError(f'Protocol "{name}" is not defined.')
 
-    def get_type_or_protocol(self, name: str) -> (Type, Protocol):
+    def get_type_or_protocol(self, name: str) -> tuple[Type, Protocol]:
         try:
             return self.get_protocol(name)
         except SemanticError:
             return self.get_type(name)
 
-    def create_function(self, name: str, params_names: list, params_types: list, return_type) -> Function:
+    def create_function(self, name: str, params_names: list, params_types: list, return_type, node=None) -> Function:
         if name in self.functions:
             raise SemanticError(f'Function with the same name ({name}) already in context.')
-        function = self.functions[name] = Function(name, params_names, params_types, return_type)
+        function = self.functions[name] = Function(name, params_names, params_types, return_type, node)
         return function
 
     def get_function(self, name: str) -> Function:
@@ -99,6 +100,10 @@ class VariableInfo:
         self.inferred_types = []
         if not isinstance(vtype, AutoType):
             self.inferred_types.append(vtype)
+        self.nameC = None
+
+    def setNameC(self, name: str):
+        self.nameC = name
 
     def __str__(self):
         return f'{self.name} : {self.type.name}'

@@ -48,7 +48,7 @@ class VarCollector(object):
 
         # Create a new scope that includes the self symbol
         methods_scope = scope.create_child()
-        methods_scope.define_variable('self', SelfType())
+        methods_scope.define_variable('self', SelfType(self.current_type))
         for method in node.methods:
             self.visit(method, methods_scope)
 
@@ -181,16 +181,17 @@ class VarCollector(object):
         for arg in node.args:
             self.visit(arg, scope)
 
+    @visitor.when(hulk_nodes.AttributeCallNode)
+    def visit(self, node: hulk_nodes.AttributeCallNode, scope: Scope):
+        node.scope = scope
+        self.visit(node.obj, scope)
+
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, scope: Scope):
         node.scope = scope
         self.visit(node.obj, scope)
         for arg in node.args:
             self.visit(arg, scope)
-
-    @visitor.when(hulk_nodes.AttributeCallNode)
-    def visit(self, node: hulk_nodes.AttributeCallNode, scope: Scope):
-        self.visit(node.obj, scope)
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode, scope: Scope):
@@ -207,7 +208,6 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.VariableNode)
     def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
         node.scope = scope
-
         if not scope.is_defined(node.lex):
             self.errors.append(SemanticError(SemanticError.VARIABLE_NOT_DEFINED))
             scope.define_variable(node.lex, ErrorType())
