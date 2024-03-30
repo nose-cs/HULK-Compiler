@@ -234,10 +234,10 @@ function_declaration %= (
     function + idx + opar + params_list_or_empty + cpar + colon + idx + arrow + simple_expr + semicolon,
     lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[10], s[7]))
 function_declaration %= (function + idx + opar + params_list_or_empty + cpar + colon + idx + expr_block,
-                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[6]))
+                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[7]))
 function_declaration %= (
     function + idx + opar + params_list_or_empty + cpar + colon + idx + expr_block + semicolon,
-    lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[6]))
+    lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[7]))
 
 params_list_or_empty %= params_list, lambda h, s: s[1]
 params_list_or_empty %= G.Epsilon, lambda h, s: []

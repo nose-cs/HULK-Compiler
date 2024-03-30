@@ -5,8 +5,6 @@ from src.semantics.types import ErrorType, AutoType
 from src.semantics.utils import Context
 
 
-# todo By default, a type inherits its parent type arguments, which means that to construct a PolarPoint
-#  you have to pass the x and y that Point is expecting:
 class TypeBuilder(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -39,7 +37,7 @@ class TypeBuilder(object):
                 return_type = ErrorType()
 
         try:
-            return self.context.create_function(node.id, params_names, params_types, return_type)
+            return self.context.create_function(node.id, params_names, params_types, return_type, node)
         except SemanticError as e:
             self.errors.append(e)
 
@@ -101,7 +99,8 @@ class TypeBuilder(object):
                 # If the parent type is already set
                 self.errors.append(e)
         else:
-            self.current_type.set_parent(self.context.get_type('Object'))
+            object_type = self.context.get_type('Object')
+            self.current_type.set_parent(object_type)
 
         for attribute in node.attributes:
             self.visit(attribute)
@@ -124,7 +123,7 @@ class TypeBuilder(object):
                 return_type = ErrorType()
 
         try:
-            return self.current_type.define_method(node.id, params_names, params_types, return_type)
+            return self.current_type.define_method(node.id, params_names, params_types, return_type, node)
         except SemanticError as e:
             self.errors.append(e)
 
@@ -142,7 +141,7 @@ class TypeBuilder(object):
             attribute_type = AutoType()
 
         try:
-            return self.current_type.define_attribute(node.id, attribute_type)
+            return self.current_type.define_attribute(node.id, attribute_type, node)
         except SemanticError as e:
             self.errors.append(e)
 
@@ -185,6 +184,6 @@ class TypeBuilder(object):
             return_type = ErrorType()
 
         try:
-            return self.current_type.define_method(node.id, params_names, params_types, return_type)
+            return self.current_type.define_method(node.id, params_names, params_types, return_type, node)
         except SemanticError as e:
             self.errors.append(e)

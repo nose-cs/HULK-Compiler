@@ -1,14 +1,14 @@
-from src.semantics.formatter_visitor import FormatterVisitor
+from src.semantics.formatter_visitor import Formatter
 from src.semantics.type_builder_visitor import TypeBuilder
+from src.semantics.type_checker_visitor import TypeChecker
 from src.semantics.type_collector_visitor import TypeCollector
-from src.semantics.utils import Scope
 from src.semantics.var_collector_visitor import VarCollector
-from src.semantics.type_inferer import TypeInfer
+from src.semantics.type_inferrer_visitor import TypeInferrer
 
 
 def semantic_analysis_pipeline(ast, debug=False):
     if debug:
-        formatter = FormatterVisitor()
+        formatter = Formatter()
         formatted_ast = formatter.visit(ast)
         print('===================== AST =====================')
         print(formatted_ast)
@@ -36,7 +36,7 @@ def semantic_analysis_pipeline(ast, debug=False):
         print('Context:')
         print(context)
         print('=============== CHECKING TYPES ================')
-        print('---------------- VAR COLLECTOR ------------------')
+        print('---------------- COLLECTING VARIABLES ------------------')
     var_collector = VarCollector(context, errors)
     scope = var_collector.visit(ast)
     if debug:
@@ -48,9 +48,21 @@ def semantic_analysis_pipeline(ast, debug=False):
         print(context)
         print('Scope:')
         print(scope)
-        print('---------------- TYPE INFERENCE ------------------')
-    type_inference = TypeInfer(context, errors)
+        print('---------------- INFERRING TYPES ------------------')
+    type_inference = TypeInferrer(context, errors)
     type_inference.visit(ast, scope)
+    if debug:
+        print('Errors: [')
+        for error in errors:
+            print('\t', error)
+        print(']')
+        print('Context:')
+        print(context)
+        print('Scope:')
+        print(scope)
+        print('---------------- CHECKING TYPES ------------------')
+    type_checker = TypeChecker(context, errors)
+    type_checker.visit(ast, scope)
     if debug:
         print('Errors: [')
         for error in errors:

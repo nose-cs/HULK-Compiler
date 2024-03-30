@@ -17,6 +17,23 @@ class HulkError(Exception):
         return str(self)
 
 
+class IOHulkError(HulkError):
+    def __init__(self, text, path):
+        super().__init__(text)
+        self.path = path
+
+    INVALID_EXTENSION = 'Input file %s is not a .hulk file.'
+    ERROR_READING_FILE = 'Error reading file %s.'
+    ERROR_WRITING_FILE = 'Error writing to file %s.'
+
+    def __str__(self):
+        return f'{self.error_type}: {self.text}' % self.path
+
+    @property
+    def error_type(self):
+        return 'IOHulkError'
+
+
 class LexicographicError(HulkError):
     def __init__(self, text, line, column):
         super().__init__(text)

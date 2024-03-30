@@ -2,7 +2,7 @@ import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 
 
-class FormatterVisitor(object):
+class Formatter(object):
     @visitor.on('node')
     def visit(self, node, tabs):
         pass
@@ -28,7 +28,7 @@ class FormatterVisitor(object):
         params = ', '.join(
             [f'{node.params_ids[i]}' + f': {node.params_types[i]}' if node.params_types[i] is not None else '' for i in
              range(len(node.params_ids))])
-        parent = f": {node.parent}({', '.join(node.parent_args)})" if node.parent else ""
+        parent = f": {node.parent}({', '.join([self.visit(arg, 0) for arg in node.parent_args])})" if node.parent else ""
         ans = '\t' * tabs + f'\\__ TypeDeclarationNode: type {node.idx}({params}){parent} -> <body>'
         attributes = '\n'.join([self.visit(attr, tabs + 1) for attr in node.attributes])
         methods = '\n'.join([self.visit(method, tabs + 1) for method in node.methods])
@@ -111,9 +111,11 @@ class FormatterVisitor(object):
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ DestructiveAssignmentNode: {node.target} := <expr>'
+
+        ans = '\t' * tabs + f'\\__ DestructiveAssignmentNode: <expr> := <expr>'
+        target = self.visit(node.target, tabs + 1)
         expr = self.visit(node.expr, tabs + 1)
-        return f'{ans}\n{expr}'
+        return f'{ans}\n{target}\n{expr}'
 
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, tabs=0):
@@ -125,7 +127,7 @@ class FormatterVisitor(object):
     @visitor.when(hulk_nodes.ForNode)
     def visit(self, node: hulk_nodes.ForNode, tabs=0):
         ans = '\t' * tabs + f'\\__ ForNode: for({node.var} in <expr>) <expr>'
-        iterable = self.visit(node.iterable)
+        iterable = self.visit(node.iterable, tabs + 1)
         expr = self.visit(node.expression, tabs + 1)
         return f'{ans}\n{iterable}\n{expr}'
 
@@ -135,17 +137,19 @@ class FormatterVisitor(object):
 
         conditions = [self.visit(cond, tabs + 1) for cond in node.conditions]
         expressions = [self.visit(expr, tabs + 1) for expr in node.expressions]
-        cond_expr = zip(conditions, expressions)
 
-        if_cond, if_expr = cond_expr[0]
-        if_clause = '\t' * tabs + f'\\__ if(<expr>) <expr>\n{if_cond}\n{if_expr}'
+        if_cond, if_expr = conditions[0], expressions[0]
+        if_clause = '\t' * tabs + f'if(<expr>) <expr>\n{if_cond}\n{if_expr}'
 
-        cond_exp = cond_expr[1:]
+        elif_clauses = []
+        for i in range(1, len(conditions)):
+            elif_clauses.append('\t' * tabs + f'elif(<expr>) <expr>\n{conditions[i]}\n{expressions[i]}')
 
-        elif_clauses = ['\t' * tabs + f'\\__ elif(<expr>) <expr>\n{cond}\n{expr}' for (cond, expr) in cond_exp]
-        elif_clauses = '\n' + '\n'.join(elif_clauses) if len(elif_clauses) > 0 else ''
+        elif_clauses = '\n'.join(elif_clauses) if elif_clauses else ''
+        if len(elif_clauses) > 0:
+            elif_clauses = '\n' + elif_clauses
 
-        else_clause = '\t' * tabs + f'\\__ else <expr>\n{self.visit(node.default_expr, tabs + 1)}'
+        else_clause = '\t' * tabs + f'else <expr>\n{self.visit(node.default_expr, tabs + 1)}'
 
         return f'{ans}\n{if_clause}{elif_clauses}\n{else_clause}'
 

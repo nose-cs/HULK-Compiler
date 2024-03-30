@@ -76,3 +76,21 @@ class TestHulkTypeInference(unittest.TestCase):
         '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_(self):
+        inp = '''
+           type A(q, r) {
+            f = q;
+            p = r;
+                       
+            getsum(s: Number) => self.f + self.p + s;
+        }
+
+        function operate(x : Number, y : Object) {
+            print(x + (y as Number));
+        }
+                       
+        let a : Number = 6, b : Number = a * 7, c : Object = b in print(operate(a, b));
+        '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(4, len(errors), f"Expects 4 error, but got {len(errors)}")

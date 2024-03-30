@@ -1,13 +1,15 @@
 from collections import OrderedDict
-from typing import List
+from typing import List, Union
 
+import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 from src.errors import SemanticError
 
 
 class Attribute:
-    def __init__(self, name, typex):
+    def __init__(self, name, typex, node=None):
         self.name = name
         self.type = typex
+        self.node = node
 
     def __str__(self):
         return f'[attrib] {self.name} : {self.type.name};'
@@ -17,8 +19,9 @@ class Attribute:
 
 
 class Method:
-    def __init__(self, name, param_names, params_types, return_type):
+    def __init__(self, name, param_names, params_types, return_type, node=None):
         self.name = name
+        self.node = node
         self.param_names = param_names
         self.param_types = params_types
         self.return_type = return_type
@@ -45,9 +48,20 @@ class Method:
         return True
 
 
+class ErrorMethod(Method):
+    def __init__(self, name, params_length: int = 10):
+        params = [('<error>', ErrorType()) for _ in range(params_length)]
+        param_names, param_types = zip(*params)
+        super().__init__(name, param_names, param_types, ErrorType())
+
+    def can_substitute_with(self, other):
+        return True
+
+
 class Protocol:
-    def __init__(self, name: str):
+    def __init__(self, name: str, node=None):
         self.name = name
+        self.node = node
         self.methods = []
         self.parent = None
 
@@ -67,10 +81,10 @@ class Protocol:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type):
+    def define_method(self, name: str, param_names: list, param_types: list, return_type, node=None):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        method = Method(name, param_names, param_types, return_type)
+        method = Method(name, param_names, param_types, return_type, node)
         self.methods.append(method)
         return method
 
@@ -89,6 +103,10 @@ class Protocol:
         return self == other or self.parent is not None and self.parent.conforms_to(
             other) or self._not_ancestor_conforms_to(other)
 
+    @staticmethod
+    def is_error():
+        return False
+
     def __str__(self):
         output = f'protocol {self.name}'
         parent = '' if self.parent is None else f' extends {self.parent.name}'
@@ -105,9 +123,11 @@ class Protocol:
 
 
 class Type:
-    def __init__(self, name: str):
+    def __init__(self, name: str, node=None):
         self.name = name
+        self.node = node
         self.params_names = []
+        self.looked_for_parent_params = False
         self.params_types = []
         self.attributes = []
         self.attributes_types = []
@@ -125,11 +145,11 @@ class Type:
         except StopIteration:
             raise SemanticError(f'Attribute "{name}" is not defined in {self.name}.')
 
-    def define_attribute(self, name: str, typex) -> Attribute:
+    def define_attribute(self, name: str, typex, node=None) -> Attribute:
         try:
             self.get_attribute(name)
         except SemanticError:
-            attribute = Attribute(name, typex)
+            attribute = Attribute(name, typex, node)
             self.attributes.append(attribute)
             return attribute
         else:
@@ -146,16 +166,36 @@ class Type:
             except SemanticError:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
-    def define_method(self, name: str, param_names: list, param_types: list, return_type) -> Method:
+    def define_method(self, name: str, param_names: list, param_types: list, return_type, node=None) -> Method:
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-        method = Method(name, param_names, param_types, return_type)
+        method = Method(name, param_names, param_types, return_type, node)
         self.methods.append(method)
         return method
 
     def set_params(self, params_names, params_types) -> None:
         self.params_names = params_names
         self.params_types = params_types
+
+    def get_params(self):
+        if not self.looked_for_parent_params and len(self.params_names) == 0:
+            if self.parent is not None:
+                params_names, params_types = self.parent.get_params()
+                self.params_names.extend(params_names)
+                self.params_types.extend(params_types)
+
+                self.node.args = []
+                self.node.parent_args = []
+                for param_name, param_type in zip(self.params_names, self.params_types):
+                    self.node.scope.children[0].define_variable(param_name, param_type)
+                    self.node.args.append(hulk_nodes.VariableNode(param_name))
+
+                    p_arg = hulk_nodes.VariableNode(param_name)
+                    p_arg.scope = self.node.scope.children[0]
+                    self.node.parent_args.append(p_arg)
+
+            self.looked_for_parent_params = True
+        return self.params_names, self.params_types
 
     def all_attributes(self, clean=True):
         plain = OrderedDict() if self.parent is None else self.parent.all_attributes(False)
@@ -260,33 +300,68 @@ class ObjectType(Type):
 
 
 class SelfType(Type):
-    def __init__(self) -> None:
+    def __init__(self, referred_type: Type = None) -> None:
         super().__init__('Self')
+        self.referred_type = referred_type
+
+    def get_attribute(self, name: str) -> Attribute:
+        if self.referred_type:
+            return self.referred_type.get_attribute(name)
+
+        return super().get_attribute(name)
+
+    def __eq__(self, other):
+        return isinstance(other, SelfType) or other.name == self.name
 
 
-def get_most_specialized_type(types: List):
+def get_most_specialized_type(types: List[Union[Type, Protocol]]):
+    """
+    Get the most specialized type in a list of types.
+    If there is some ErrorType in the list, it will return an ErrorType.
+    If there is some AutoType in the list, it will return an AutoType.
+    If there is no specialized type, it will return an ErrorType.
+
+    :param types: List of types or protocols
+    :type types: List[Union[Type, Protocol]]
+    :return: The most specialized type in the list.
+    :rtype: Type or Protocol
+    """
     if not types or any(isinstance(t, ErrorType) for t in types):
         return ErrorType()
+    if any(isinstance(t, AutoType) for t in types):
+        return AutoType()
     most_specialized = types[0]
     for typex in types[1:]:
         if typex.conforms_to(most_specialized):
             most_specialized = typex
-
         elif not most_specialized.conforms_to(typex):
             return ErrorType()
     return most_specialized
 
 
-def get_lowest_common_ancestor(types):
+# todo define lca with protocols
+def get_lowest_common_ancestor(types: List[Type]):
+    """
+    Get the lowest common ancestor of a list of types.
+    If there is some ErrorType in the list, it will return an ErrorType.
+    If there is some AutoType in the list, it will return an AutoType.
+
+    :param types: List of types
+    :type types: List[Type]
+    :return: The lca of the types.
+    :rtype: Type
+    """
     if not types or any(isinstance(t, ErrorType) for t in types):
         return ErrorType()
+    if any(t == AutoType() for t in types):
+        return AutoType()
     lca = types[0]
     for typex in types[1:]:
         lca = _get_lca(lca, typex)
     return lca
 
 
-def _get_lca(type1, type2):
+def _get_lca(type1: Type, type2: Type):
     if type1.conforms_to(type2):
         return type2
     if type2.conforms_to(type1):
