@@ -20,7 +20,7 @@ plus_or_minus_operation, star_div_or_mod_operation, pow_operation, sign_operatio
 
 destructive_assignment, is_or_as_operation = G.NonTerminals("<destructive_ass> <is_or_as_operation>")
 
-func_call, obj_method_or_attribute_call, type_instantiation = G.NonTerminals(
+func_call, obj_indexing_or_method_or_attribute_call, type_instantiation = G.NonTerminals(
     '<func-call> <object_method_or_attribute_call> <type_instantiation>')
 
 # Adding non-terminals to types, protocols and functions declaration
@@ -112,7 +112,7 @@ simple_expr %= while_loop, lambda h, s: s[1]
 simple_expr %= for_loop, lambda h, s: s[1]
 simple_expr %= destructive_assignment, lambda h, s: s[1]
 
-destructive_assignment %= (obj_method_or_attribute_call + dest_eq + expr,
+destructive_assignment %= (obj_indexing_or_method_or_attribute_call + dest_eq + expr,
                            lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3]))
 destructive_assignment %= or_operation, lambda h, s: s[1]
 
@@ -177,14 +177,18 @@ type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
                        lambda h, s: hulk_ast_nodes.TypeInstantiationNode(s[2], s[4]))
 type_instantiation %= not_operation, lambda h, s: s[1]
 
-not_operation %= not_op + obj_method_or_attribute_call, lambda h, s: hulk_ast_nodes.NotNode(s[2])
-not_operation %= obj_method_or_attribute_call, lambda h, s: s[1]
+not_operation %= not_op + obj_indexing_or_method_or_attribute_call, lambda h, s: hulk_ast_nodes.NotNode(s[2])
+not_operation %= obj_indexing_or_method_or_attribute_call, lambda h, s: s[1]
 
-obj_method_or_attribute_call %= (obj_method_or_attribute_call + dot + idx + opar + expr_list_comma_sep_or_empty + cpar,
+obj_indexing_or_method_or_attribute_call %= (obj_indexing_or_method_or_attribute_call + dot + idx + opar + expr_list_comma_sep_or_empty + cpar,
                                  lambda h, s: hulk_ast_nodes.MethodCallNode(s[1], s[3], s[5]))
-obj_method_or_attribute_call %= (obj_method_or_attribute_call + dot + idx,
+obj_indexing_or_method_or_attribute_call %= (obj_indexing_or_method_or_attribute_call + dot + idx,
                                  lambda h, s: hulk_ast_nodes.AttributeCallNode(s[1], s[3]))
-obj_method_or_attribute_call %= factor, lambda h, s: s[1]
+obj_indexing_or_method_or_attribute_call %= factor, lambda h, s: s[1]
+
+obj_indexing_or_method_or_attribute_call %= obj_indexing_or_method_or_attribute_call + o_square_bracket + expr + c_square_bracket, 
+lambda h,s: hulk_ast_nodes.IndexingNNode(s[1] , s[3])
+
 
 factor %= opar + expr + cpar, lambda h, s: s[2]
 factor %= atom, lambda h, s: s[1]
