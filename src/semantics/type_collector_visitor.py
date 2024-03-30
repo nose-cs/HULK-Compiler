@@ -48,13 +48,13 @@ class TypeCollector(object):
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         try:
-            self.context.create_type(node.idx)
+            self.context.create_type(node.idx, node)
         except SemanticError as e:
             self.errors.append(e)
 
     @visitor.when(hulk_nodes.ProtocolDeclarationNode)
     def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
         try:
-            self.context.create_protocol(node.idx)
+            self.context.create_protocol(node.idx, node)
         except SemanticError as e:
             self.errors.append(e)
