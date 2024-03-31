@@ -149,4 +149,4 @@ class CCodeGenerator:
 
         main += "   return 0; \n}"
 
-        return declarations + type_create + codgen.blocks_defs + codgen.condition_blocks + codgen.if_else_blocks + codgen.while_blocks + codgen.vector_selector + codgen.vector_comp + methods_code + functions_code + main
+        return declarations + type_create + codgen.blocks_defs + codgen.condition_blocks + codgen.if_else_blocks + codgen.loop_blocks + codgen.vector_selector + codgen.vector_comp + methods_code + functions_code + main
