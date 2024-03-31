@@ -10,26 +10,34 @@ class CCodeGenerator:
         self.lexer = HulkLexer()
         self.parser = LR1Parser(G)
 
-    def __call__(self, hulk_code: str) -> Any:
+    def __call__(self, hulk_code: str, debug=False) -> Any:
         tokens, errors = self.lexer(hulk_code)
 
         derivation, operations = self.parser([t.token_type for t in tokens])
         ast = evaluate_reverse_parse(derivation, operations, tokens)
-        ast, errors, context, scope = semantic_analysis_pipeline(ast, debug=False)
+        ast, errors, context, scope = semantic_analysis_pipeline(ast, debug)
 
         return self.generate(ast, context)
 
     def generate(self, ast, context):
         from src.code_gen.expression_visitor import CodeGenC
 
-        def getlinesindented(code: str):
+        def getlinesindented(code: str, add_return=False):
             lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
+            
+            if add_return:
+                lines[-1] = "   return " + lines[-1][3:]
+            
             return '\n'.join(lines)
             
 
         codgen = CodeGenC(context)
 
-        code = ""
+        declarations = ""
+        type_create = ""
+        methods_code = ""
+        functions_code = ""
+        main = ""
 
         create_defs = {}
         method_defs = {}
@@ -56,7 +64,7 @@ class CCodeGenerator:
 
                 create_defs[type.name] = (create_def, create_params)
 
-                code += create_def + ";\n"
+                declarations += create_def + ";\n"
 
                 method_defs[type.name] = []
 
@@ -73,9 +81,9 @@ class CCodeGenerator:
 
                     method_def += ")"
                     method_defs[type.name].append((method_def, method_name, method))
-                    code += method_def + ";\n"
+                    declarations += method_def + ";\n"
                         
-                code += "\n"
+                declarations += "\n"
 
         for function in context.functions.values():
             if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand']:
@@ -92,50 +100,53 @@ class CCodeGenerator:
 
                     function_def += ")"
                     function_defs.append((function_def, function_name, function))
-                    code += function_def + ";\n"
+                    declarations += function_def + ";\n"
 
-        code += '\n'
+        declarations += '\n'
 
         for type in context.types.values():
             if type.name not in ["Number", "Bool", "String", "Object"]:
-                code += create_defs[type.name][0] + " {\n"
-                code += "   Object* obj = createObject();\n"
-                code += "   addAttribute(obj, \"type\",\"" + type.name + "\");\n"
+                type_create += create_defs[type.name][0] + " {\n"
+                type_create += "   Object* obj = createObject();\n"
 
-                code += "\n"
+                type_create += "\n"
                 for param in create_defs[type.name][1]:
-                    code += "   addAttribute(obj, \"" + param + "\", " + param + ");\n"
+                    type_create += "   addAttribute(obj, \"" + param + "\", " + param + ");\n"
 
-                code += "\n"
+                type_create += "\n"
 
                 current = type
+                index = 0
+                while current is not None:
+                    type_create += "   addAttribute(obj, \"parent_type" + str(index) + "\",\"" + current.name + "\");\n"
 
-                while current is not None and current.name != "Object":
                     if current.name in method_defs:
                         for method in method_defs[current.name]:
-                            code += "   addAttribute(obj, \"" + method[1] + "\", *" + method[1] + ");\n"
+                            type_create += "   addAttribute(obj, \"" + method[1] + "\", *" + method[1] + ");\n"
 
                     current = current.parent
-
-                code += "}\n\n"
+                    index += 1
+                
+                type_create += "   return obj;\n"
+                type_create += "}\n\n"
 
         for type in context.types.values():
             if type.name not in ["Number", "Bool", "String", "Object"]:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
-                        code += method_def + " {\n"
-                        code += getlinesindented(codgen.visit(method.node)[0]) + "\n"
-                        code += "}\n\n"
+                        methods_code += method_def + " {\n"
+                        methods_code += getlinesindented(codgen.visit(method.node), True) + ";\n"
+                        methods_code += "}\n\n"
                 
         for function_def, function_name, function in function_defs:
-            code += function_def + " {\n"
-            code += getlinesindented(codgen.visit(function.node)[0]) + "\n"
-            code += "}\n\n"
+            functions_code += function_def + " {\n"
+            functions_code += getlinesindented(codgen.visit(function.node), True) + "\n"
+            functions_code += "}\n\n"
 
-        code += "\nint main() {\n"
+        main += "\nint main() {\n"
 
-        code += getlinesindented(codgen.visit(ast.expression)[0]) + "\n"
+        main += getlinesindented(codgen.visit(ast.expression)) + ";\n"
 
-        code += "   return 0; \n}"
+        main += "   return 0; \n}"
 
-        return code
+        return declarations + type_create + codgen.blocks_defs + codgen.condition_blocks + codgen.if_else_blocks + codgen.while_blocks + methods_code + functions_code + main

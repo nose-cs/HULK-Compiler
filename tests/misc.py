@@ -1,0 +1,64 @@
+import unittest
+from tests.assertt_without_exception import assert_without_exception
+from src.lexer.hulk_lexer import HulkLexer
+from src.parsing import LR1Parser
+lexer = HulkLexer()
+parser = LR1Parser()
+
+class TestMiscelaneous(unittest.TestCase):
+
+    def recursive_gcd(self):
+        inp = '''
+            function gcd(a,b) => if (a % b == 0) b else gcd(b, a % b);
+            gcd(13,15);
+            '''
+        tokens = lexer._tokenize(inp)
+        return assert_without_exception(parser, tokens)
+
+    def lcm(self):
+        inp = '''
+        function gcd(a,b) => if (a % b == 0) b else gcd(b, a % b);
+        function lcm(a,b) => a*b/gcd(a,b);
+        lcm(13,15);
+        
+    '''
+        tokens = lexer._tokenize(inp)
+        return assert_without_exception(parser, tokens)
+
+    def IsPrime(self):
+        inp = '''
+        function IsPrime(n) => let a = false in for(i in range(2,sqrt(n)))
+        if(n % i == 0) a := true else a;
+        IsPrime(23);
+        '''
+        tokens = lexer._tokenize(inp)
+        return assert_without_exception(parser, tokens)
+    
+    def LeastCommonSubsequence(self):
+        inp = '''
+            function Max(a,b) => if (a > b) a else b;
+            function MaxSumSubsarray(A) =>
+                let MaxAccum = 0 , Actual = 0 in 
+                    for (i in A)
+                    {
+                        Actual := Max(0, Actual + i);
+                        MaxAccum := Max(Actual, MaxAccum);
+                    };
+
+            MaxSumSubarray([5,7,3,8,2]);
+            
+              '''
+        tokens = lexer._tokenize(inp)
+        return assert_without_exception(parser, tokens)
+    
+    def HeapSort(self):
+        inp = '''
+            
+            Type Heap(A)
+            {
+                Heap = BuildHeap(A)
+            } 
+            '''
+    
+
+    
