@@ -44,7 +44,7 @@ class CCodeGenerator:
         function_defs = []
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object"]:
+            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
                 create_def = "Object* create" + type.name + " ("
                 create_params = []
 
@@ -86,7 +86,7 @@ class CCodeGenerator:
                 declarations += "\n"
 
         for function in context.functions.values():
-            if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand']:
+            if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand', 'range']:
                     function_name = "function_" + function.name
                     function_def = "Object* " + function_name + " ("
                     
@@ -105,7 +105,7 @@ class CCodeGenerator:
         declarations += '\n'
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object"]:
+            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
                 type_create += create_defs[type.name][0] + " {\n"
                 type_create += "   Object* obj = createObject();\n"
 
@@ -131,7 +131,7 @@ class CCodeGenerator:
                 type_create += "}\n\n"
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object"]:
+            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
                         methods_code += method_def + " {\n"
@@ -149,4 +149,4 @@ class CCodeGenerator:
 
         main += "   return 0; \n}"
 
-        return declarations + type_create + codgen.blocks_defs + codgen.condition_blocks + codgen.if_else_blocks + codgen.while_blocks + methods_code + functions_code + main
+        return declarations + type_create + codgen.blocks_defs + codgen.condition_blocks + codgen.if_else_blocks + codgen.while_blocks + codgen.vector_selector + codgen.vector_comp + methods_code + functions_code + main
