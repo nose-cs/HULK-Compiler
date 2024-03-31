@@ -204,9 +204,6 @@ class Type:
             return other.bypass() or self == other or self.parent is not None and self.parent.conforms_to(other)
         elif isinstance(other, Protocol):
             try:
-                print('---------------type')
-                print(other)
-                print(all(method.can_substitute_with(self.get_method(method.name)) for method in other.methods))
                 return all(method.can_substitute_with(self.get_method(method.name)) for method in other.methods)
             # If a method is not defined in the current type (or its ancestors), then it is not conforming
             except SemanticError:
