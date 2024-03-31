@@ -140,7 +140,7 @@ class CCodeGenerator:
                 
         for function_def, function_name, function in function_defs:
             functions_code += function_def + " {\n"
-            functions_code += getlinesindented(codgen.visit(function.node), True) + "\n"
+            functions_code += getlinesindented(codgen.visit(function.node), True) + ";\n"
             functions_code += "}\n\n"
 
         main += "\nint main() {\n"

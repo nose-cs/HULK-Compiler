@@ -354,3 +354,11 @@ class CodeGenC(object):
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode):
         return "replaceObject(" + self.visit(node.target) + ", " + self.visit(node.expr) + ")"
+    
+    @visitor.when(hulk_nodes.ModNode)
+    def visit(self, node: hulk_nodes.ModNode):
+        return "numberMod(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.VectorInitializationNode)
+    def visit(self, node: hulk_nodes.VectorInitializationNode):
+        return "createVector(" + str(len(node.elements)) + ", " + ", ".join([self.visit(element) for element in node.elements]) + ")"
