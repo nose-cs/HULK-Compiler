@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdarg.h>
 
 #define OBJECT_DICT_CAPACITY 67
 
@@ -105,6 +106,7 @@ Object* createObject();
 Object* replaceObject(Object* obj1, Object* obj2);
 Object* method_Object_equals(Object* obj1, Object* obj2);
 Object* method_Object_toString(Object* obj);
+char* getType(Object* obj);
 
 // Protocol
 void* getMethodForCurrentType(Object* obj, char* method_name, int index);
@@ -134,6 +136,14 @@ Object* method_Bool_toString(Object* boolean);
 Object* method_Bool_equals(Object* bool1, Object* bool2);
 Object* invertBool(Object* boolean);
 
+// Vector
+Object* createVectorFromList(int num_elements, Object** list);
+Object* createVector(int num_elements, ...);
+Object* getElementOfVector(Object* vector, int index);
+void replaceElementOfVector(Object* vector, int index, Object* value);
+Object* method_Vector_toString(Object* vector);
+Object* method_Vector_equals(Object* vector1, Object* vector2);
+Object* function_range(Object* start, Object* end);
 
 /////////////////////////////////  Object   ////////////////////////////////////
 
@@ -167,6 +177,11 @@ Object* method_Object_toString(Object* obj)
     sprintf(address, "%p", (void*)obj);
 
     return createString(address);
+}
+
+char* getType(Object* obj)
+{
+    return getAttributeValue(obj, "parent_type0");
 }
 
 /////////////////////////////////  Protocol   ////////////////////////////////////
@@ -238,6 +253,9 @@ Object* method_Number_toString(Object* number) {
 }
 
 Object* method_Number_equals(Object* number1, Object* number2) {
+    if(strcmp(getType(number1), getType(number2)) != 0)
+        return createBool(false);
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -301,11 +319,24 @@ Object* numberLessOrEqualThan(Object* number1, Object* number2) {
 }
 
 Object* numberPow(Object* number1, Object* number2) {
+    int value1 = *(double*)getAttributeValue(number1, "value");
+    int value2 = *(double*)getAttributeValue(number2, "value");
+
+    int total = 1;
+
+    for(int i = value2; i > 0; i--)
+    {
+        total *= value1;
+    }
+
+    return createNumber(total);
+}
+
+Object* numberMod(Object* number1, Object* number2) {
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
-    //return createNumber(pow(*value1, *value2));
-    return NULL;
+    return createNumber(((int)*value1) % ((int)*value2));
 }
 
 Object* numberParse(Object* string) {
@@ -337,6 +368,9 @@ Object* method_String_toString(Object* str) {
 }
 
 Object* method_String_equals(Object* string1, Object* string2) {
+    if(strcmp(getType(string1), getType(string2)) != 0)
+        return createBool(false);
+
     char* value1 = getAttributeValue(string1, "value");
     char* value2 = getAttributeValue(string2, "value");
 
@@ -370,6 +404,9 @@ Object* method_Bool_toString(Object* boolean) {
 }
 
 Object* method_Bool_equals(Object* bool1, Object* bool2) {
+    if(strcmp(getType(bool1), getType(bool2)) != 0)
+        return createBool(false);
+
     bool* value1 = getAttributeValue(bool1, "value");
     bool* value2 = getAttributeValue(bool2, "value");
 
@@ -380,4 +417,128 @@ Object* invertBool(Object* boolean) {
     bool* value = getAttributeValue(boolean, "value");
 
     return createBool(!*value);
+}
+
+/////////////////////////////////  Vectors   ////////////////////////////////////
+
+Object* createVectorFromList(int num_elements, Object** list)
+{
+    Object* vector = createObject();
+
+    addAttribute(vector, "parent_type0", "Vector");
+    addAttribute(vector, "parent_type1", "Object");
+
+    addAttribute(vector, "method_Vector_toString", *method_Vector_toString);
+    addAttribute(vector, "method_Vector_equals", *method_Vector_equals);
+
+    int* size = malloc(sizeof(int));
+    *size = num_elements;
+    addAttribute(vector, "size", size);
+
+    addAttribute(vector, "list", list);
+
+    return vector;
+}
+
+Object* createVector(int num_elements, ...)
+{
+    va_list elements;
+
+    va_start(elements, num_elements);
+
+    Object** list = malloc(num_elements * sizeof(Object*));
+
+    for(int i = 0; i < num_elements; i++) {
+        list[i] = va_arg(elements, Object*);
+    }
+
+    va_end(elements);
+
+    return createVectorFromList(num_elements, list);
+}
+
+Object* getElementOfVector(Object* vector, int index)
+{
+    return ((Object**)getAttributeValue(vector, "list"))[index];
+}
+
+void replaceElementOfVector(Object* vector, int index, Object* value)
+{
+    free(((Object**)getAttributeValue(vector, "list"))[index]);
+    ((Object**)getAttributeValue(vector, "list"))[index] = value;
+}
+
+Object* method_Vector_toString(Object* vector)
+{
+    int* size = getAttributeValue(vector, "size");
+
+    int total_size = 3 + ((*size > 0 ? *size : 1) - 1) * 2;
+
+    Object** list = getAttributeValue(vector, "list");
+
+    Object** strs = malloc(*size * sizeof(Object*));
+
+    for(int i = 0; i < *size; i++)
+    {
+        strs[i] = ((Object* (*)(Object*))getMethodForCurrentType(list[i], "toString", 0))(list[i]);
+        total_size += *(int*)getAttributeValue(strs[i], "len");
+    }
+
+    char* result = malloc(total_size * sizeof(char));
+    result[0] = '\0';
+
+    strcat(result, "[");
+    for(int i = 0; i < *size; i++)
+    {
+        strcat(result, (char*)getAttributeValue(strs[i], "value"));
+        free(strs[i]);
+
+        if(i + 1 < *size)
+            strcat(result, ", ");
+    }
+    strcat(result, "]");
+
+    free(strs);
+
+    return createString(result);
+}
+
+Object* method_Vector_equals(Object* vector1, Object* vector2)
+{
+    if(strcmp(getType(vector1), getType(vector2)) != 0)
+        return createBool(false);
+
+    int* size1 = getAttributeValue(vector1, "size");
+    Object** list1 = getAttributeValue(vector1, "list");
+
+    int* size2 = getAttributeValue(vector2, "size");
+    Object** list2 = getAttributeValue(vector2, "list");
+
+    if(*size1 != *size2)
+        return createBool(false);
+
+    for(int i = 0; i < *size1; i++)
+    {
+        bool* equal = getAttributeValue(((Object* (*)(Object*, Object*))getMethodForCurrentType(list1[i], "equals", 0))(list1[i], list2[i]), "value");
+
+        if(!*equal)
+            return createBool(false);
+    }
+
+    return createBool(true);
+}
+
+Object* function_range(Object* start, Object* end)
+{
+    int vstart = *(double*)getAttributeValue(start, "value");
+    int vend = *(double*)getAttributeValue(end, "value");
+
+    Object** list = malloc((vend - vstart) * sizeof(Object*));
+
+    for(int i = 0; i < vend - vstart; i++)
+    {
+        list[i] = createNumber(vstart + i);
+    }
+
+    return createVectorFromList(vend - vstart, list);
 }

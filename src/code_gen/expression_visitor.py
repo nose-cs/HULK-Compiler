@@ -21,6 +21,12 @@ class CodeGenC(object):
         self.while_blocks = ""
         self.index_while_blocks = 0
 
+        self.vector_comp = ""
+        self.index_vector_comp = 0
+
+        self.vector_selector = ""
+        self.index_vector_selector = 0
+
     def getlinesindented(self, code: str, add_return=False, collect_last_exp=False):
         lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
         
@@ -97,6 +103,10 @@ class CodeGenC(object):
     @visitor.when(hulk_nodes.DivNode)
     def visit(self, node: hulk_nodes.DivNode):
         return "numberDivision(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+
+    @visitor.when(hulk_nodes.PowNode)
+    def visit(self, node: hulk_nodes.PowNode):
+        return "numberPow(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
 
     @visitor.when(hulk_nodes.VariableNode)
     def visit(self, node: hulk_nodes.VariableNode):
@@ -354,3 +364,83 @@ class CodeGenC(object):
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode):
         return "replaceObject(" + self.visit(node.target) + ", " + self.visit(node.expr) + ")"
+    
+    @visitor.when(hulk_nodes.ModNode)
+    def visit(self, node: hulk_nodes.ModNode):
+        return "numberMod(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.VectorInitializationNode)
+    def visit(self, node: hulk_nodes.VectorInitializationNode):
+        return "createVector(" + str(len(node.elements)) + ", " + ", ".join([self.visit(element) for element in node.elements]) + ")"
+    
+    @visitor.when(hulk_nodes.VectorComprehensionNode)
+    def visit(self, node: hulk_nodes.VectorComprehensionNode):
+        var_iter = "v" + str(self.index_var)
+        self.index_var += 1
+        node.scope.children[0].find_variable(node.var).setNameC(var_iter)
+
+        selector = "Object* selector" + str(self.index_vector_selector) + " ("
+        index_selector = self.index_vector_selector
+        self.index_vector_selector += 1
+
+        vars = node.scope.get_variables(True)
+
+        for var in vars:
+            selector += "Object* " + var.nameC + ", "
+
+        selector += "Object* " + var_iter
+
+        selector +=  ")"
+
+        self.blocks_defs += selector + ";\n\n"
+
+        selector += " {\n"
+        selector += self.getlinesindented(self.visit(node.selector), True) + ";\n}"
+
+        self.vector_selector += selector + "\n\n"
+
+        vector_comp = "Object* vectorComprehension" + str(self.index_vector_comp) + " ("
+        index_vec = self.index_vector_comp
+        self.index_vector_comp += 1
+
+        for var in vars:
+            vector_comp += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            vector_comp = vector_comp[:-2]
+
+        vector_comp += ")"
+
+        self.blocks_defs += vector_comp + ";\n\n"
+
+        vector_comp += " {\n"
+
+        vector_comp += "   Object* vector = " + self.visit(node.iterable) + ";\n"
+        vector_comp += "   Object** list = getAttributeValue(vector, \"list\");\n"
+        vector_comp += "   int size = *(int*)getAttributeValue(vector, \"size\");\n\n"
+
+        vector_comp += "   Object** new_list = malloc(size * sizeof(Object*));\n\n"
+
+        vector_comp += "   for(int i = 0; i < size; i++) {\n"
+        vector_comp += "      new_list[i] = selector" + str(index_selector)
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        vector_comp += params + "list[i]);\n"
+
+        if len(vars) > 0:
+            params = params[:-2]
+
+        params += ")"
+
+        vector_comp += "   }\n\n"
+        vector_comp += "   return createVectorFromList(size, new_list);\n"
+        vector_comp += "}"
+
+        self.vector_comp += vector_comp + "\n\n"
+
+        return "vectorComprehension" + str(index_vec) + params
+
