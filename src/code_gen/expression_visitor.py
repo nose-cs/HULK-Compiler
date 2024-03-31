@@ -104,6 +104,10 @@ class CodeGenC(object):
     def visit(self, node: hulk_nodes.DivNode):
         return "numberDivision(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
 
+    @visitor.when(hulk_nodes.PowNode)
+    def visit(self, node: hulk_nodes.PowNode):
+        return "numberPow(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+
     @visitor.when(hulk_nodes.VariableNode)
     def visit(self, node: hulk_nodes.VariableNode):
         return node.scope.find_variable(node.lex).nameC

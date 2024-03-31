@@ -319,11 +319,17 @@ Object* numberLessOrEqualThan(Object* number1, Object* number2) {
 }
 
 Object* numberPow(Object* number1, Object* number2) {
-    double* value1 = getAttributeValue(number1, "value");
-    double* value2 = getAttributeValue(number2, "value");
+    int value1 = *(double*)getAttributeValue(number1, "value");
+    int value2 = *(double*)getAttributeValue(number2, "value");
 
-    //return createNumber(pow(*value1, *value2));
-    return NULL;
+    int total = 1;
+
+    for(int i = value2; i > 0; i--)
+    {
+        total *= value1;
+    }
+
+    return createNumber(total);
 }
 
 Object* numberMod(Object* number1, Object* number2) {
