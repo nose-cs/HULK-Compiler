@@ -113,8 +113,6 @@ class TypeChecker(object):
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
             return types.ErrorType()
 
-        # todo cannot infer the return type of a function
-
         return function.return_type
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
@@ -169,7 +167,7 @@ class TypeChecker(object):
 
         for cond_type in cond_types:
             if cond_type != types.BoolType():
-                self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
+                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
 
         expr_types = [self.visit(expression, child_scope) for expression, child_scope in
                       zip(node.expressions, scope.children[len(cond_types):])]
@@ -183,9 +181,19 @@ class TypeChecker(object):
         cond_type = self.visit(node.condition, scope.children[0])
 
         if cond_type != types.BoolType():
-            self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
 
         return self.visit(node.expression, scope.children[1])
+
+    @visitor.when(hulk_nodes.ForNode)
+    def visit(self, node: hulk_nodes.ForNode, scope: Scope):
+        ttype = self.visit(node.iterable, scope.children[1])
+        iterable_protocol = self.context.get_protocol('Iterable')
+
+        if not ttype.conforms_to(iterable_protocol):
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
+
+        return self.visit(node.expression, scope.children[0])
 
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode, scope: Scope):
@@ -273,7 +281,7 @@ class TypeChecker(object):
         expression_type = self.visit(node.expression, scope)
         bool_type = self.context.get_type('Bool')
 
-        cast_type = self.context.get_type(node.ttype)
+        cast_type = self.context.get_type_or_protocol(node.ttype)
 
         if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
             return bool_type
@@ -284,7 +292,7 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         expression_type = self.visit(node.expression, scope)
 
-        cast_type = self.context.get_type(node.ttype)
+        cast_type = self.context.get_type_or_protocol(node.ttype)
 
         if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
             self.errors.append(SemanticError.INCOMPATIBLE_TYPES)

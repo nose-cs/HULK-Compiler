@@ -204,7 +204,11 @@ class MethodCallNode(ExpressionNode):
         self.method = method
         self.args = args
 
-
+class IndexingNNode(ExpressionNode):
+    def __init__(self, obj, index):
+        self.obj = obj
+        self.index = index
+        
 # ---------------------------------------------------Depth 3---------------------------------------------------------- #
 
 class ConstantNumNode(AtomicNode):

@@ -134,3 +134,43 @@ class TestHulkLoops(unittest.TestCase):
 
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test11(self):
+        inp = """
+         print(
+            if (5 == 6)
+                let a = 3 in print(a + 9)
+            elif (6 == 6)
+                let a = 2 in print(a)
+            else
+            print(6)
+            );
+        """
+
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test1(self):
+        inp = """
+        let x = new Person() in x.printNam();
+        """
+
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test12(self):
+        inp = """
+                type Person(){
+                   name = "John";
+                   age = 25;
+
+                  printName(){
+                       print(name);
+                   }
+               }
+
+               let x = new Person() in if (x.name == "Jane") print("Jane") else print("John");
+               """
+
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(2, len(errors), f"Expects 2 error, but got {len(errors)}")
