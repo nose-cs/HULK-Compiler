@@ -139,7 +139,8 @@ Object* invertBool(Object* boolean);
 // Vector
 Object* createVectorFromList(int num_elements, Object** list);
 Object* createVector(int num_elements, ...);
-Object* getElementOfVector(Object* vector, Object* index);
+Object* getElementOfVector(Object* vector, int index);
+void replaceElementOfVector(Object* vector, int index, Object* value);
 Object* method_Vector_toString(Object* vector);
 Object* method_Vector_equals(Object* vector1, Object* vector2);
 Object* function_range(Object* start, Object* end);
@@ -456,9 +457,15 @@ Object* createVector(int num_elements, ...)
     return createVectorFromList(num_elements, list);
 }
 
-Object* getElementOfVector(Object* vector, Object* index)
+Object* getElementOfVector(Object* vector, int index)
 {
-    return ((Object**)getAttributeValue(vector, "list"))[(int)*(double*)getAttributeValue(index, "value")];
+    return ((Object**)getAttributeValue(vector, "list"))[index];
+}
+
+void replaceElementOfVector(Object* vector, int index, Object* value)
+{
+    free(((Object**)getAttributeValue(vector, "list"))[index]);
+    ((Object**)getAttributeValue(vector, "list"))[index] = value;
 }
 
 Object* method_Vector_toString(Object* vector)

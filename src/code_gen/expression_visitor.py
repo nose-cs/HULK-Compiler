@@ -18,8 +18,8 @@ class CodeGenC(object):
         self.if_else_blocks = ""
         self.index_if_else_blocks = 0
 
-        self.loop_blocks = ""
-        self.index_loop_blocks = 0
+        self.while_blocks = ""
+        self.index_while_blocks = 0
 
         self.vector_comp = ""
         self.index_vector_comp = 0
@@ -334,9 +334,9 @@ class CodeGenC(object):
         self.condition_blocks += condition_code + "\n\n"
 
 
-        code = "Object* loopBlock" + str(self.index_loop_blocks) + "("
-        index = self.index_loop_blocks
-        self.index_loop_blocks += 1
+        code = "Object* whileBlock" + str(self.index_while_blocks) + "("
+        index = self.index_while_blocks
+        self.index_while_blocks += 1
 
         for var in vars:
             code += "Object* " + var.nameC + ", "
@@ -357,9 +357,9 @@ class CodeGenC(object):
 
         code += "   return return_obj;\n}"
 
-        self.loop_blocks += code + "\n\n"
+        self.while_blocks += code + "\n\n"
 
-        return "loopBlock" + str(index) + params
+        return "whileBlock" + str(index) + params
     
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode):
@@ -444,57 +444,3 @@ class CodeGenC(object):
 
         return "vectorComprehension" + str(index_vec) + params
 
-    @visitor.when(hulk_nodes.IndexingNNode)
-    def visit(self, node: hulk_nodes.IndexingNNode):
-        return "getElementOfVector(" + self.visit(node.obj) + ", " + self.visit(node.index) + ")"
-    
-    @visitor.when(hulk_nodes.ForNode)
-    def visit(self, node: hulk_nodes.ForNode):
-        var_iter = "v" + str(self.index_var)
-        self.index_var += 1
-        node.scope.children[0].find_variable(node.var).setNameC(var_iter)
-
-        vars = node.scope.get_variables(True)
-
-        params = "("
-
-        for var in vars:
-            params += var.nameC + ", "
-
-        if len(vars) > 0:
-            params = params[:-2]     
-
-        params += ")"
-
-
-        code = "Object* loopBlock" + str(self.index_loop_blocks) + "("
-        index = self.index_loop_blocks
-        self.index_loop_blocks += 1
-
-        for var in vars:
-            code += "Object* " + var.nameC + ", "
-
-        if len(vars) > 0:
-            code = code[:-2]
-
-        code += ")"
-
-        self.blocks_defs += code + ";\n\n"
-
-        code += " {\n"
-        code += "   Object* return_obj = NULL;\n"
-        code += "   Object* " + var_iter + " = NULL;\n"
-        code += "   Object* vector = " + self.visit(node.iterable) + ";\n"
-        code += "   Object** list = getAttributeValue(vector, \"list\");\n"
-        code += "   int size = *(int*)getAttributeValue(vector, \"size\");\n\n"
-
-        code += "   for(int i = 0; i < size; i++) {\n"
-        code += "      " + var_iter + " = list[i];\n\n"
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + ";\n"
-        code += "   }\n"
-
-        code += "   return return_obj;\n}"
-
-        self.loop_blocks += code + "\n\n"
-
-        return "loopBlock" + str(index) + params
