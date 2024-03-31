@@ -41,6 +41,22 @@ class TypeCollector(object):
         self.context.create_function('log', ['base', 'value'], [number_type, number_type], number_type)
         self.context.create_function('rand', [], [], number_type)
 
+        # Add iterable protocol
+        iterable_protocol = self.context.create_protocol('Iterable')
+        iterable_protocol.define_method('next', [], [], bool_type)
+        iterable_protocol.define_method('current', [], [], object_type)
+
+        range_type = self.context.create_type('Range')
+        range_type.set_parent(object_type)
+        range_type.set_params(['min', 'max'], [number_type, number_type])
+        range_type.define_attribute('min', number_type)
+        range_type.define_attribute('max', number_type)
+        range_type.define_attribute('current', number_type)
+        range_type.define_method('next', [], [], bool_type)
+        range_type.define_method('current', [], [], number_type)
+
+        self.context.create_function('range', ['min', 'max'], [number_type, number_type], range_type)
+
         for decl in node.declarations:
             self.visit(decl)
         return self.context, self.errors

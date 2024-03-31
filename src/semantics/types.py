@@ -48,16 +48,6 @@ class Method:
         return True
 
 
-class ErrorMethod(Method):
-    def __init__(self, name, params_length: int = 10):
-        params = [('<error>', ErrorType()) for _ in range(params_length)]
-        param_names, param_types = zip(*params)
-        super().__init__(name, param_names, param_types, ErrorType())
-
-    def can_substitute_with(self, other):
-        return True
-
-
 class Protocol:
     def __init__(self, name: str, node=None):
         self.name = name
@@ -100,8 +90,8 @@ class Protocol:
     def conforms_to(self, other):
         if isinstance(other, Type):
             return False
-        return self == other or self.parent is not None and self.parent.conforms_to(
-            other) or self._not_ancestor_conforms_to(other)
+        return self == other or (self.parent is not None and self.parent.conforms_to(
+            other)) or self._not_ancestor_conforms_to(other)
 
     @staticmethod
     def is_error():
@@ -214,6 +204,9 @@ class Type:
             return other.bypass() or self == other or self.parent is not None and self.parent.conforms_to(other)
         elif isinstance(other, Protocol):
             try:
+                print('---------------type')
+                print(other)
+                print(all(method.can_substitute_with(self.get_method(method.name)) for method in other.methods))
                 return all(method.can_substitute_with(self.get_method(method.name)) for method in other.methods)
             # If a method is not defined in the current type (or its ancestors), then it is not conforming
             except SemanticError:

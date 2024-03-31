@@ -232,7 +232,7 @@ function_declaration %= (function + idx + opar + params_list_or_empty + cpar + e
 # specifying return type
 function_declaration %= (
     function + idx + opar + params_list_or_empty + cpar + colon + idx + arrow + simple_expr + semicolon,
-    lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[10], s[7]))
+    lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[9], s[7]))
 function_declaration %= (function + idx + opar + params_list_or_empty + cpar + colon + idx + expr_block,
                          lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[7]))
 function_declaration %= (
