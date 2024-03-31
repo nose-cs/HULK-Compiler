@@ -14,6 +14,7 @@ class TypeChecker(object):
             errors = []
         self.context: Context = context
         self.current_type = None
+        self.current_method = None
         self.errors: List[SemanticError] = errors
 
     @visitor.on('node')
@@ -271,11 +272,8 @@ class TypeChecker(object):
             self.errors.append(SemanticError("Cannot access an attribute from a non-self object"))
             return types.ErrorType()
 
-    # todo for loop
-
     # todo vector initialization
 
-    # todo false or error?
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
         expression_type = self.visit(node.expression, scope)

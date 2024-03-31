@@ -276,7 +276,7 @@ optional_inheritance %= inherits + idx, lambda h, s: s[2]
 optional_inheritance %= G.Epsilon, lambda h, s: None
 
 optional_params_for_type %= opar + params_list_or_empty + cpar, lambda h, s: s[2]
-optional_params_for_type %= G.Epsilon, lambda h, s: []
+optional_params_for_type %= G.Epsilon, lambda h, s: None
 
 type_body_or_empty %= G.Epsilon, lambda h, s: []
 type_body_or_empty %= type_body, lambda h, s: s[1]

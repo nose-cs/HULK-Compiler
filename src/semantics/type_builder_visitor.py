@@ -42,12 +42,16 @@ class TypeBuilder(object):
             self.errors.append(e)
 
     def get_params_names_and_types(self, node):
+        # for types that not specify params
+        if node.params_ids is None or node.params_types is None:
+            return None, None
+
         params_names = []
         params_types = []
 
         # Check that params are not repeated
         if len(node.params_ids) != len(set(node.params_ids)):
-            self.errors.append(SemanticError('A function cannot have two parameters with the same name'))
+            self.errors.append(SemanticError('A function or method cannot have two parameters with the same name'))
 
         for i in range(len(node.params_ids)):
             # If the param is already declared, skip it
@@ -72,8 +76,7 @@ class TypeBuilder(object):
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         self.current_type = self.context.get_type(node.idx)
 
-        params_names, params_types = self.get_params_names_and_types(node)
-        self.current_type.set_params(params_names, params_types)
+        self.current_type.params_names, self.current_type.params_types = self.get_params_names_and_types(node)
 
         # Check if the type is inheriting from a forbidden type
         if node.parent in ['Number', 'Bool', 'String', 'Self']:

@@ -49,7 +49,7 @@ class CodeGenC(object):
         args = node.args
 
         while classs is not None and classs.name != "Object":
-            for i, param in enumerate(classs.get_params()[0]):
+            for i, param in enumerate(classs.params_names):
                 classs.node.scope.children[0].find_variable(param).setNameC(self.visit(args[i]))
 
             for att in classs.attributes:

@@ -48,7 +48,7 @@ class TypeCollector(object):
 
         range_type = self.context.create_type('Range')
         range_type.set_parent(object_type)
-        range_type.set_params(['min', 'max'], [number_type, number_type])
+        range_type.params_names, range_type.params_types = ['min', 'max'], [number_type, number_type]
         range_type.define_attribute('min', number_type)
         range_type.define_attribute('max', number_type)
         range_type.define_attribute('current', number_type)

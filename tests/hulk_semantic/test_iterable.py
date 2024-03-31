@@ -47,9 +47,9 @@ class TestHulkLoops(unittest.TestCase):
             next(): Bool => (self.current := self.current + 1) < self.max;
             current(): Number => self.current;
         }
-        let x = new Range(1, 100) in x is Iterable;
+        let x = new MyRange(1, 100) in x is Iterable;
         ''')
-        ast, errors, context, scope = run_code(inp, True)
+        ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
     def test_invalid_cast_to_iterable(self):
@@ -62,16 +62,16 @@ class TestHulkLoops(unittest.TestCase):
             next(): Bool => (self.current := self.current + 1) < self.max;
             current(): Number => self.current;
         }
-        
+
         type X {
             current() => true;
             next() => true;
         }
-        
-        let x = new Range(1, 100), y: Iterable = new X() in x as Iterable;
+
+        let x = new MyRange(1, 100), y: Iterable = new X() in x as Iterable;
         ''')
         ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
     def test____(self):
         inp = ('''

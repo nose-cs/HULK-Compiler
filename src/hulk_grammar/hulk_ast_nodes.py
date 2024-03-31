@@ -1,11 +1,13 @@
 from abc import ABC
 from typing import List, Tuple
+
 from src.semantics.utils import Scope
+
 
 # ---------------------------------------------------Depth 0---------------------------------------------------------- #
 class Node(ABC):
     def __init__(self):
-        self.scope : Scope = None
+        self.scope: Scope = None
 
 
 # ---------------------------------------------------Depth 1---------------------------------------------------------- #
@@ -41,12 +43,12 @@ class FunctionDeclarationNode(DeclarationNode):
 
 class TypeDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, body, parent, parent_args=None):
-        if parent_args is None:
-            parent_args = []
-        if len(params) > 0:
+        if params and len(params) > 0:
             params_ids, params_types = zip(*params)
-        else:
+        elif params and len(params) == 0:
             params_ids, params_types = [], []
+        else:
+            params_ids, params_types = None, None
         self.idx = idx
         self.methods = [method for method in body if isinstance(method, MethodDeclarationNode)]
         self.attributes = [attribute for attribute in body if isinstance(attribute, AttributeDeclarationNode)]
@@ -204,11 +206,13 @@ class MethodCallNode(ExpressionNode):
         self.method = method
         self.args = args
 
+
 class IndexingNNode(ExpressionNode):
     def __init__(self, obj, index):
         self.obj = obj
         self.index = index
-        
+
+
 # ---------------------------------------------------Depth 3---------------------------------------------------------- #
 
 class ConstantNumNode(AtomicNode):
