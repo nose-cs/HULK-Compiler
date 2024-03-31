@@ -158,18 +158,34 @@ class VarCollector(object):
         self.visit(node.condition, scope.create_child())
         self.visit(node.expression, scope.create_child())
 
+    @visitor.when(hulk_nodes.ForNode)
+    def visit(self, node: hulk_nodes.ForNode, scope: Scope):
+        node.scope = scope
+        expr_scope = scope.create_child()
+
+        expr_scope.define_variable(node.var, AutoType())
+
+        self.visit(node.iterable, scope.create_child())
+        self.visit(node.expression, expr_scope)
+
     # todo vector initialization and for
 
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
         node.scope = scope
+        try:
+            self.context.get_type_or_protocol(node.ttype)
+        except SemanticError as e:
+            self.errors.append(e)
+            self.context.create_error_type(node.ttype)
+
         self.visit(node.expression, scope)
 
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         node.scope = scope
         try:
-            self.context.get_type(node.ttype)
+            self.context.get_type_or_protocol(node.ttype)
         except SemanticError as e:
             self.errors.append(e)
             self.context.create_error_type(node.ttype)

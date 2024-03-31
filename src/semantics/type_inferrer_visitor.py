@@ -207,6 +207,11 @@ class TypeInferrer(object):
         self.visit(node.condition, scope.children[0])
         return self.visit(node.expression, scope.children[1])
 
+    @visitor.when(hulk_nodes.ForNode)
+    def visit(self, node: hulk_nodes.ForNode, scope: Scope):
+        self.visit(node.iterable, scope.children[1])
+        return self.visit(node.expression, scope.children[0])
+
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode, scope: Scope):
         try:
@@ -278,7 +283,7 @@ class TypeInferrer(object):
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         self.visit(node.expression, scope)
-        cast_type = self.context.get_type(node.ttype)
+        cast_type = self.context.get_type_or_protocol(node.ttype)
         return cast_type
 
     @visitor.when(hulk_nodes.ArithmeticExpressionNode)
