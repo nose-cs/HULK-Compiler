@@ -123,22 +123,6 @@ class Scope:
     def __len__(self):
         return len(self.locals)
 
-    def next_child_0(self):
-        child = self.children[self.index]
-        self.index = self.index + 1
-        if self.index == len(self.children):
-            self.index = -1
-            return None
-        return child
-
-    def next_child(self):
-        self.index = self.index + 1
-        if self.index == len(self.children):
-            self.index = 0
-            return None
-        child = self.children[self.index]
-        return child
-
     def create_child(self):
         child = Scope(self)
         self.children.append(child)

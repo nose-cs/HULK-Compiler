@@ -163,34 +163,21 @@ class Type:
         return method
 
     def set_params(self):
-        self.params_names, self.params_types = self.get_params()
+        """
+        Sets the params of the type.
+        If the type doesn't specify them, sets a copy of the params of the lowest ancestor that does it.
+        """
+        params_names, params_types = self.get_params()
+        self.params_names = [param_name for param_name in params_names]
+        self.params_types = [param_type for param_type in params_types]
 
     def get_params(self):
         if (self.params_names is None or self.params_types is None) and self.parent is not None:
             params_names, params_types = self.parent.get_params()
         else:
-            params_names, params_types = self.params_names, self.params_types
+            params_names = self.params_names
+            params_types = self.params_types
         return params_names, params_types
-
-    # def get_params(self):
-    #     if not self.looked_for_parent_params and len(self.params_names) == 0:
-    #         if self.parent is not None:
-    #             params_names, params_types = self.parent.get_params()
-    #             self.params_names.extend(params_names)
-    #             self.params_types.extend(params_types)
-    #
-    #             self.node.args = []
-    #             self.node.parent_args = []
-    #             for param_name, param_type in zip(self.params_names, self.params_types):
-    #                 self.node.scope.children[0].define_variable(param_name, param_type)
-    #                 self.node.args.append(hulk_nodes.VariableNode(param_name))
-    #
-    #                 p_arg = hulk_nodes.VariableNode(param_name)
-    #                 p_arg.scope = self.node.scope.children[0]
-    #                 self.node.parent_args.append(p_arg)
-    #
-    #         self.looked_for_parent_params = True
-    #     return self.params_names, self.params_types
 
     def all_attributes(self, clean=True):
         plain = OrderedDict() if self.parent is None else self.parent.all_attributes(False)
@@ -334,17 +321,18 @@ def get_most_specialized_type(types: List[Union[Type, Protocol]]):
     return most_specialized
 
 
-# todo define lca with protocols
-def get_lowest_common_ancestor(types: List[Type]):
+# todo test this
+def get_lowest_common_ancestor(types: List[Union[Type, Protocol]]):
     """
     Get the lowest common ancestor of a list of types.
     If there is some ErrorType in the list, it will return an ErrorType.
     If there is some AutoType in the list, it will return an AutoType.
+    If there is no lca, it will return Object, ie: lca of Hashable and Iterable is Object.
 
     :param types: List of types
-    :type types: List[Type]
-    :return: The lca of the types.
-    :rtype: Type
+    :type types: List[Union[Type, Protocol]]
+    :return: The lowest common ancestor of the types.
+    :rtype: Type or Protocol
     """
     if not types or any(isinstance(t, ErrorType) for t in types):
         return ErrorType()
@@ -357,6 +345,9 @@ def get_lowest_common_ancestor(types: List[Type]):
 
 
 def _get_lca(type1: Type, type2: Type):
+    # Object is the "root" of protocols too
+    if type1 is None or type2 is None:
+        return ObjectType()
     if type1.conforms_to(type2):
         return type2
     if type2.conforms_to(type1):

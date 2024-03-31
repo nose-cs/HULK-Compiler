@@ -35,18 +35,6 @@ class TypeChecker(object):
         self.current_type = self.context.get_type(node.idx)
 
         new_scope = scope.children[0]
-        parent_args = [self.visit(expr, new_scope) for expr in node.parent_args]
-
-        parent_params_types = self.current_type.parent.params_types
-
-        if len(parent_args) != len(parent_params_types):
-            self.errors.append(SemanticError(
-                f"Expected {len(parent_params_types)} arguments, but {len(parent_args)} were given."))
-            return types.ErrorType()
-
-        for parent_arg, parent_param_type in zip(parent_args, parent_params_types):
-            if not parent_arg.conforms_to(parent_param_type):
-                self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
 
         for attr in node.attributes:
             self.visit(attr, new_scope)
@@ -54,6 +42,22 @@ class TypeChecker(object):
         methods_scope = scope.children[1]
         for method in node.methods:
             self.visit(method, methods_scope)
+
+        if isinstance(self.current_type.parent, types.ErrorType):
+            return
+
+        parent_args_types = [self.visit(expr, new_scope) for expr in node.parent_args]
+
+        parent_params_types = self.current_type.parent.params_types
+
+        if len(parent_args_types) != len(parent_params_types):
+            self.errors.append(SemanticError(
+                f"Expected {len(parent_params_types)} arguments, but {len(parent_args_types)} were given."))
+            return types.ErrorType()
+
+        for parent_arg_type, parent_param_type in zip(parent_args_types, parent_params_types):
+            if not parent_arg_type.conforms_to(parent_param_type):
+                self.errors.append(SemanticError.INCOMPATIBLE_TYPES)
 
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
     def visit(self, node: hulk_nodes.AttributeDeclarationNode, scope: Scope):

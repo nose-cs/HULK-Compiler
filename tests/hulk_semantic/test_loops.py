@@ -174,3 +174,11 @@ class TestHulkLoops(unittest.TestCase):
 
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(2, len(errors), f"Expects 2 error, but got {len(errors)}")
+
+    def test13(self):
+        inp = """
+               function fact(x) => let f = 1 in for (i in range(1, x+1)) f := f * i;
+               fact(3);
+               """
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

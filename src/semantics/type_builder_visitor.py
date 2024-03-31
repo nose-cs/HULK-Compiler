@@ -51,7 +51,7 @@ class TypeBuilder(object):
 
         # Check that params are not repeated
         if len(node.params_ids) != len(set(node.params_ids)):
-            self.errors.append(SemanticError('A function or method cannot have two parameters with the same name'))
+            self.errors.append(SemanticError('Cannot have two parameters with the same name in %s'))
 
         for i in range(len(node.params_ids)):
             # If the param is already declared, skip it

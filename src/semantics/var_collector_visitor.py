@@ -35,22 +35,21 @@ class VarCollector(object):
 
         self.current_type = self.context.get_type(node.idx)
 
+        # Set parent arguments when they are None
+        if node.parent_args is None and node.params_ids is not None:
+            node.parent_args = []
+
         # Set params cause in the type builder I didn't have the params of my parent
-        self.current_type.set_params()
-        node.params_ids, node.params_types = self.current_type.params_names, self.current_type.params_types
+        if node.parent_args is None and node.params_ids is None:
+            self.current_type.set_params()
+            node.params_ids, node.params_types = self.current_type.params_names, self.current_type.params_types
+            # After this I know that my parent's args are my params (are just variables with its params names)
+            node.parent_args = [hulk_nodes.VariableNode(param_name) for param_name in self.current_type.params_names]
 
         # Create a new scope that includes the parameters
         new_scope = scope.create_child()
         for i in range(len(self.current_type.params_names)):
             new_scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i])
-
-        # Set parent arguments when they are None
-        if node.parent_args is None and node.params_ids is not None:
-            node.parent_args = []
-
-        if node.parent_args is None and node.params_ids is None:
-            parent_params_names, parent_params_types = self.current_type.parent.get_params()
-            node.parent_args = parent_params_names
 
         for expr in node.parent_args:
             self.visit(expr, new_scope)

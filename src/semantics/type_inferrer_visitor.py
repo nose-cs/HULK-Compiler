@@ -50,9 +50,6 @@ class TypeInferrer(object):
 
         new_scope = scope.children[0]
 
-        for expr in node.parent_args:
-            self.visit(expr, new_scope)
-
         for attr in node.attributes:
             attr_type = self.visit(attr, new_scope)
             attribute = self.current_type.get_attribute(attr.id)
@@ -75,6 +72,10 @@ class TypeInferrer(object):
                 else:
                     self.errors.append(SemanticError("Cannot infer the type of the param, please specify it."))
                     local_var.type = types.ErrorType()
+                    self.current_type.params_types[i] = types.ErrorType()
+
+        for expr in node.parent_args:
+            self.visit(expr, new_scope)
 
         # Infer the params types and return type of the methods
         methods_scope = scope.children[1]
