@@ -12,8 +12,8 @@ class CodeGenC(object):
         
         self.blocks_defs = ""
 
-        self.condition_blocks = ""
-        self.index_condition_blocks = 0
+        self.let_in_blocks = ""
+        self.index_let_in_blocks = 0
 
         self.if_else_blocks = ""
         self.index_if_else_blocks = 0
@@ -31,10 +31,10 @@ class CodeGenC(object):
         lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
         
         if add_return:
-            lines[-1] = "   return " + lines[-1][3:]
+            lines[-1] = "   return " + lines[-1][3:] + ";"
         
         if collect_last_exp:
-            lines[-1] = "   return_obj = " + lines[-1][3:]
+            lines[-1] = "   return_obj = " + lines[-1][3:] + ";"
 
         return '\n'.join(lines)
 
@@ -86,6 +86,8 @@ class CodeGenC(object):
         for expression in node.expressions:
             code += self.visit(expression) + ";\n"
 
+        code = code[:-2]
+
         return code
     
     @visitor.when(hulk_nodes.PlusNode)
@@ -119,7 +121,7 @@ class CodeGenC(object):
         
         node.scope.find_variable(node.id).setNameC(var)
 
-        return "Object* " + var + " = " + self.visit(node.expr)
+        return "Object* " + var + " = copyObject(" + self.visit(node.expr) + ");"
         
     @visitor.when(hulk_nodes.ConstantNumNode)
     def visit(self, node: hulk_nodes.ConstantNumNode):
@@ -138,7 +140,7 @@ class CodeGenC(object):
         code = ""
 
         for var_declaration in node.var_declarations:
-            code += self.visit(var_declaration) + ";\n"
+            code += self.visit(var_declaration) + "\n"
 
         code += self.visit(node.body)
 
@@ -149,7 +151,7 @@ class CodeGenC(object):
         code = "function_" + node.idx + "("
 
         for arg in node.args:
-            code += self.visit(arg) + ", "
+            code += "copyObject(" + self.visit(arg) + "), "
 
         if len(node.args) > 0:
             code = code[:-2]
@@ -187,7 +189,7 @@ class CodeGenC(object):
                 ")(" + obj
 
         for arg in node.args:
-            code += ", " + self.visit(arg)
+            code += ", copyObject(" + self.visit(arg) + ")"
 
         code += ")"
 
@@ -225,7 +227,7 @@ class CodeGenC(object):
 
             condition_code += " {\n"
 
-            condition_code += self.getlinesindented(self.visit(condition), True) + ";\n}"
+            condition_code += self.getlinesindented(self.visit(condition), True) + "\n}"
 
             self.condition_blocks += condition_code + "\n\n"
             conditions_codes.append("condition" + str(index_condition) + params)
@@ -249,14 +251,14 @@ class CodeGenC(object):
         
         code += "   if(*((bool*)getAttributeValue(" + conditions_codes[0] + ", \"value\"))) {\n"
 
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[0]), True)) + ";\n   }\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[0]), True)) + "\n   }\n"
 
         for i in range(1, len(node.conditions)):
             code += "   else if(*((bool*)getAttributeValue(" + conditions_codes[i] + ", \"value\"))) {\n"
-            code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[i]), True)) + ";\n   }\n"
+            code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[i]), True)) + "\n   }\n"
 
         code += "   else {\n"
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.default_expr), True)) + ";\n   }\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.default_expr), True)) + "\n   }\n"
 
         code += "}"
 
@@ -329,7 +331,7 @@ class CodeGenC(object):
 
         condition_code += " {\n"
 
-        condition_code += self.getlinesindented(self.visit(node.condition), True) + ";\n}"
+        condition_code += self.getlinesindented(self.visit(node.condition), True) + "\n}"
 
         self.condition_blocks += condition_code + "\n\n"
 
@@ -352,7 +354,7 @@ class CodeGenC(object):
         code += "   Object* return_obj = NULL;\n"
 
         code += "   while(*((bool*)getAttributeValue(condition" + str(index_condition) + params + ", \"value\"))) {\n"
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + ";\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + "\n"
         code += "   }\n"
 
         code += "   return return_obj;\n}"
@@ -395,7 +397,7 @@ class CodeGenC(object):
         self.blocks_defs += selector + ";\n\n"
 
         selector += " {\n"
-        selector += self.getlinesindented(self.visit(node.selector), True) + ";\n}"
+        selector += self.getlinesindented(self.visit(node.selector), True) + "\n}"
 
         self.vector_selector += selector + "\n\n"
 
@@ -490,7 +492,7 @@ class CodeGenC(object):
 
         code += "   for(int i = 0; i < size; i++) {\n"
         code += "      " + var_iter + " = list[i];\n\n"
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + ";\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + "\n"
         code += "   }\n"
 
         code += "   return return_obj;\n}"
