@@ -156,7 +156,7 @@ class TypeChecker(object):
         new_type = self.visit(node.expr, scope)
         old_type = self.visit(node.target, scope)
 
-        if old_type == types.SelfType():
+        if old_type.name == 'Self':
             self.errors.append(SemanticError(SemanticError.SELF_IS_READONLY))
             return types.ErrorType()
 
@@ -451,3 +451,22 @@ class TypeChecker(object):
             return types.ErrorType()
 
         return self.visit(node.selector, scope.children[0])
+
+    @visitor.when(hulk_nodes.IndexingNode)
+    def visit(self, node: hulk_nodes.IndexingNode, scope: Scope):
+        number_type = self.context.get_type('Number')
+
+        index_type = self.visit(node.index, scope)
+        if index_type != number_type:
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
+            return types.ErrorType()
+
+        obj_type = self.visit(node.obj, scope)
+
+        print(obj_type)
+
+        if obj_type.name != 'Vector':
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
+            return types.ErrorType()
+
+        return obj_type.get_element_type()

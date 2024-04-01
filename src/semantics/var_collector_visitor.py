@@ -246,3 +246,9 @@ class VarCollector(object):
         self.visit(node.selector, selector_scope)
 
         self.visit(node.iterable, scope.create_child())
+
+    @visitor.when(hulk_nodes.IndexingNode)
+    def visit(self, node: hulk_nodes.IndexingNode, scope: Scope):
+        node.scope = scope
+        self.visit(node.obj, scope)
+        self.visit(node.index, scope)

@@ -238,7 +238,7 @@ class ErrorType(Type):
         return True
 
     def __eq__(self, other):
-        return isinstance(other, Type)
+        return isinstance(other, ErrorType) or other.name == self.name
 
 
 class AutoType(Type):
@@ -301,14 +301,24 @@ class VectorType(Type):
         super().__init__('Vector')
         self.set_parent(ObjectType())
         self.define_method('next', [], [], BoolType())
-        self.define_method('current', [], [], element_type)
         self.define_method('size', [], [], NumberType())
+        self.define_method('current', [], [], element_type)
 
     def set_element_type(self, ttype: Union[Type, Protocol]):
         self.get_method('current').return_type = ttype
 
+    def get_element_type(self) -> Union[Type, Protocol]:
+        return self.get_method('current').return_type
+
+    def conforms_to(self, other):
+        if not isinstance(other, VectorType):
+            return super().conforms_to(other)
+        self_elem_type = self.get_element_type()
+        other_elem_type = other.get_element_type()
+        return self_elem_type.conforms_to(other_elem_type)
+
     def __eq__(self, other):
-        return isinstance(other, ObjectType) or other.name == self.name
+        return isinstance(other, VectorType) or other.name == self.name
 
 
 def get_most_specialized_type(types: List[Union[Type, Protocol]]):

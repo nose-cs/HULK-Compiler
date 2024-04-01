@@ -300,14 +300,10 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, number_type)
-        elif left_type != number_type:
-            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, number_type)
-        elif right_type != number_type:
-            return types.ErrorType()
 
         return number_type
 
@@ -319,14 +315,10 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, number_type)
-        elif left_type != number_type:
-            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, number_type)
-        elif right_type != number_type:
-            return types.ErrorType()
 
         return bool_type
 
@@ -337,14 +329,10 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, bool_type)
-        elif left_type != bool_type:
-            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, bool_type)
-        elif right_type != bool_type:
-            return types.ErrorType()
 
         return bool_type
 
@@ -356,24 +344,18 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, object_type)
-        elif not left_type.conforms_to(object_type):
-            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, object_type)
-        elif not right_type.conforms_to(object_type):
-            return types.ErrorType()
 
         return string_type
 
     @visitor.when(hulk_nodes.EqualityExpressionNode)
     def visit(self, node: hulk_nodes.EqualityExpressionNode, scope: Scope):
         bool_type = self.context.get_type('Bool')
-        left_type = self.visit(node.left, scope)
-        right_type = self.visit(node.right, scope)
-        if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
-            return types.ErrorType()
+        self.visit(node.left, scope)
+        self.visit(node.right, scope)
         return bool_type
 
     @visitor.when(hulk_nodes.NegNode)
@@ -383,8 +365,6 @@ class TypeInferrer(object):
 
         if operand_type == types.AutoType():
             self.assign_auto_type(node.operand, scope, number_type)
-        elif operand_type != number_type:
-            return types.ErrorType()
 
         return number_type
 
@@ -395,8 +375,6 @@ class TypeInferrer(object):
 
         if operand_type == types.AutoType():
             self.assign_auto_type(node.operand, scope, bool_type)
-        elif operand_type != bool_type:
-            return types.ErrorType()
 
         return bool_type
 
@@ -454,3 +432,19 @@ class TypeInferrer(object):
             variable.type = types.ErrorType()
 
         return self.visit(node.selector, scope.children[0])
+
+    @visitor.when(hulk_nodes.IndexingNode)
+    def visit(self, node: hulk_nodes.IndexingNode, scope: Scope):
+        number_type = self.context.get_type('Number')
+
+        index_type = self.visit(node.index, scope)
+        if index_type == types.AutoType():
+            self.assign_auto_type(node.index, scope, number_type)
+        elif index_type != number_type:
+            return types.ErrorType()
+
+        obj_type = self.visit(node.obj, scope)
+        if obj_type.name != 'Vector':
+            return types.ErrorType()
+
+        return obj_type.get_element_type()

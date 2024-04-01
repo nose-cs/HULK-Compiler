@@ -43,3 +43,17 @@ class TestHulkLoops(unittest.TestCase):
            '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test__(self):
+        inp = '''
+           for (x in [9 + 3, 50]) x[4] := 8;
+           '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test___(self):
+        inp = '''
+           let x = [1,2,3] in x[7] := 4;
+           '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
