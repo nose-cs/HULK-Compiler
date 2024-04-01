@@ -204,8 +204,8 @@ class Formatter(object):
         args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
         return f'{ans}\n{obj}\n{args}'
 
-    @visitor.when(hulk_nodes.IndexingNNode)
-    def visit(self, node: hulk_nodes.IndexingNNode, tabs=0):
+    @visitor.when(hulk_nodes.IndexingNode)
+    def visit(self, node: hulk_nodes.IndexingNode, tabs=0):
         ans = '\t' * tabs + f'\\IndexingHode: <expr>[<expr>]'
         obj = self.visit(node.obj, tabs + 1)
         index = self.visit(node.index, tabs + 1)

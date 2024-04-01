@@ -207,7 +207,7 @@ class MethodCallNode(ExpressionNode):
         self.args = args
 
 
-class IndexingNNode(ExpressionNode):
+class IndexingNode(ExpressionNode):
     def __init__(self, obj, index):
         self.obj = obj
         self.index = index

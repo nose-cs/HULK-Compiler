@@ -296,6 +296,21 @@ class SelfType(Type):
         return isinstance(other, SelfType) or other.name == self.name
 
 
+class VectorType(Type):
+    def __init__(self, element_type) -> None:
+        super().__init__('Vector')
+        self.set_parent(ObjectType())
+        self.define_method('next', [], [], BoolType())
+        self.define_method('current', [], [], element_type)
+        self.define_method('size', [], [], NumberType())
+
+    def set_element_type(self, ttype: Union[Type, Protocol]):
+        self.get_method('current').return_type = ttype
+
+    def __eq__(self, other):
+        return isinstance(other, ObjectType) or other.name == self.name
+
+
 def get_most_specialized_type(types: List[Union[Type, Protocol]]):
     """
     Get the most specialized type in a list of types.

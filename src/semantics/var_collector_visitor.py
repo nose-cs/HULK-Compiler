@@ -231,6 +231,12 @@ class VarCollector(object):
     def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
         node.scope = scope
 
+    @visitor.when(hulk_nodes.VectorInitializationNode)
+    def visit(self, node: hulk_nodes.VectorInitializationNode, scope: Scope):
+        node.scope = scope
+        for element in node.elements:
+            self.visit(element, scope)
+
     @visitor.when(hulk_nodes.VectorComprehensionNode)
     def visit(self, node: hulk_nodes.VectorComprehensionNode, scope: Scope):
         node.scope = scope

@@ -434,3 +434,20 @@ class TypeChecker(object):
                 return types.ErrorType()
 
         return ttype
+
+    @visitor.when(hulk_nodes.VectorInitializationNode)
+    def visit(self, node: hulk_nodes.VectorInitializationNode, scope: Scope):
+        elements_types = [self.visit(element, scope) for element in node.elements]
+        lca = types.get_lowest_common_ancestor(elements_types)
+        return types.VectorType(lca)
+
+    @visitor.when(hulk_nodes.VectorComprehensionNode)
+    def visit(self, node: hulk_nodes.VectorComprehensionNode, scope: Scope):
+        ttype = self.visit(node.iterable, scope.children[0])
+        iterable_protocol = self.context.get_protocol('Iterable')
+
+        if not ttype.conforms_to(iterable_protocol):
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES))
+            return types.ErrorType()
+
+        return self.visit(node.selector, scope.children[0])

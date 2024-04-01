@@ -281,11 +281,6 @@ class TypeInferrer(object):
             # Can't access to a non-self attribute
             return types.ErrorType()
 
-    # todo for loop
-
-    # todo vector initialization
-
-    # todo false or error?
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
         bool_type = self.context.get_type('Bool')
@@ -305,10 +300,14 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, number_type)
+        elif left_type != number_type:
+            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, number_type)
+        elif right_type != number_type:
+            return types.ErrorType()
 
         return number_type
 
@@ -320,10 +319,14 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, number_type)
+        elif left_type != number_type:
+            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, number_type)
+        elif right_type != number_type:
+            return types.ErrorType()
 
         return bool_type
 
@@ -334,10 +337,14 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, bool_type)
+        elif left_type != bool_type:
+            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, bool_type)
+        elif right_type != bool_type:
+            return types.ErrorType()
 
         return bool_type
 
@@ -349,19 +356,24 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, object_type)
+        elif not left_type.conforms_to(object_type):
+            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, object_type)
+        elif not right_type.conforms_to(object_type):
+            return types.ErrorType()
 
         return string_type
 
-    # todo be more specific with True and False
     @visitor.when(hulk_nodes.EqualityExpressionNode)
-    def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
+    def visit(self, node: hulk_nodes.EqualityExpressionNode, scope: Scope):
         bool_type = self.context.get_type('Bool')
-        self.visit(node.left, scope)
-        self.visit(node.right, scope)
+        left_type = self.visit(node.left, scope)
+        right_type = self.visit(node.right, scope)
+        if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
+            return types.ErrorType()
         return bool_type
 
     @visitor.when(hulk_nodes.NegNode)
@@ -371,6 +383,8 @@ class TypeInferrer(object):
 
         if operand_type == types.AutoType():
             self.assign_auto_type(node.operand, scope, number_type)
+        elif operand_type != number_type:
+            return types.ErrorType()
 
         return number_type
 
@@ -381,6 +395,8 @@ class TypeInferrer(object):
 
         if operand_type == types.AutoType():
             self.assign_auto_type(node.operand, scope, bool_type)
+        elif operand_type != bool_type:
+            return types.ErrorType()
 
         return bool_type
 
@@ -415,3 +431,26 @@ class TypeInferrer(object):
             self.visit(arg, scope)
 
         return ttype
+
+    @visitor.when(hulk_nodes.VectorInitializationNode)
+    def visit(self, node: hulk_nodes.VectorInitializationNode, scope: Scope):
+        elements_types = [self.visit(element, scope) for element in node.elements]
+        lca = types.get_lowest_common_ancestor(elements_types)
+        print(lca)
+        return types.VectorType(lca)
+
+    @visitor.when(hulk_nodes.VectorComprehensionNode)
+    def visit(self, node: hulk_nodes.VectorComprehensionNode, scope: Scope):
+        ttype = self.visit(node.iterable, scope.children[0])
+        iterable_protocol = self.context.get_protocol('Iterable')
+
+        new_scope = scope.children[0]
+        variable = new_scope.find_variable(node.var)
+
+        if ttype.conforms_to(iterable_protocol):
+            element_type = ttype.get_method('current').return_type
+            variable.type = element_type
+        else:
+            variable.type = types.ErrorType()
+
+        return self.visit(node.selector, scope.children[0])
