@@ -137,14 +137,43 @@ class CodeGenC(object):
     
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode):
-        code = ""
+        vars = node.scope.get_variables(True)
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        if len(vars) > 0:
+            params = params[:-2]     
+
+        params += ")"
+
+        code = "Object* letInNode" + str(self.index_let_in_blocks) + "("
+        index = self.index_let_in_blocks
+        self.index_let_in_blocks += 1
+
+        for var in vars:
+            code += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            code = code[:-2]
+
+        code += ")"
+
+        self.blocks_defs += code + ";\n\n"
+
+        code += " {\n"
 
         for var_declaration in node.var_declarations:
-            code += self.visit(var_declaration) + "\n"
+            code += "   " + self.visit(var_declaration) + "\n"
 
-        code += self.visit(node.body)
+        code += self.getlinesindented(self.visit(node.body), True) + "\n"
+        code += "}"
 
-        return code
+        self.let_in_blocks += code + "\n\n"
+
+        return "letInNode" + str(index) + params
     
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode):
@@ -209,30 +238,6 @@ class CodeGenC(object):
 
         params += ")"
 
-        conditions_codes = []
-
-        for condition in node.conditions:
-            condition_code = "Object* condition" + str(self.index_condition_blocks) + "("
-            index_condition = self.index_condition_blocks
-            self.index_condition_blocks += 1
-
-            for var in vars:
-                condition_code += "Object* " + var.nameC + ", "
-
-            if len(vars) > 0:
-                condition_code = condition_code[:-2]
-
-            condition_code += ")"
-            self.blocks_defs += condition_code + ";\n\n"
-
-            condition_code += " {\n"
-
-            condition_code += self.getlinesindented(self.visit(condition), True) + "\n}"
-
-            self.condition_blocks += condition_code + "\n\n"
-            conditions_codes.append("condition" + str(index_condition) + params)
-
-
         code = "Object* ifElseBlock" + str(self.index_if_else_blocks) + "("
         index = self.index_if_else_blocks
         self.index_if_else_blocks += 1
@@ -249,12 +254,12 @@ class CodeGenC(object):
 
         code += " {\n"
         
-        code += "   if(*((bool*)getAttributeValue(" + conditions_codes[0] + ", \"value\"))) {\n"
+        code += "   if(*((bool*)getAttributeValue(" + self.visit(node.conditions[0]) + ", \"value\"))) {\n"
 
         code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[0]), True)) + "\n   }\n"
 
         for i in range(1, len(node.conditions)):
-            code += "   else if(*((bool*)getAttributeValue(" + conditions_codes[i] + ", \"value\"))) {\n"
+            code += "   else if(*((bool*)getAttributeValue(" + self.visit(node.conditions[i]) + ", \"value\"))) {\n"
             code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[i]), True)) + "\n   }\n"
 
         code += "   else {\n"
@@ -316,26 +321,6 @@ class CodeGenC(object):
 
         params += ")"
 
-        condition_code = "Object* condition" + str(self.index_condition_blocks) + "("
-        index_condition = self.index_condition_blocks
-        self.index_condition_blocks += 1
-
-        for var in vars:
-            condition_code += "Object* " + var.nameC + ", "
-
-        if len(vars) > 0:
-            condition_code = condition_code[:-2]
-
-        condition_code += ")"
-        self.blocks_defs += condition_code + ";\n\n"
-
-        condition_code += " {\n"
-
-        condition_code += self.getlinesindented(self.visit(node.condition), True) + "\n}"
-
-        self.condition_blocks += condition_code + "\n\n"
-
-
         code = "Object* loopBlock" + str(self.index_loop_blocks) + "("
         index = self.index_loop_blocks
         self.index_loop_blocks += 1
@@ -353,7 +338,7 @@ class CodeGenC(object):
         code += " {\n"
         code += "   Object* return_obj = NULL;\n"
 
-        code += "   while(*((bool*)getAttributeValue(condition" + str(index_condition) + params + ", \"value\"))) {\n"
+        code += "   while(*((bool*)getAttributeValue(" + self.visit(node.condition) + ", \"value\"))) {\n"
         code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + "\n"
         code += "   }\n"
 
