@@ -210,7 +210,18 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.ForNode)
     def visit(self, node: hulk_nodes.ForNode, scope: Scope):
-        self.visit(node.iterable, scope.children[1])
+        ttype = self.visit(node.iterable, scope.children[1])
+        iterable_protocol = self.context.get_protocol('Iterable')
+
+        new_scope = scope.children[0]
+        variable = new_scope.find_variable(node.var)
+
+        if ttype.conforms_to(iterable_protocol):
+            element_type = ttype.get_method('current').return_type
+            variable.type = element_type
+        else:
+            variable.type = types.ErrorType()
+
         return self.visit(node.expression, scope.children[0])
 
     @visitor.when(hulk_nodes.FunctionCallNode)
