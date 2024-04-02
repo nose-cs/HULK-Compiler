@@ -140,11 +140,11 @@ Object* stringConcat(Object* string1, Object* string2);
 Object* method_String_toString(Object* str);
 Object* method_String_equals(Object* string1, Object* string2);
 
-// Bool
-Object* createBool(bool boolean);
-Object* method_Bool_toString(Object* boolean);
-Object* method_Bool_equals(Object* bool1, Object* bool2);
-Object* invertBool(Object* boolean);
+// Boolean
+Object* createBoolean(bool boolean);
+Object* method_Boolean_toString(Object* boolean);
+Object* method_Boolean_equals(Object* bool1, Object* bool2);
+Object* invertBoolean(Object* boolean);
 Object* boolOr(Object* bool1, Object* bool2);
 Object* boolAnd(Object* bool1, Object* bool2);
 
@@ -196,7 +196,7 @@ Object* replaceObject(Object* obj1, Object* obj2)
 
 Object* method_Object_equals(Object* obj1, Object* obj2)
 {
-    return createBool(obj1 == obj2);
+    return createBoolean(obj1 == obj2);
 }
 
 Object* method_Object_toString(Object* obj)
@@ -282,12 +282,12 @@ Object* method_Number_toString(Object* number) {
 
 Object* method_Number_equals(Object* number1, Object* number2) {
     if(strcmp(getType(number1), getType(number2)) != 0)
-        return createBool(false);
+        return createBoolean(false);
 
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
-    return createBool(fabs(*value1 - *value2) < 0.000000001);
+    return createBoolean(fabs(*value1 - *value2) < 0.000000001);
 }
 
 Object* numberSum(Object* number1, Object* number2) {
@@ -363,28 +363,28 @@ Object* numberGreaterThan(Object* number1, Object* number2) {
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
-    return createBool(*value1 > *value2);
+    return createBoolean(*value1 > *value2);
 }
 
 Object* numberGreaterOrEqualThan(Object* number1, Object* number2) {
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
-    return createBool(*value1 >= *value2);
+    return createBoolean(*value1 >= *value2);
 }
 
 Object* numberLessThan(Object* number1, Object* number2) {
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
-    return createBool(*value1 < *value2);
+    return createBoolean(*value1 < *value2);
 }
 
 Object* numberLessOrEqualThan(Object* number1, Object* number2) {
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
-    return createBool(*value1 <= *value2);
+    return createBoolean(*value1 <= *value2);
 }
 
 Object* numberMod(Object* number1, Object* number2) {
@@ -437,32 +437,32 @@ Object* method_String_toString(Object* str) {
 
 Object* method_String_equals(Object* string1, Object* string2) {
     if(strcmp(getType(string1), getType(string2)) != 0)
-        return createBool(false);
+        return createBoolean(false);
 
     char* value1 = getAttributeValue(string1, "value");
     char* value2 = getAttributeValue(string2, "value");
 
-    return createBool(strcmp(value1, value2) == 0);
+    return createBoolean(strcmp(value1, value2) == 0);
 }
 
-/////////////////////////////////  Bool   ////////////////////////////////////
+/////////////////////////////////  Boolean   ////////////////////////////////////
 
-Object* createBool(bool boolean) {
+Object* createBoolean(bool boolean) {
     Object* obj = createObject();
 
     bool* value = malloc(sizeof(bool));
     *value = boolean;
 
     addAttribute(obj, "value", value);
-    addAttribute(obj, "parent_type0", "Bool");
+    addAttribute(obj, "parent_type0", "Boolean");
     addAttribute(obj, "parent_type1", "Object");
-    addAttribute(obj, "method_Bool_toString", *method_Bool_toString);
-    addAttribute(obj, "method_Bool_equals", *method_Bool_equals);
+    addAttribute(obj, "method_Boolean_toString", *method_Boolean_toString);
+    addAttribute(obj, "method_Boolean_equals", *method_Boolean_equals);
 
     return obj;
 }
 
-Object* method_Bool_toString(Object* boolean) {
+Object* method_Boolean_toString(Object* boolean) {
     bool* value = getAttributeValue(boolean, "value");
 
     if(*value == true)
@@ -471,20 +471,20 @@ Object* method_Bool_toString(Object* boolean) {
         return createString("false");
 }
 
-Object* method_Bool_equals(Object* bool1, Object* bool2) {
+Object* method_Boolean_equals(Object* bool1, Object* bool2) {
     if(strcmp(getType(bool1), getType(bool2)) != 0)
-        return createBool(false);
+        return createBoolean(false);
 
     bool* value1 = getAttributeValue(bool1, "value");
     bool* value2 = getAttributeValue(bool2, "value");
 
-    return createBool(value1 == value2);
+    return createBoolean(value1 == value2);
 }
 
-Object* invertBool(Object* boolean) {
+Object* invertBoolean(Object* boolean) {
     bool* value = getAttributeValue(boolean, "value");
 
-    return createBool(!*value);
+    return createBoolean(!*value);
 }
 
 Object* boolOr(Object* bool1, Object* bool2)
@@ -492,7 +492,7 @@ Object* boolOr(Object* bool1, Object* bool2)
     bool vbool1 = *(bool*)getAttributeValue(bool1, "value");
     bool vbool2 = *(bool*)getAttributeValue(bool2, "value");
 
-    return createBool(vbool1 || vbool2);
+    return createBoolean(vbool1 || vbool2);
 }
 
 Object* boolAnd(Object* bool1, Object* bool2)
@@ -500,7 +500,7 @@ Object* boolAnd(Object* bool1, Object* bool2)
     bool vbool1 = *(bool*)getAttributeValue(bool1, "value");
     bool vbool2 = *(bool*)getAttributeValue(bool2, "value");
 
-    return createBool(vbool1 && vbool2);
+    return createBoolean(vbool1 && vbool2);
 }
 
 /////////////////////////////////  Vectors   ////////////////////////////////////
@@ -553,10 +553,10 @@ Object* method_Vector_next(Object* self)
     if(*current + 1 < size) 
     {
         *current += 1;
-        return createBool(true);
+        return createBoolean(true);
     }
 
-    return createBool(false);
+    return createBoolean(false);
 }
 
 Object* method_Vector_current(Object* self)
@@ -607,7 +607,7 @@ Object* method_Vector_toString(Object* vector)
 Object* method_Vector_equals(Object* vector1, Object* vector2)
 {
     if(strcmp(getType(vector1), getType(vector2)) != 0)
-        return createBool(false);
+        return createBoolean(false);
 
     int* size1 = getAttributeValue(vector1, "size");
     Object** list1 = getAttributeValue(vector1, "list");
@@ -616,17 +616,17 @@ Object* method_Vector_equals(Object* vector1, Object* vector2)
     Object** list2 = getAttributeValue(vector2, "list");
 
     if(*size1 != *size2)
-        return createBool(false);
+        return createBoolean(false);
 
     for(int i = 0; i < *size1; i++)
     {
         bool* equal = getAttributeValue(((Object* (*)(Object*, Object*))getMethodForCurrentType(list1[i], "equals", 0))(list1[i], list2[i]), "value");
 
         if(!*equal)
-            return createBool(false);
+            return createBoolean(false);
     }
 
-    return createBool(true);
+    return createBoolean(true);
 }
 
 
@@ -665,10 +665,10 @@ Object* method_Range_next(Object* self)
     if(*current + 1 < max) 
     {
         *current += 1;
-        return createBool(true);
+        return createBoolean(true);
     }
 
-    return createBool(false);
+    return createBoolean(false);
 }
 
 Object* method_Range_current(Object* self)

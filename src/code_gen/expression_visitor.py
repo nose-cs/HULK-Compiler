@@ -603,8 +603,8 @@ class CodeGenC(object):
 
         return "vectorComprehension" + str(index_vec) + params
 
-    @visitor.when(hulk_nodes.IndexingNNode)
-    def visit(self, node: hulk_nodes.IndexingNNode):
+    @visitor.when(hulk_nodes.IndexingNode)
+    def visit(self, node: hulk_nodes.IndexingNode):
         return "getElementOfVector(" + self.visit(node.obj) + ", " + self.visit(node.index) + ")"
     
     @visitor.when(hulk_nodes.ForNode)

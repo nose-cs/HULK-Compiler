@@ -45,7 +45,7 @@ class CCodeGenerator:
         function_defs = []
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
+            if type.name not in ["Number", "Boolean", "String", "Object", "Range"]:
                 create_def = "Object* create" + type.name + " ("
                 create_params = []
 
@@ -106,7 +106,7 @@ class CCodeGenerator:
         declarations += '\n'
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
+            if type.name not in ["Number", "Boolean", "String", "Object", "Range"]:
                 type_create += create_defs[type.name][0] + " {\n"
                 type_create += "   Object* obj = createObject();\n"
 
@@ -132,7 +132,7 @@ class CCodeGenerator:
                 type_create += "}\n\n"
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
+            if type.name not in ["Number", "Boolean", "String", "Object", "Range"]:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
                         methods_code += method_def + " {\n"

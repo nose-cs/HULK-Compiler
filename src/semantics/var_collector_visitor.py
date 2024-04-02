@@ -239,7 +239,7 @@ class VarCollector(object):
     def visit(self, node: hulk_nodes.VectorInitializationNode, scope: Scope):
         node.scope = scope
         for element in node.elements:
-            self.visit(element, scope)
+            self.visit(element, scope.create_child())
 
     @visitor.when(hulk_nodes.VectorComprehensionNode)
     def visit(self, node: hulk_nodes.VectorComprehensionNode, scope: Scope):
@@ -252,7 +252,7 @@ class VarCollector(object):
         self.visit(node.iterable, scope.create_child())
 
     @visitor.when(hulk_nodes.IndexingNode)
-    def visit(self, node: hulk_nodes.IndexingNNode, scope: Scope):
+    def visit(self, node: hulk_nodes.IndexingNode, scope: Scope):
         node.scope = scope
 
         self.visit(node.obj, scope.create_child())
