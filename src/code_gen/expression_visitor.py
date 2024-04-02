@@ -21,6 +21,9 @@ class CodeGenC(object):
         self.loop_blocks = ""
         self.index_loop_blocks = 0
 
+        self.method_call_blocks = ""
+        self.index_method_call_blocks = 0
+
         self.vector_comp = ""
         self.index_vector_comp = 0
 
@@ -213,16 +216,61 @@ class CodeGenC(object):
         if len(args) > 0:
             args = ',' + args
 
-        code = "((Object* (*)(Object*" + args + "))" + \
-                "getMethodForCurrentType(" + obj + ", \"" + node.method + "\", 0)" + \
-                ")(" + obj
+        if isinstance(node.obj, hulk_nodes.VariableNode):
+            code = "((Object* (*)(Object*" + args + "))" + \
+                    "getMethodForCurrentType(" + obj + ", \"" + node.method + "\", 0)" + \
+                    ")(" + obj
 
-        for arg in node.args:
-            code += ", copyObject(" + self.visit(arg) + ")"
+            for arg in node.args:
+                code += ", copyObject(" + self.visit(arg) + ")"
 
-        code += ")"
+            code += ")"
 
-        return code
+            return code
+        
+        else:
+            vars = node.scope.get_variables(True)
+
+            params = "("
+
+            for var in vars:
+                params += var.nameC + ", "
+
+            if len(vars) > 0:
+                params = params[:-2]     
+
+            params += ")"
+
+            code = "Object* methodCallBlock" + str(self.index_method_call_blocks) + "("
+            index = self.index_method_call_blocks
+            self.index_method_call_blocks += 1
+
+            for var in vars:
+                code += "Object* " + var.nameC + ", "
+
+            if len(vars) > 0:
+                code = code[:-2]
+
+            code += ")"
+
+            self.blocks_defs += code + ";\n\n"
+
+            code += " {\n"
+
+            code += "   Object* obj = " + obj + ";\n"
+            code += "   return ((Object* (*)(Object*" + args + "))" + \
+                    "getMethodForCurrentType(obj, \"" + node.method + "\", 0)" + \
+                    ")(obj"
+            
+            for arg in node.args:
+                code += ", copyObject(" + self.visit(arg) + ")"
+
+            code += ");\n}"
+
+            self.method_call_blocks += code + "\n\n"
+
+            return "methodCallBlock" + str(index) + params
+        
     
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode):
@@ -283,21 +331,105 @@ class CodeGenC(object):
     def visit(self, node: hulk_nodes.EqualNode):
         left = self.visit(node.left)
 
-        code = "((Object* (*)(Object*, Object*))" + \
-                "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
-                ")(" + left + ", " + self.visit(node.right) + ")"
+        if isinstance(node.left, hulk_nodes.VariableNode):
+            code = "((Object* (*)(Object*, Object*))" + \
+                    "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
+                    ")(" + left + ", " + self.visit(node.right) + ")"
 
-        return code
+            return code
+        
+        else:
+            vars = node.scope.get_variables(True)
+
+            params = "("
+
+            for var in vars:
+                params += var.nameC + ", "
+
+            if len(vars) > 0:
+                params = params[:-2]     
+
+            params += ")"
+
+            code = "Object* methodCallBlock" + str(self.index_method_call_blocks) + "("
+            index = self.index_method_call_blocks
+            self.index_method_call_blocks += 1
+
+            for var in vars:
+                code += "Object* " + var.nameC + ", "
+
+            if len(vars) > 0:
+                code = code[:-2]
+
+            code += ")"
+
+            self.blocks_defs += code + ";\n\n"
+
+            code += " {\n"
+
+            code += "   Object* obj = " + left + ";\n"
+            code += "   return ((Object* (*)(Object*, Object*))" + \
+                    "getMethodForCurrentType(obj, \"equals\", 0)" + \
+                    ")(obj, " + self.visit(node.right) + ");"
+            
+            code += "\n}"
+
+            self.method_call_blocks += code + "\n\n"
+
+            return "methodCallBlock" + str(index) + params
+
     
     @visitor.when(hulk_nodes.NotEqualNode)
     def visit(self, node: hulk_nodes.NotEqualNode):
         left = self.visit(node.left)
 
-        code = "invertBool(((Object* (*)(Object*, Object*))" + \
-                "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
-                ")(" + left + ", " + self.visit(node.right) + "))"
+        if isinstance(node.left, hulk_nodes.VariableNode):
+            code = "invertBool(((Object* (*)(Object*, Object*))" + \
+                    "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
+                    ")(" + left + ", " + self.visit(node.right) + "))"
 
-        return code
+            return code
+        
+        else:
+            vars = node.scope.get_variables(True)
+
+            params = "("
+
+            for var in vars:
+                params += var.nameC + ", "
+
+            if len(vars) > 0:
+                params = params[:-2]     
+
+            params += ")"
+
+            code = "Object* methodCallBlock" + str(self.index_method_call_blocks) + "("
+            index = self.index_method_call_blocks
+            self.index_method_call_blocks += 1
+
+            for var in vars:
+                code += "Object* " + var.nameC + ", "
+
+            if len(vars) > 0:
+                code = code[:-2]
+
+            code += ")"
+
+            self.blocks_defs += code + ";\n\n"
+
+            code += " {\n"
+
+            code += "   Object* obj = " + left + ";\n"
+            code += "   return invertBool(((Object* (*)(Object*, Object*))" + \
+                    "getMethodForCurrentType(obj, \"equals\", 0)" + \
+                    ")(obj, " + self.visit(node.right) + "));"
+            
+            code += "\n}"
+
+            self.method_call_blocks += code + "\n\n"
+
+            return "methodCallBlock" + str(index) + params
+        
     
     @visitor.when(hulk_nodes.LessThanNode)
     def visit(self, node: hulk_nodes.LessThanNode):

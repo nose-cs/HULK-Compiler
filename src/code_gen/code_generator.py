@@ -119,7 +119,7 @@ class CCodeGenerator:
                 current = type
                 index = 0
                 while current is not None:
-                    type_create += "   addAttribute(obj, \"parent_type" + str(index) + "\",\"" + current.name + "\");\n"
+                    type_create += "   addAttribute(obj, \"parent_type" + str(index) + "\", \"" + current.name + "\");\n"
 
                     if current.name in method_defs:
                         for method in method_defs[current.name]:
@@ -150,4 +150,4 @@ class CCodeGenerator:
 
         main += "\n   return 0; \n}"
 
-        return declarations + type_create + codgen.blocks_defs + codgen.let_in_blocks + codgen.if_else_blocks + codgen.loop_blocks + codgen.vector_selector + codgen.vector_comp + methods_code + functions_code + main
+        return declarations + type_create + codgen.blocks_defs + codgen.let_in_blocks + codgen.if_else_blocks + codgen.loop_blocks + codgen.method_call_blocks + codgen.vector_selector + codgen.vector_comp + methods_code + functions_code + main
