@@ -102,6 +102,7 @@ void removeAttribute(Object* obj, char* key) {
 /////////////////////////////////  Method Declaration   ////////////////////////////////////
 
 // Object
+Object* createEmptyObject();
 Object* createObject();
 Object* replaceObject(Object* obj1, Object* obj2);
 Object* method_Object_equals(Object* obj1, Object* obj2);
@@ -116,6 +117,7 @@ Object* function_print(Object* obj);
 
 // Number
 Object* createNumber(double number);
+Object* copyObject(Object* obj);
 Object* method_Number_toString(Object* number);
 Object* method_Number_equals(Object* number1, Object* number2);
 Object* numberSum(Object* number1, Object* number2);
@@ -144,10 +146,23 @@ Object* method_Vector_toString(Object* vector);
 Object* method_Vector_equals(Object* vector1, Object* vector2);
 Object* function_range(Object* start, Object* end);
 
+// Range
+Object* createRange(Object* min, Object* max);
+Object* method_Range_toString(Object* range);
+Object* method_Range_equals(Object* range1, Object* range2);
+
 /////////////////////////////////  Object   ////////////////////////////////////
 
+Object* createEmptyObject() {
+    return malloc(sizeof(Object));
+}
+
+Object* copyObject(Object* obj) {
+    return replaceObject(createEmptyObject(), obj);
+}
+
 Object* createObject() {
-    Object* obj = malloc(sizeof(Object));
+    Object* obj = createEmptyObject();
     
     obj->lists = malloc(sizeof(Attribute*) * OBJECT_DICT_CAPACITY);
     for (int i = 0; i < OBJECT_DICT_CAPACITY; i++) {
@@ -534,4 +549,58 @@ Object* function_range(Object* start, Object* end)
     }
 
     return createVectorFromList(vend - vstart, list);
+}
+
+
+/////////////////////////////////  Range   ////////////////////////////////////
+
+Object* createRange(Object* min, Object* max)
+{
+    Object* obj = createObject();
+
+    Object* cmin = copyObject(min);
+    Object* cmax = copyObject(max);
+
+    addAttribute(obj, "min", cmin);
+    addAttribute(obj, "max", cmax);
+
+    addAttribute(obj, "parent_type0", "Range");
+    addAttribute(obj, "parent_type1", "Object");
+
+    addAttribute(obj, "method_Range_toString", *method_Range_toString);
+    addAttribute(obj, "method_Range_equals", *method_Range_equals);
+
+    return obj;
+}
+
+Object* method_Range_toString(Object* range)
+{
+    Object* min = getAttributeValue(range, "min");
+    Object* max = getAttributeValue(range, "max");
+
+    int total_size = 6;
+
+    Object* min_str = ((Object* (*)(Object*))getMethodForCurrentType(min, "toString", 0))(min);
+    total_size += *(int*)getAttributeValue(min_str, "len");
+
+    Object* max_str = ((Object* (*)(Object*))getMethodForCurrentType(max, "toString", 0))(max);
+    total_size += *(int*)getAttributeValue(max_str, "len");
+
+    char* result = malloc(total_size * sizeof(char));
+    sprintf(result, "[%s - %s]", (char*)getAttributeValue(min_str, "value"), (char*)getAttributeValue(max_str, "value"));
+
+    free(min_str);
+    free(max_str);
+    return createString(result);
+}
+
+Object* method_Range_equals(Object* range1, Object* range2)
+{
+    Object* min1 = getAttributeValue(range1, "min");
+    Object* max1 = getAttributeValue(range1, "max");
+
+    Object* min2 = getAttributeValue(range2, "min");
+    Object* max2 = getAttributeValue(range2, "max");
+
+    return createBool(*(bool*)getAttributeValue(method_Number_equals(min1, min2), "value") && *(bool*)getAttributeValue(method_Number_equals(max1, max2), "value"));
 }

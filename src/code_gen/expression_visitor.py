@@ -24,6 +24,9 @@ class CodeGenC(object):
         self.method_call_blocks = ""
         self.index_method_call_blocks = 0
 
+        self.create_blocks = ""
+        self.index_create_blocks = 0
+
         self.vector_comp = ""
         self.index_vector_comp = 0
 
@@ -51,7 +54,37 @@ class CodeGenC(object):
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode):
-        code = "create" + node.idx + " ("
+        vars = node.scope.get_variables(True)
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        if len(vars) > 0:
+            params = params[:-2]     
+
+        params += ")"
+
+        create_block = "Object* createBlock" + str(self.index_create_blocks) + "("
+        index = self.index_create_blocks
+        self.index_create_blocks += 1
+
+        for var in vars:
+            create_block += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            create_block = create_block[:-2]
+
+        create_block += ")"
+
+        self.blocks_defs += create_block + ";\n\n"
+
+        create_block += " {\n"
+
+        def_vars = ""
+
+        code = "   return create" + node.idx + "("
         before = len(code)        
 
         classs = self.context.get_type(node.idx)
@@ -59,10 +92,14 @@ class CodeGenC(object):
 
         while classs is not None and classs.name != "Object":
             for i, param in enumerate(classs.get_params()[0]):
-                classs.node.scope.children[0].find_variable(param).setNameC(self.visit(args[i]))
+                var = "v" + str(self.index_var)
+                self.index_var += 1
+
+                def_vars += "   Object* " + var + " = " + self.visit(args[i]) + ";\n"
+                classs.node.scope.children[0].find_variable(param).setNameC(var)
 
             for att in classs.attributes:
-                code += self.visit(att.node.expr) + ", "
+                code += "copyObject(" + self.visit(att.node.expr) + "), "
 
             args = classs.node.parent_args
             classs = classs.parent
@@ -70,9 +107,12 @@ class CodeGenC(object):
         if before != len(code):
             code = code[:-2]
         
-        code += ")"
+        code += ");"
 
-        return code
+        create_block += def_vars + "\n" + code + "\n}"
+        self.create_blocks += create_block + "\n\n"
+
+        return "createBlock" + str(index) + params
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
