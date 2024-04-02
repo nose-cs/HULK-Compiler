@@ -665,3 +665,7 @@ class CodeGenC(object):
     @visitor.when(hulk_nodes.AndNode)
     def visit(self, node: hulk_nodes.AndNode):
         return "boolAnd(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.ConcatNode)
+    def visit(self, node: hulk_nodes.ConcatNode):
+        return "stringConcat(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"

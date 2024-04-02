@@ -147,7 +147,7 @@ concat_operation %= (concat_operation + amper + plus_or_minus_operation,
                      lambda h, s: hulk_ast_nodes.ConcatNode(s[1], s[3]))
 concat_operation %= (concat_operation + double_amp + plus_or_minus_operation,
                      lambda h, s: hulk_ast_nodes.ConcatNode(
-                         hulk_ast_nodes.ConcatNode(s[1], hulk_ast_nodes.ConstantStringNode(" ")),
+                         hulk_ast_nodes.ConcatNode(s[1], hulk_ast_nodes.ConstantStringNode("\" \"")),
                          s[3]))
 concat_operation %= plus_or_minus_operation, lambda h, s: s[1]
 

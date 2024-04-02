@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdarg.h>
+#include <time.h>
 
 #define OBJECT_DICT_CAPACITY 67
 
@@ -125,10 +126,17 @@ Object* numberMinus(Object* number1, Object* number2);
 Object* numberMultiply(Object* number1, Object* number2);
 Object* numberDivision(Object* number1, Object* number2);
 Object* numberPow(Object* number1, Object* number2);
-Object* numberParse(Object* string);
+Object* function_sqrt(Object* number);
+Object* function_sin(Object* angle);
+Object* function_cos(Object* angle);
+Object* function_exp(Object* number);
+Object* function_log(Object* number);
+Object* function_rand();
+Object* function_parse(Object* string);
 
 // String
 Object* createString(char* str);
+Object* stringConcat(Object* string1, Object* string2);
 Object* method_String_toString(Object* str);
 Object* method_String_equals(Object* string1, Object* string2);
 
@@ -310,6 +318,47 @@ Object* numberDivision(Object* number1, Object* number2) {
     return createNumber(*value1 / *value2);
 }
 
+Object* numberPow(Object* number1, Object* number2) {
+    double value = *(double*)getAttributeValue(number1, "value");
+    double exp = *(double*)getAttributeValue(number2, "value");
+
+    return createNumber(pow(value, exp));
+}
+
+Object* function_sqrt(Object* number) {
+    double value = *(double*)getAttributeValue(number, "value");
+
+    return createNumber(sqrt(value));
+}
+
+Object* function_sin(Object* angle) {
+    double vangle = *(double*)getAttributeValue(angle, "value");
+
+    return createNumber(sin(vangle));
+}
+
+Object* function_cos(Object* angle) {
+    double vangle = *(double*)getAttributeValue(angle, "value");
+
+    return createNumber(cos(vangle));
+}
+
+Object* function_exp(Object* number) {
+    double value = *(double*)getAttributeValue(number, "value");
+
+    return createNumber(exp(value));
+}
+
+Object* function_log(Object* number) {
+    double value = *(double*)getAttributeValue(number, "value");
+
+    return createNumber(log(value));
+}
+
+Object* function_rand() {
+    return createNumber((double)rand() / (RAND_MAX + 1.0));
+}
+
 Object* numberGreaterThan(Object* number1, Object* number2) {
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
@@ -338,20 +387,6 @@ Object* numberLessOrEqualThan(Object* number1, Object* number2) {
     return createBool(*value1 <= *value2);
 }
 
-Object* numberPow(Object* number1, Object* number2) {
-    int value1 = *(double*)getAttributeValue(number1, "value");
-    int value2 = *(double*)getAttributeValue(number2, "value");
-
-    int total = 1;
-
-    for(int i = value2; i > 0; i--)
-    {
-        total *= value1;
-    }
-
-    return createNumber(total);
-}
-
 Object* numberMod(Object* number1, Object* number2) {
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
@@ -359,7 +394,7 @@ Object* numberMod(Object* number1, Object* number2) {
     return createNumber(((int)*value1) % ((int)*value2));
 }
 
-Object* numberParse(Object* string) {
+Object* function_parse(Object* string) {
     char* value = getAttributeValue(string, "value");
     return createNumber(strtod(value, NULL));
 }
@@ -381,6 +416,19 @@ Object* createString(char* str) {
     addAttribute(obj, "method_String_equals", *method_String_equals);
 
     return obj;
+}
+
+Object* stringConcat(Object* string1, Object* string2)
+{
+    char* str1 = getAttributeValue(string1, "value");
+    int len1 = *(int*)getAttributeValue(string1, "len");
+
+    char* str2 = getAttributeValue(string2, "value");
+    int len2 = *(int*)getAttributeValue(string2, "len");
+
+    char* result = malloc((len1 + len2) * sizeof(char));
+    sprintf(result, "%s%s", str1, str2);
+    return createString(result);
 }
 
 Object* method_String_toString(Object* str) {

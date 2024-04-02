@@ -87,7 +87,7 @@ class CCodeGenerator:
                 declarations += "\n"
 
         for function in context.functions.values():
-            if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand', 'range']:
+            if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand', 'range', 'parse']:
                     function_name = "function_" + function.name
                     function_def = "Object* " + function_name + " ("
                     
@@ -145,6 +145,7 @@ class CCodeGenerator:
             functions_code += "}\n\n"
 
         main += "\nint main() {\n"
+        main += "   srand(time(NULL));\n\n"
 
         main += getlinesindented(codgen.visit(ast.expression)) + ";"
 
