@@ -60,7 +60,7 @@ class TestHulkConditionals(unittest.TestCase):
         let x = print(if (mod == 0) "Magic" elif (mod % 3 == 1) "Woke" else "Dumb") in x;
         '''
         ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+        self.assertEqual(2, len(errors), f"Expects 2 error, but got {len(errors)}")
 
     def test_for_loop(self):
         inp = 'for (x in range(0, 10)) print(x);'

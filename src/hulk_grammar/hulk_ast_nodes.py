@@ -1,11 +1,13 @@
 from abc import ABC
 from typing import List, Tuple
+
 from src.semantics.utils import Scope
+
 
 # ---------------------------------------------------Depth 0---------------------------------------------------------- #
 class Node(ABC):
     def __init__(self):
-        self.scope : Scope = None
+        self.scope: Scope = None
 
 
 # ---------------------------------------------------Depth 1---------------------------------------------------------- #
@@ -41,12 +43,12 @@ class FunctionDeclarationNode(DeclarationNode):
 
 class TypeDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, body, parent, parent_args=None):
-        if parent_args is None:
-            parent_args = []
-        if len(params) > 0:
+        if params and len(params) > 0:
             params_ids, params_types = zip(*params)
-        else:
+        elif params and len(params) == 0:
             params_ids, params_types = [], []
+        else:
+            params_ids, params_types = None, None
         self.idx = idx
         self.methods = [method for method in body if isinstance(method, MethodDeclarationNode)]
         self.attributes = [attribute for attribute in body if isinstance(attribute, AttributeDeclarationNode)]
@@ -121,11 +123,13 @@ class BinaryExpressionNode(ExpressionNode, ABC):
     def __init__(self, left, right):
         self.left = left
         self.right = right
+        self.operator = None
 
 
 class UnaryExpressionNode(ExpressionNode, ABC):
     def __init__(self, operand):
         self.operand = operand
+        self.operator = None
 
 
 class ConditionalNode(ExpressionNode):
@@ -204,11 +208,18 @@ class MethodCallNode(ExpressionNode):
         self.method = method
         self.args = args
 
-class IndexingNNode(ExpressionNode):
+
+class BaseCallNode(ExpressionNode):
+    def __init__(self, args):
+        self.args = args
+
+
+class IndexingNode(ExpressionNode):
     def __init__(self, obj, index):
         self.obj = obj
         self.index = index
-        
+
+
 # ---------------------------------------------------Depth 3---------------------------------------------------------- #
 
 class ConstantNumNode(AtomicNode):
@@ -257,60 +268,90 @@ class NegNode(UnaryExpressionNode):
 
 # ---------------------------------------------------Depth 4---------------------------------------------------------- #
 class ConcatNode(StrBinaryExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = 'concat (@, @@)'
 
 
 class OrNode(BoolBinaryExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '|'
 
 
 class AndNode(BoolBinaryExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '&'
 
 
 class LessThanNode(InequalityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '<'
 
 
 class GreaterThanNode(InequalityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '>'
 
 
 class LessOrEqualNode(InequalityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '<='
 
 
 class GreaterOrEqualNode(InequalityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '>='
 
 
 class PlusNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '+'
 
 
 class MinusNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '-'
 
 
 class StarNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '*'
 
 
 class DivNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '/'
 
 
 class ModNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '%'
 
 
 class PowNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right, operator):
+        super().__init__(left, right)
+        self.operator = operator
 
 
 class EqualNode(EqualityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '=='
 
 
 class NotEqualNode(EqualityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '!='

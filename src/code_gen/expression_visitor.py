@@ -91,7 +91,7 @@ class CodeGenC(object):
         args = node.args
 
         while classs is not None and classs.name != "Object":
-            for i, param in enumerate(classs.get_params()[0]):
+            for i, param in enumerate(classs.params_names):
                 var = "v" + str(self.index_var)
                 self.index_var += 1
 
