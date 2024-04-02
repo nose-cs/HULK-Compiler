@@ -25,10 +25,9 @@ class TestHulkStrings(unittest.TestCase):
 
     def test_unfinished_string(self):
         inp = '"Hello, World!'
-        expected = [hulk_grammar.string_literal, hulk_grammar.G.EOF]
         tokens, errors = lexer(inp)
         gotten = [token.token_type for token in tokens]
-        self.assertNotEqual(expected, gotten)
+        self.assertNotEqual([hulk_grammar.string_literal, hulk_grammar.G.EOF], gotten)
         self.assertEqual(len(errors), 1, f"Expects 1 errors, but got {len(errors)}")
 
     def test_boolean(self):
