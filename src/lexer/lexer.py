@@ -3,7 +3,6 @@ from src.regex.regex_automaton import get_regex_automaton
 from src.utils import Token, UnknownToken
 
 
-# todo refactor this
 class Lexer:
     def __init__(self, table, eof, build_automaton=False, convert_to_dfa=False, synchronizing_tokens=None):
         self.eof = eof

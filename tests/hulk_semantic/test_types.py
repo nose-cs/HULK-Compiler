@@ -21,6 +21,32 @@ def run_code(inp: str, debug=False):
 
 class TestHulkLoops(unittest.TestCase):
 
+    def test_circular_inheritance(self):
+        inp = ('''
+                type A inherits B {
+                    x = x + 5;
+                }
+                type B(x) inherits A(x^2) {
+                    x = x + 5;
+                }
+                let x = 9 in new A(x);
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_inherits_params(self):
+        inp = ('''
+                type A inherits B {
+                    x = x + 5;
+                }
+                type B(x) {
+                    x = x + 5;
+                }
+                let x = 9 in new A(x);
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
     def test_hierarchy(self):
         inp = ('''
         type A(x) {

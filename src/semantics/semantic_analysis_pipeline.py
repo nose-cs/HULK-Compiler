@@ -61,15 +61,15 @@ def semantic_analysis_pipeline(ast, debug=False):
         print('Scope:')
         print(scope)
         print('---------------- CHECKING TYPES ------------------')
-    # type_checker = TypeChecker(context, errors)
-    # type_checker.visit(ast, scope)
-    # if debug:
-    #     print('Errors: [')
-    #     for error in errors:
-    #         print('\t', error)
-    #     print(']')
-    #     print('Context:')
-    #     print(context)
-    #     print('Scope:')
-    #     print(scope)
+    type_checker = TypeChecker(context, errors)
+    type_checker.visit(ast, scope)
+    if debug:
+        print('Errors: [')
+        for error in errors:
+            print('\t', error)
+        print(']')
+        print('Context:')
+        print(context)
+        print('Scope:')
+        print(scope)
     return ast, errors, context, scope

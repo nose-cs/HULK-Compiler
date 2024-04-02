@@ -35,6 +35,17 @@ class VarCollector(object):
 
         self.current_type = self.context.get_type(node.idx)
 
+        # Set parent arguments when they are None
+        if node.parent_args is None and node.params_ids is not None:
+            node.parent_args = []
+
+        # Set params cause in the type builder I didn't have the params of my parent
+        if node.parent_args is None and node.params_ids is None:
+            self.current_type.set_params()
+            node.params_ids, node.params_types = self.current_type.params_names, self.current_type.params_types
+            # After this I know that my parent's args are my params (are just variables with its params names)
+            node.parent_args = [hulk_nodes.VariableNode(param_name) for param_name in self.current_type.params_names]
+
         # Create a new scope that includes the parameters
         new_scope = scope.create_child()
         for i in range(len(self.current_type.params_names)):
@@ -168,8 +179,6 @@ class VarCollector(object):
         self.visit(node.iterable, scope.create_child())
         self.visit(node.expression, expr_scope)
 
-    # todo vector initialization and for
-
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
         node.scope = scope
@@ -198,6 +207,12 @@ class VarCollector(object):
         for arg in node.args:
             self.visit(arg, scope)
 
+    @visitor.when(hulk_nodes.BaseCallNode)
+    def visit(self, node: hulk_nodes.BaseCallNode, scope: Scope):
+        node.scope = scope
+        for arg in node.args:
+            self.visit(arg, scope)
+
     @visitor.when(hulk_nodes.AttributeCallNode)
     def visit(self, node: hulk_nodes.AttributeCallNode, scope: Scope):
         node.scope = scope
@@ -220,6 +235,12 @@ class VarCollector(object):
     def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
         node.scope = scope
 
+    @visitor.when(hulk_nodes.VectorInitializationNode)
+    def visit(self, node: hulk_nodes.VectorInitializationNode, scope: Scope):
+        node.scope = scope
+        for element in node.elements:
+            self.visit(element, scope)
+
     @visitor.when(hulk_nodes.VectorComprehensionNode)
     def visit(self, node: hulk_nodes.VectorComprehensionNode, scope: Scope):
         node.scope = scope
@@ -229,3 +250,9 @@ class VarCollector(object):
         self.visit(node.selector, selector_scope)
 
         self.visit(node.iterable, scope.create_child())
+
+    @visitor.when(hulk_nodes.IndexingNode)
+    def visit(self, node: hulk_nodes.IndexingNode, scope: Scope):
+        node.scope = scope
+        self.visit(node.obj, scope)
+        self.visit(node.index, scope)

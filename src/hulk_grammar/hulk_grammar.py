@@ -57,7 +57,7 @@ double_bar, o_square_bracket, c_square_bracket, obracket, cbracket = G.Terminals
 
 semicolon, opar, cpar, arrow, comma, colon, dot = G.Terminals('; ( ) => , : .')
 
-protocol, extends, word_type, inherits, idx = G.Terminals('protocol extends type inherits <id>')
+protocol, extends, word_type, inherits, base, idx = G.Terminals('protocol extends type inherits base <id>')
 
 new, is_, as_ = G.Terminals('new is as')
 
@@ -122,20 +122,17 @@ or_operation %= and_operation, lambda h, s: s[1]
 and_operation %= and_operation + and_op + equality, lambda h, s: hulk_ast_nodes.AndNode(s[1], s[3])
 and_operation %= equality, lambda h, s: s[1]
 
-# todo dejarlo pasar y que de error en el type checker
-equality %= inequality + eq + inequality, lambda h, s: hulk_ast_nodes.EqualNode(s[1], s[3])
-equality %= inequality + neq + inequality, lambda h, s: hulk_ast_nodes.NotEqualNode(s[1], s[3])
+equality %= equality + eq + inequality, lambda h, s: hulk_ast_nodes.EqualNode(s[1], s[3])
+equality %= equality + neq + inequality, lambda h, s: hulk_ast_nodes.NotEqualNode(s[1], s[3])
 equality %= inequality, lambda h, s: s[1]
 
-# makes sense 3 <= 8 <= 11 ?
-# No, compilers book page 148
-inequality %= (is_or_as_operation + leq + is_or_as_operation,
+inequality %= (inequality + leq + is_or_as_operation,
                lambda h, s: hulk_ast_nodes.LessOrEqualNode(s[1], s[3]))
-inequality %= (is_or_as_operation + geq + is_or_as_operation,
+inequality %= (inequality + geq + is_or_as_operation,
                lambda h, s: hulk_ast_nodes.GreaterOrEqualNode(s[1], s[3]))
-inequality %= (is_or_as_operation + lt + is_or_as_operation,
+inequality %= (inequality + lt + is_or_as_operation,
                lambda h, s: hulk_ast_nodes.LessThanNode(s[1], s[3]))
-inequality %= (is_or_as_operation + gt + is_or_as_operation,
+inequality %= (inequality + gt + is_or_as_operation,
                lambda h, s: hulk_ast_nodes.GreaterThanNode(s[1], s[3]))
 inequality %= is_or_as_operation, lambda h, s: s[1]
 
@@ -169,8 +166,8 @@ sign_operation %= plus + pow_operation, lambda h, s: s[2]
 sign_operation %= minus + pow_operation, lambda h, s: hulk_ast_nodes.NegNode(s[2])
 sign_operation %= pow_operation, lambda h, s: s[1]
 
-pow_operation %= type_instantiation + power + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
-pow_operation %= type_instantiation + power2 + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
+pow_operation %= type_instantiation + power + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3], s[2])
+pow_operation %= type_instantiation + power2 + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3], s[2])
 pow_operation %= type_instantiation, lambda h, s: s[1]
 
 type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,
@@ -180,14 +177,15 @@ type_instantiation %= not_operation, lambda h, s: s[1]
 not_operation %= not_op + obj_indexing_or_method_or_attribute_call, lambda h, s: hulk_ast_nodes.NotNode(s[2])
 not_operation %= obj_indexing_or_method_or_attribute_call, lambda h, s: s[1]
 
-obj_indexing_or_method_or_attribute_call %= (obj_indexing_or_method_or_attribute_call + dot + idx + opar + expr_list_comma_sep_or_empty + cpar,
-                                 lambda h, s: hulk_ast_nodes.MethodCallNode(s[1], s[3], s[5]))
+obj_indexing_or_method_or_attribute_call %= (
+    obj_indexing_or_method_or_attribute_call + dot + idx + opar + expr_list_comma_sep_or_empty + cpar,
+    lambda h, s: hulk_ast_nodes.MethodCallNode(s[1], s[3], s[5]))
 obj_indexing_or_method_or_attribute_call %= (obj_indexing_or_method_or_attribute_call + dot + idx,
-                                 lambda h, s: hulk_ast_nodes.AttributeCallNode(s[1], s[3]))
-obj_indexing_or_method_or_attribute_call %= (obj_indexing_or_method_or_attribute_call + o_square_bracket + expr + c_square_bracket, 
-                                 lambda h,s: hulk_ast_nodes.IndexingNNode(s[1] , s[3]))
+                                             lambda h, s: hulk_ast_nodes.AttributeCallNode(s[1], s[3]))
+obj_indexing_or_method_or_attribute_call %= (
+    obj_indexing_or_method_or_attribute_call + o_square_bracket + expr + c_square_bracket,
+    lambda h, s: hulk_ast_nodes.IndexingNode(s[1], s[3]))
 obj_indexing_or_method_or_attribute_call %= factor, lambda h, s: s[1]
-
 
 factor %= opar + expr + cpar, lambda h, s: s[2]
 factor %= atom, lambda h, s: s[1]
@@ -198,6 +196,7 @@ atom %= string_literal, lambda h, s: hulk_ast_nodes.ConstantStringNode(s[1])
 atom %= idx, lambda h, s: hulk_ast_nodes.VariableNode(s[1])
 atom %= func_call, lambda h, s: s[1]
 atom %= vector_initialization, lambda h, s: s[1]
+atom %= base + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.BaseCallNode(s[3])
 
 # Function call
 func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.FunctionCallNode(s[1], s[3])
@@ -276,7 +275,7 @@ optional_inheritance %= inherits + idx, lambda h, s: s[2]
 optional_inheritance %= G.Epsilon, lambda h, s: None
 
 optional_params_for_type %= opar + params_list_or_empty + cpar, lambda h, s: s[2]
-optional_params_for_type %= G.Epsilon, lambda h, s: []
+optional_params_for_type %= G.Epsilon, lambda h, s: None
 
 type_body_or_empty %= G.Epsilon, lambda h, s: []
 type_body_or_empty %= type_body, lambda h, s: s[1]

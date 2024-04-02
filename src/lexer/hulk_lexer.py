@@ -1,10 +1,12 @@
+import sys
+
+import dill
+
 import src.hulk_grammar.hulk_grammar as hulk_grammar
 from src.errors import LexicographicError
 from src.hulk_grammar.hulk_grammar import G
 from src.lexer.lexer import Lexer
 from src.pycompiler import Terminal
-import dill
-import sys
 
 nonzero_digits = '|'.join(str(n) for n in range(1, 10))
 digits = '|'.join(str(n) for n in range(10))
@@ -29,7 +31,7 @@ reserved_words = [("let", hulk_grammar.let), ("in", hulk_grammar.in_),
                   ("function", hulk_grammar.function),
                   ("new", hulk_grammar.new), ("is", hulk_grammar.is_), ("as", hulk_grammar.as_),
                   ("protocol", hulk_grammar.protocol), ("extends", hulk_grammar.extends),
-                  ("type", hulk_grammar.word_type), ("inherits", hulk_grammar.inherits),
+                  ("type", hulk_grammar.word_type), ("inherits", hulk_grammar.inherits), ("base", hulk_grammar.base),
                   ("true|false", hulk_grammar.bool_literal)]
 
 # tokens that don't have any syntactic meaning
@@ -85,7 +87,7 @@ class HulkLexer(Lexer):
         for token in tokens:
             if not token.is_valid:
                 errors.append(LexicographicError(LexicographicError.UNKNOWN_TOKEN, token.row, token.column))
-            if token.token_type == unterminated_string.Name:
+            elif token.token_type.Name == unterminated_string.Name:
                 errors.append(LexicographicError(LexicographicError.UNTERMINATED_STRING, token.row, token.column))
         return errors
 
@@ -93,4 +95,4 @@ class HulkLexer(Lexer):
         tokens = super().__call__(text)
         errors = self.find_errors(tokens)
         return [token for token in tokens if token.is_valid and
-                token.token_type.Name not in {spaces.Name, escaped_char.Name, unterminated_string.Name} ], errors
+                token.token_type.Name not in {spaces.Name, escaped_char.Name, unterminated_string.Name}], errors

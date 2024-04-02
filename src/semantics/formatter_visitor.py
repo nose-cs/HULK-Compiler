@@ -1,6 +1,7 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 
+
 class Formatter(object):
     @visitor.on('node')
     def visit(self, node, tabs):
@@ -24,14 +25,27 @@ class Formatter(object):
 
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode, tabs=0):
-        params = ', '.join(
-            [f'{node.params_ids[i]}' + f': {node.params_types[i]}' if node.params_types[i] is not None else '' for i in
-             range(len(node.params_ids))])
-        parent = f": {node.parent}({', '.join([self.visit(arg, 0) for arg in node.parent_args])})" if node.parent else ""
-        ans = '\t' * tabs + f'\\__ TypeDeclarationNode: type {node.idx}({params}){parent} -> <body>'
+        if node.params_types is None:
+            params = ''
+        else:
+            params = '(' + ', '.join(
+                [f'{node.params_ids[i]}' + f': {node.params_types[i]}' if node.params_types[i] is not None else '' for i
+                 in
+                 range(len(node.params_ids))]) + ')'
+
+        if node.parent:
+            parent = f" inherits {node.parent}"
+            if node.parent_args:
+                parent = parent + '(<expr>, <expr>, ..., <expr>)'
+        else:
+            parent = ""
+
+        ans = '\t' * tabs + f'\\__ TypeDeclarationNode: type {node.idx}{params}{parent} -> <body>'
+        parent_args = '\n' + '\n'.join(
+            [self.visit(arg, tabs + 1) for arg in node.parent_args]) if node.parent_args else ""
         attributes = '\n'.join([self.visit(attr, tabs + 1) for attr in node.attributes])
         methods = '\n'.join([self.visit(method, tabs + 1) for method in node.methods])
-        return f'{ans}\n{attributes}\n{methods}'
+        return f'{ans}{parent_args}\n{attributes}\n{methods}'
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode, tabs=0):
@@ -189,9 +203,15 @@ class Formatter(object):
         obj = self.visit(node.obj, tabs + 1)
         args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
         return f'{ans}\n{obj}\n{args}'
-    
-    @visitor.when(hulk_nodes.IndexingNNode)
-    def visit(self, node: hulk_nodes.IndexingNNode, tabs = 0):
+
+    @visitor.when(hulk_nodes.BaseCallNode)
+    def visit(self, node: hulk_nodes.BaseCallNode, tabs=0):
+        ans = '\t' * tabs + f'\\__ base(<expr>, ..., <expr>)'
+        args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
+        return f'{ans}\n{args}'
+
+    @visitor.when(hulk_nodes.IndexingNode)
+    def visit(self, node: hulk_nodes.IndexingNode, tabs=0):
         ans = '\t' * tabs + f'\\IndexingHode: <expr>[<expr>]'
         obj = self.visit(node.obj, tabs + 1)
         index = self.visit(node.index, tabs + 1)

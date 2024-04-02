@@ -31,6 +31,7 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
+    # todo
     def test_while_in_method(self):
         inp = '''
         function gcd(a, b) => 
@@ -38,7 +39,7 @@ class TestHulkLoops(unittest.TestCase):
                 let m = a % b in {
                 b := a;
                 a := m;
-                }; 
+            }; 
         5;
         '''
         ast, errors, context, scope = run_code(inp, True)
@@ -51,11 +52,13 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
+    # todo
     def test_for_loop(self):
         inp = '''
         function gcd(a: Number, b: Number) {
             if (a % b == 0) b 
-            else gcd(b, a % b);}
+            else gcd(b, a % b)
+        ;}
         5;
         '''
         ast, errors, context, scope = run_code(inp, True)
@@ -70,7 +73,6 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    # todo heredar parametros del padre
     def test_(self):
         inp = '''
         type C (cc : Number) {
@@ -174,3 +176,19 @@ class TestHulkLoops(unittest.TestCase):
 
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(2, len(errors), f"Expects 2 error, but got {len(errors)}")
+
+    def test13(self):
+        inp = """
+               function fact(x) => let f = 1 in for (i in range(1, x+1)) f := f * i;
+               fact(3);
+               """
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test14(self):
+        inp = """
+               function fact(x) => let f = 1 in for (i in x + 3) f := f * i;
+               fact(3);
+               """
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
