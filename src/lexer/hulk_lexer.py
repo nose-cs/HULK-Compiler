@@ -31,7 +31,7 @@ reserved_words = [("let", hulk_grammar.let), ("in", hulk_grammar.in_),
                   ("function", hulk_grammar.function),
                   ("new", hulk_grammar.new), ("is", hulk_grammar.is_), ("as", hulk_grammar.as_),
                   ("protocol", hulk_grammar.protocol), ("extends", hulk_grammar.extends),
-                  ("type", hulk_grammar.word_type), ("inherits", hulk_grammar.inherits),
+                  ("type", hulk_grammar.word_type), ("inherits", hulk_grammar.inherits), ("base", hulk_grammar.base),
                   ("true|false", hulk_grammar.bool_literal)]
 
 # tokens that don't have any syntactic meaning

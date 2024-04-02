@@ -209,6 +209,11 @@ class MethodCallNode(ExpressionNode):
         self.args = args
 
 
+class BaseCallNode(ExpressionNode):
+    def __init__(self, args):
+        self.args = args
+
+
 class IndexingNode(ExpressionNode):
     def __init__(self, obj, index):
         self.obj = obj

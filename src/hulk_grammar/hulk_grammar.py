@@ -57,7 +57,7 @@ double_bar, o_square_bracket, c_square_bracket, obracket, cbracket = G.Terminals
 
 semicolon, opar, cpar, arrow, comma, colon, dot = G.Terminals('; ( ) => , : .')
 
-protocol, extends, word_type, inherits, idx = G.Terminals('protocol extends type inherits <id>')
+protocol, extends, word_type, inherits, base, idx = G.Terminals('protocol extends type inherits base <id>')
 
 new, is_, as_ = G.Terminals('new is as')
 
@@ -196,6 +196,7 @@ atom %= string_literal, lambda h, s: hulk_ast_nodes.ConstantStringNode(s[1])
 atom %= idx, lambda h, s: hulk_ast_nodes.VariableNode(s[1])
 atom %= func_call, lambda h, s: s[1]
 atom %= vector_initialization, lambda h, s: s[1]
+atom %= base + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.BaseCallNode(s[3])
 
 # Function call
 func_call %= idx + opar + expr_list_comma_sep_or_empty + cpar, lambda h, s: hulk_ast_nodes.FunctionCallNode(s[1], s[3])

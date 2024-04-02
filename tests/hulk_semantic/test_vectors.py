@@ -85,3 +85,10 @@ class TestHulkLoops(unittest.TestCase):
               '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_base(self):
+        inp = '''
+              let x = base() in x;
+              '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
