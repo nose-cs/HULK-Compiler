@@ -137,6 +137,8 @@ Object* createBool(bool boolean);
 Object* method_Bool_toString(Object* boolean);
 Object* method_Bool_equals(Object* bool1, Object* bool2);
 Object* invertBool(Object* boolean);
+Object* boolOr(Object* bool1, Object* bool2);
+Object* boolAnd(Object* bool1, Object* bool2);
 
 // Vector
 Object* createVectorFromList(int num_elements, Object** list);
@@ -437,6 +439,22 @@ Object* invertBool(Object* boolean) {
     return createBool(!*value);
 }
 
+Object* boolOr(Object* bool1, Object* bool2)
+{
+    bool vbool1 = *(bool*)getAttributeValue(bool1, "value");
+    bool vbool2 = *(bool*)getAttributeValue(bool2, "value");
+
+    return createBool(vbool1 || vbool2);
+}
+
+Object* boolAnd(Object* bool1, Object* bool2)
+{
+    bool vbool1 = *(bool*)getAttributeValue(bool1, "value");
+    bool vbool2 = *(bool*)getAttributeValue(bool2, "value");
+
+    return createBool(vbool1 && vbool2);
+}
+
 /////////////////////////////////  Vectors   ////////////////////////////////////
 
 Object* createVectorFromList(int num_elements, Object** list)
@@ -639,5 +657,5 @@ Object* method_Range_equals(Object* range1, Object* range2)
     Object* min2 = getAttributeValue(range2, "min");
     Object* max2 = getAttributeValue(range2, "max");
 
-    return createBool(*(bool*)getAttributeValue(method_Number_equals(min1, min2), "value") && *(bool*)getAttributeValue(method_Number_equals(max1, max2), "value"));
+    return boolAnd(method_Number_equals(min1, min2), method_Number_equals(max1, max2));
 }

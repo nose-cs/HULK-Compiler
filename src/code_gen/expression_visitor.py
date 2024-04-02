@@ -657,3 +657,11 @@ class CodeGenC(object):
         self.loop_blocks += code + "\n\n"
 
         return "loopBlock" + str(index) + params
+    
+    @visitor.when(hulk_nodes.OrNode)
+    def visit(self, node: hulk_nodes.OrNode):
+        return "boolOr(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.AndNode)
+    def visit(self, node: hulk_nodes.AndNode):
+        return "boolAnd(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
