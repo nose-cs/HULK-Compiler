@@ -31,6 +31,7 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
+    # todo
     def test_while_in_method(self):
         inp = '''
         function gcd(a, b) => 
@@ -38,7 +39,7 @@ class TestHulkLoops(unittest.TestCase):
                 let m = a % b in {
                 b := a;
                 a := m;
-                }; 
+            }; 
         5;
         '''
         ast, errors, context, scope = run_code(inp, True)
@@ -51,11 +52,13 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
+    # todo
     def test_for_loop(self):
         inp = '''
         function gcd(a: Number, b: Number) {
             if (a % b == 0) b 
-            else gcd(b, a % b);}
+            else gcd(b, a % b)
+        ;}
         5;
         '''
         ast, errors, context, scope = run_code(inp, True)
@@ -70,7 +73,6 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    # todo heredar parametros del padre
     def test_(self):
         inp = '''
         type C (cc : Number) {

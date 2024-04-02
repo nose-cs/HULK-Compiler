@@ -29,7 +29,7 @@ class TypeCollector(object):
         number_type = self.context.create_type('Number')
         number_type.set_parent(object_type)
 
-        bool_type = self.context.create_type('Bool')
+        bool_type = self.context.create_type('Boolean')
         bool_type.set_parent(object_type)
 
         # Add the built-in functions

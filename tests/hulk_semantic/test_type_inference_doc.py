@@ -28,7 +28,6 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    # todo
     def test2(self):
         inp = ('''
         function fib(n) => if (n == 0 | n == 1) 1 else fib(n-1) + fib(n-2);

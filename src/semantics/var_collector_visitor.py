@@ -179,8 +179,6 @@ class VarCollector(object):
         self.visit(node.iterable, scope.create_child())
         self.visit(node.expression, expr_scope)
 
-    # todo vector initialization and for
-
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
         node.scope = scope

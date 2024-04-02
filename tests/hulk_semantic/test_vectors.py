@@ -57,3 +57,17 @@ class TestHulkLoops(unittest.TestCase):
            '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_force_object_return(self):
+        inp = '''
+           let x: Iterable = [1,2,3] in x[7] + 10;
+           '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_force_(self):
+        inp = '''
+           let x = 5 + "20" in x[7] + 10;
+           '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")

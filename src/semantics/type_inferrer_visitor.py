@@ -102,7 +102,8 @@ class TypeInferrer(object):
 
         if method.return_type == types.AutoType():
             if return_type == types.AutoType():
-                self.errors.append(SemanticError("Cannot infer the return type of the method, please specify it."))
+                error_text = f"Cannot infer the return type of {method.name} in {self.current_type.name}, please specify it."
+                self.errors.append(SemanticError(error_text))
                 return_type = types.ErrorType()
             method.return_type = return_type
 
@@ -117,7 +118,8 @@ class TypeInferrer(object):
                     if new_type.is_error():
                         self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
                 else:
-                    self.errors.append(SemanticError("Cannot infer the type of the param, please specify it."))
+                    error_text = f"Cannot infer the type of the param {method.param_names[i]} in {method.name} in {self.current_type.name}, please specify it."
+                    self.errors.append(SemanticError(error_text))
                     local_var.type = types.ErrorType()
 
         return return_type
@@ -131,7 +133,8 @@ class TypeInferrer(object):
 
         if function.return_type == types.AutoType():
             if return_type == types.AutoType():
-                self.errors.append(SemanticError("Cannot infer the return type of the function, please specify it."))
+                error_text = f"Cannot infer the return type of the function {function.name}, please specify it."
+                self.errors.append(SemanticError(error_text))
                 return_type = types.ErrorType()
             function.return_type = return_type
 
@@ -146,7 +149,8 @@ class TypeInferrer(object):
                     if new_type.is_error():
                         self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
                 else:
-                    self.errors.append(SemanticError("Cannot infer the type of the param, please specify it."))
+                    error_text = f"Cannot infer the type of the param {function.param_names[i]} in {function.name}, please specify it."
+                    self.errors.append(SemanticError(error_text))
                     local_var.type = types.ErrorType()
 
         return return_type
@@ -168,7 +172,8 @@ class TypeInferrer(object):
         var.type = var.type if var.type != types.AutoType() else inf_type
 
         if var.type == types.AutoType() and not isinstance(var.type, types.ErrorType):
-            self.errors.append(SemanticError("Cannot infer the type of the variable, please specify it."))
+            error_text = f"Cannot infer the type of the variable {node.id}, please specify it."
+            self.errors.append(SemanticError(error_text))
             var.type = types.ErrorType()
 
         return var.type
@@ -283,14 +288,18 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
-        bool_type = self.context.get_type('Bool')
+        bool_type = self.context.get_type('Boolean')
         self.visit(node.expression, scope)
         return bool_type
 
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
-        self.visit(node.expression, scope)
+        expr_type = self.visit(node.expression, scope)
         cast_type = self.context.get_type_or_protocol(node.ttype)
+        if not expr_type.conforms_to(cast_type) and not cast_type.conforms_to(expr_type):
+            return types.ErrorType()
+        if expr_type.is_error():
+            return types.ErrorType()
         return cast_type
 
     @visitor.when(hulk_nodes.ArithmeticExpressionNode)
@@ -300,39 +309,51 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, number_type)
+        elif left_type != number_type or left_type.is_error():
+            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, number_type)
+        elif right_type != number_type or right_type.is_error():
+            return types.ErrorType()
 
         return number_type
 
     @visitor.when(hulk_nodes.InequalityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
-        bool_type = self.context.get_type('Bool')
+        bool_type = self.context.get_type('Boolean')
         number_type = self.context.get_type('Number')
 
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, number_type)
+        elif left_type != number_type or left_type.is_error():
+            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, number_type)
+        elif right_type != number_type or right_type.is_error():
+            return types.ErrorType()
 
         return bool_type
 
     @visitor.when(hulk_nodes.BoolBinaryExpressionNode)
     def visit(self, node: hulk_nodes.BoolBinaryExpressionNode, scope: Scope):
-        bool_type = self.context.get_type('Bool')
+        bool_type = self.context.get_type('Boolean')
 
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, bool_type)
+        elif left_type != bool_type or left_type.is_error():
+            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, bool_type)
+        elif right_type != bool_type or right_type.is_error():
+            return types.ErrorType()
 
         return bool_type
 
@@ -344,18 +365,28 @@ class TypeInferrer(object):
         left_type = self.visit(node.left, scope)
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, object_type)
+        elif not left_type.conforms_to(object_type) or left_type.is_error():
+            return types.ErrorType()
 
         right_type = self.visit(node.right, scope)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, object_type)
+        elif not right_type.conforms_to(object_type) or right_type.is_error():
+            return types.ErrorType()
 
         return string_type
 
     @visitor.when(hulk_nodes.EqualityExpressionNode)
     def visit(self, node: hulk_nodes.EqualityExpressionNode, scope: Scope):
-        bool_type = self.context.get_type('Bool')
-        self.visit(node.left, scope)
-        self.visit(node.right, scope)
+        bool_type = self.context.get_type('Boolean')
+        left_type = self.visit(node.left, scope)
+        right_type = self.visit(node.right, scope)
+
+        if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
+            return types.ErrorType()
+        if left_type.is_error() or right_type.is_error():
+            return types.ErrorType()
+
         return bool_type
 
     @visitor.when(hulk_nodes.NegNode)
@@ -365,22 +396,26 @@ class TypeInferrer(object):
 
         if operand_type == types.AutoType():
             self.assign_auto_type(node.operand, scope, number_type)
+        elif operand_type != number_type or operand_type.is_error():
+            return types.ErrorType()
 
         return number_type
 
     @visitor.when(hulk_nodes.NotNode)
     def visit(self, node: hulk_nodes.NotNode, scope: Scope):
         operand_type = self.visit(node.operand, scope)
-        bool_type = self.context.get_type('Bool')
+        bool_type = self.context.get_type('Boolean')
 
         if operand_type == types.AutoType():
             self.assign_auto_type(node.operand, scope, bool_type)
+        elif operand_type != bool_type or operand_type.is_error():
+            return types.ErrorType()
 
         return bool_type
 
     @visitor.when(hulk_nodes.ConstantBoolNode)
     def visit(self, node: hulk_nodes.ConstantBoolNode, scope: Scope):
-        return self.context.get_type('Bool')
+        return self.context.get_type('Boolean')
 
     @visitor.when(hulk_nodes.ConstantNumNode)
     def visit(self, node: hulk_nodes.ConstantNumNode, scope: Scope):
@@ -414,7 +449,6 @@ class TypeInferrer(object):
     def visit(self, node: hulk_nodes.VectorInitializationNode, scope: Scope):
         elements_types = [self.visit(element, scope) for element in node.elements]
         lca = types.get_lowest_common_ancestor(elements_types)
-        print(lca)
         return types.VectorType(lca)
 
     @visitor.when(hulk_nodes.VectorComprehensionNode)
@@ -425,7 +459,7 @@ class TypeInferrer(object):
         new_scope = scope.children[0]
         variable = new_scope.find_variable(node.var)
 
-        if ttype.conforms_to(iterable_protocol):
+        if ttype.conforms_to(iterable_protocol) and not ttype.is_error():
             element_type = ttype.get_method('current').return_type
             variable.type = element_type
         else:
@@ -444,6 +478,9 @@ class TypeInferrer(object):
             return types.ErrorType()
 
         obj_type = self.visit(node.obj, scope)
+        if obj_type.is_error():
+            return types.ErrorType()
+
         if obj_type.name != 'Vector':
             return types.ErrorType()
 

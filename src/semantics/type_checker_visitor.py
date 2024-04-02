@@ -287,18 +287,11 @@ class TypeChecker(object):
             self.errors.append(SemanticError("Cannot access an attribute from a non-self object"))
             return types.ErrorType()
 
-    # todo vector initialization
-
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
-        expression_type = self.visit(node.expression, scope)
-        bool_type = self.context.get_type('Bool')
-
-        cast_type = self.context.get_type_or_protocol(node.ttype)
-
-        if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
-            return bool_type
-
+        self.visit(node.expression, scope)
+        bool_type = self.context.get_type('Boolean')
+        self.context.get_type_or_protocol(node.ttype)
         return bool_type
 
     @visitor.when(hulk_nodes.AsNode)
@@ -331,7 +324,7 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.InequalityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode, scope: Scope):
-        bool_type = self.context.get_type('Bool')
+        bool_type = self.context.get_type('Boolean')
 
         left_type = self.visit(node.left, scope)
 
@@ -346,7 +339,7 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.BoolBinaryExpressionNode)
     def visit(self, node: hulk_nodes.BoolBinaryExpressionNode, scope: Scope):
-        bool_type = self.context.get_type('Bool')
+        bool_type = self.context.get_type('Boolean')
 
         left_type = self.visit(node.left, scope)
 
@@ -385,7 +378,7 @@ class TypeChecker(object):
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
 
-        return self.context.get_type('Bool')
+        return self.context.get_type('Boolean')
 
     @visitor.when(hulk_nodes.NegNode)
     def visit(self, node: hulk_nodes.NegNode, scope: Scope):
@@ -402,7 +395,7 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.NotNode)
     def visit(self, node: hulk_nodes.NotNode, scope: Scope):
         operand_type = self.visit(node.operand, scope)
-        bool_type = self.context.get_type('Bool')
+        bool_type = self.context.get_type('Boolean')
 
         if operand_type != types.BoolType():
             error_text = SemanticError.INCOMPATIBLE_TYPES % operand_type.name
@@ -413,7 +406,7 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.ConstantBoolNode)
     def visit(self, node: hulk_nodes.ConstantBoolNode, scope: Scope):
-        return self.context.get_type('Bool')
+        return self.context.get_type('Boolean')
 
     @visitor.when(hulk_nodes.ConstantNumNode)
     def visit(self, node: hulk_nodes.ConstantNumNode, scope: Scope):
@@ -485,6 +478,9 @@ class TypeChecker(object):
             return types.ErrorType()
 
         obj_type = self.visit(node.obj, scope)
+
+        if obj_type.is_error():
+            return types.ErrorType()
 
         if obj_type.name != 'Vector':
             error_text = SemanticError.INVALID_UNARY_OPERATION % obj_type.name

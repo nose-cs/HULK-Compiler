@@ -44,7 +44,7 @@ class TestHulkLoops(unittest.TestCase):
             max = max;
             current = min - 1;
         
-            next(): Bool => (self.current := self.current + 1) < self.max;
+            next(): Boolean => (self.current := self.current + 1) < self.max;
             current(): Number => self.current;
         }
         let x = new MyRange(1, 100) in x is Iterable;
@@ -59,7 +59,7 @@ class TestHulkLoops(unittest.TestCase):
             max = max;
             current = min - 1;
 
-            next(): Bool => (self.current := self.current + 1) < self.max;
+            next(): Boolean => (self.current := self.current + 1) < self.max;
             current(): Number => self.current;
         }
 

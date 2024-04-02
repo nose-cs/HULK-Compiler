@@ -238,7 +238,7 @@ class ErrorType(Type):
         return True
 
     def __eq__(self, other):
-        return isinstance(other, ErrorType) or other.name == self.name
+        return isinstance(other, Type)
 
 
 class AutoType(Type):
@@ -259,7 +259,7 @@ class StringType(Type):
 
 class BoolType(Type):
     def __init__(self):
-        super().__init__('Bool')
+        super().__init__('Boolean')
 
     def __eq__(self, other):
         return isinstance(other, BoolType) or other.name == self.name
