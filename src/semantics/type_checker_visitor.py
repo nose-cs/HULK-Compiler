@@ -316,7 +316,7 @@ class TypeChecker(object):
         right_type = self.visit(node.right, scope)
 
         if not left_type == types.NumberType() or not right_type == types.NumberType():
-            error_text = SemanticError.INVALID_OPERATION % (left_type.name, right_type.name)
+            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
 
@@ -331,7 +331,7 @@ class TypeChecker(object):
         right_type = self.visit(node.right, scope)
 
         if not left_type == types.NumberType() or not right_type == types.NumberType():
-            error_text = SemanticError.INVALID_OPERATION % (left_type.name, right_type.name)
+            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
 
@@ -346,7 +346,7 @@ class TypeChecker(object):
         right_type = self.visit(node.right, scope)
 
         if not left_type == types.BoolType() or not right_type == types.BoolType():
-            error_text = SemanticError.INVALID_OPERATION % (left_type.name, right_type.name)
+            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
 
@@ -362,7 +362,7 @@ class TypeChecker(object):
         right_type = self.visit(node.right, scope)
 
         if not left_type.conforms_to(object_type) or not right_type.conforms_to(object_type):
-            error_text = SemanticError.INVALID_OPERATION % (left_type.name, right_type.name)
+            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
 
@@ -374,7 +374,7 @@ class TypeChecker(object):
         right_type = self.visit(node.right, scope)
 
         if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
-            error_text = SemanticError.INVALID_OPERATION % (left_type.name, right_type.name)
+            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
 
@@ -386,7 +386,7 @@ class TypeChecker(object):
         number_type = self.context.get_type('Number')
 
         if operand_type != types.NumberType():
-            error_text = SemanticError.INCOMPATIBLE_TYPES % operand_type.name
+            error_text = SemanticError.INVALID_UNARY_OPERATION % (node.operator, operand_type.name)
             self.errors.append(SemanticError(error_text))
             return number_type
 
@@ -398,7 +398,7 @@ class TypeChecker(object):
         bool_type = self.context.get_type('Boolean')
 
         if operand_type != types.BoolType():
-            error_text = SemanticError.INCOMPATIBLE_TYPES % operand_type.name
+            error_text = SemanticError.INVALID_UNARY_OPERATION % (node.operator, operand_type.name)
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
 
@@ -482,8 +482,8 @@ class TypeChecker(object):
         if obj_type.is_error():
             return types.ErrorType()
 
-        if obj_type.name != 'Vector':
-            error_text = SemanticError.INVALID_UNARY_OPERATION % obj_type.name
+        if not isinstance(obj_type, types.VectorType):
+            error_text = SemanticError.INVALID_UNARY_OPERATION % ('[]', obj_type.name)
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
 

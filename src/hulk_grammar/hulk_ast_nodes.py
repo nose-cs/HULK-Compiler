@@ -123,11 +123,13 @@ class BinaryExpressionNode(ExpressionNode, ABC):
     def __init__(self, left, right):
         self.left = left
         self.right = right
+        self.operator = None
 
 
 class UnaryExpressionNode(ExpressionNode, ABC):
     def __init__(self, operand):
         self.operand = operand
+        self.operator = None
 
 
 class ConditionalNode(ExpressionNode):
@@ -261,60 +263,90 @@ class NegNode(UnaryExpressionNode):
 
 # ---------------------------------------------------Depth 4---------------------------------------------------------- #
 class ConcatNode(StrBinaryExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = 'concat (@, @@)'
 
 
 class OrNode(BoolBinaryExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '|'
 
 
 class AndNode(BoolBinaryExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '&'
 
 
 class LessThanNode(InequalityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '<'
 
 
 class GreaterThanNode(InequalityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '>'
 
 
 class LessOrEqualNode(InequalityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '<='
 
 
 class GreaterOrEqualNode(InequalityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '>='
 
 
 class PlusNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '+'
 
 
 class MinusNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '-'
 
 
 class StarNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '*'
 
 
 class DivNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '/'
 
 
 class ModNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '%'
 
 
 class PowNode(ArithmeticExpressionNode):
-    pass
+    def __init__(self, left, right, operator):
+        super().__init__(left, right)
+        self.operator = operator
 
 
 class EqualNode(EqualityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '=='
 
 
 class NotEqualNode(EqualityExpressionNode):
-    pass
+    def __init__(self, left, right):
+        super().__init__(left, right)
+        self.operator = '!='

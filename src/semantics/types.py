@@ -298,7 +298,7 @@ class SelfType(Type):
 
 class VectorType(Type):
     def __init__(self, element_type) -> None:
-        super().__init__('Vector')
+        super().__init__(f'{element_type.name}[]')
         self.set_parent(ObjectType())
         self.define_method('next', [], [], BoolType())
         self.define_method('size', [], [], NumberType())

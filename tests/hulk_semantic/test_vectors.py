@@ -71,3 +71,17 @@ class TestHulkLoops(unittest.TestCase):
            '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_invalid_assigment(self):
+        inp = '''
+           let x = [7,8,9] in x := [new Object()];
+           '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_valid_assigment(self):
+        inp = '''
+              let x = ["casa", 7, 8] in x := ["hola"];
+              '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

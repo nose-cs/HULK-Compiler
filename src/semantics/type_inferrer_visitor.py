@@ -481,7 +481,7 @@ class TypeInferrer(object):
         if obj_type.is_error():
             return types.ErrorType()
 
-        if obj_type.name != 'Vector':
+        if not isinstance(obj_type, types.VectorType):
             return types.ErrorType()
 
         return obj_type.get_element_type()

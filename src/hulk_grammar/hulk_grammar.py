@@ -166,8 +166,8 @@ sign_operation %= plus + pow_operation, lambda h, s: s[2]
 sign_operation %= minus + pow_operation, lambda h, s: hulk_ast_nodes.NegNode(s[2])
 sign_operation %= pow_operation, lambda h, s: s[1]
 
-pow_operation %= type_instantiation + power + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
-pow_operation %= type_instantiation + power2 + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3])
+pow_operation %= type_instantiation + power + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3], s[2])
+pow_operation %= type_instantiation + power2 + pow_operation, lambda h, s: hulk_ast_nodes.PowNode(s[1], s[3], s[2])
 pow_operation %= type_instantiation, lambda h, s: s[1]
 
 type_instantiation %= (new + idx + opar + expr_list_comma_sep_or_empty + cpar,

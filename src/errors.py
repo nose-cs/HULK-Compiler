@@ -64,13 +64,13 @@ class SemanticError(HulkError):
     SELF_IS_READONLY = 'Variable "self" is read-only.'
     INCOMPATIBLE_TYPES = 'Cannot convert "%s" into "%s".'
     VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined.'
-    INVALID_OPERATION = 'Operation is not defined between "%s" and "%s".'
-    INVALID_UNARY_OPERATION = 'Operation is not defined for "%s".'
+    INVALID_OPERATION = 'Operation "%s" is not defined between "%s" and "%s".'
+    INVALID_UNARY_OPERATION = 'Operation "%s" is not defined for "%s".'
     INCONSISTENT_USE = 'Inconsistent use of "%s".'
     EXPECTED_ARGUMENTS = 'Expected %s arguments, but got %s in "%s".'
-    CANNOT_INFER_RETURN_TYPE = 'Cannot infer return type of "%s".'
-    CANNOT_INFER_PARAM_TYPE = 'Cannot infer type of parameter "%s".'
-    CANNOT_INFER_VAR_TYPE = 'Cannot infer type of variable "%s".'
+    CANNOT_INFER_RETURN_TYPE = 'Cannot infer return type of "%s". Please specify it.'
+    CANNOT_INFER_PARAM_TYPE = 'Cannot infer type of parameter "%s". Please specify it.'
+    CANNOT_INFER_VAR_TYPE = 'Cannot infer type of variable "%s". Please specify it.'
 
     @property
     def error_type(self):
