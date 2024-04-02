@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from hulk_grammar.hulk_grammar import G
@@ -74,9 +75,7 @@ def run_pipeline(input_path: Path, output_path: Path, debug=False):
 
 
 if __name__ == "__main__":
-    # input_ = sys.argv[1]
-    # output_ = sys.argv[2]
-    debug = True
-    input_ = "./hello_world.hulk"
-    output_ = "./hello_world.c"
+    input_ = sys.argv[1]
+    output_ = sys.argv[2]
+    debug = False
     run_pipeline(Path(input_), Path(output_), debug)
