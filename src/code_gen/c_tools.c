@@ -141,6 +141,8 @@ Object* invertBool(Object* boolean);
 // Vector
 Object* createVectorFromList(int num_elements, Object** list);
 Object* createVector(int num_elements, ...);
+Object* method_Vector_next(Object* self);
+Object* method_Vector_current(Object* self);
 Object* getElementOfVector(Object* vector, Object* index);
 Object* method_Vector_toString(Object* vector);
 Object* method_Vector_equals(Object* vector1, Object* vector2);
@@ -148,6 +150,8 @@ Object* function_range(Object* start, Object* end);
 
 // Range
 Object* createRange(Object* min, Object* max);
+Object* method_Range_next(Object* self);
+Object* method_Range_current(Object* self);
 Object* method_Range_toString(Object* range);
 Object* method_Range_equals(Object* range1, Object* range2);
 
@@ -451,6 +455,10 @@ Object* createVectorFromList(int num_elements, Object** list)
 
     addAttribute(vector, "list", list);
 
+    addAttribute(vector, "current", createNumber(-1));
+    addAttribute(vector, "method_Vector_next", *method_Vector_next);
+    addAttribute(vector, "method_Vector_current", *method_Vector_current);
+
     return vector;
 }
 
@@ -469,6 +477,25 @@ Object* createVector(int num_elements, ...)
     va_end(elements);
 
     return createVectorFromList(num_elements, list);
+}
+
+Object* method_Vector_next(Object* self)
+{
+    int size = *(int*)getAttributeValue(self, "size");
+    double* current = getAttributeValue((Object*)getAttributeValue(self, "current"), "value");
+    
+    if(*current + 1 < size) 
+    {
+        *current += 1;
+        return createBool(true);
+    }
+
+    return createBool(false);
+}
+
+Object* method_Vector_current(Object* self)
+{
+    return getElementOfVector(self, getAttributeValue(self, "current"));
 }
 
 Object* getElementOfVector(Object* vector, Object* index)
@@ -536,41 +563,51 @@ Object* method_Vector_equals(Object* vector1, Object* vector2)
     return createBool(true);
 }
 
-Object* function_range(Object* start, Object* end)
-{
-    int vstart = *(double*)getAttributeValue(start, "value");
-    int vend = *(double*)getAttributeValue(end, "value");
-
-    Object** list = malloc((vend - vstart) * sizeof(Object*));
-
-    for(int i = 0; i < vend - vstart; i++)
-    {
-        list[i] = createNumber(vstart + i);
-    }
-
-    return createVectorFromList(vend - vstart, list);
-}
-
 
 /////////////////////////////////  Range   ////////////////////////////////////
+
+Object* function_range(Object* start, Object* end)
+{
+    return createRange(start, end);
+}
 
 Object* createRange(Object* min, Object* max)
 {
     Object* obj = createObject();
 
-    Object* cmin = copyObject(min);
-    Object* cmax = copyObject(max);
-
-    addAttribute(obj, "min", cmin);
-    addAttribute(obj, "max", cmax);
+    addAttribute(obj, "min", min);
+    addAttribute(obj, "max", max);
+    addAttribute(obj, "current", numberMinus(min, createNumber(1)));
 
     addAttribute(obj, "parent_type0", "Range");
     addAttribute(obj, "parent_type1", "Object");
+
+    addAttribute(obj, "method_Range_next", *method_Range_next);
+    addAttribute(obj, "method_Range_current", *method_Range_current);
 
     addAttribute(obj, "method_Range_toString", *method_Range_toString);
     addAttribute(obj, "method_Range_equals", *method_Range_equals);
 
     return obj;
+}
+
+Object* method_Range_next(Object* self)
+{
+    int max = *(double*)getAttributeValue((Object*)getAttributeValue(self, "max"), "value");
+    double* current = getAttributeValue((Object*)getAttributeValue(self, "current"), "value");
+    
+    if(*current + 1 < max) 
+    {
+        *current += 1;
+        return createBool(true);
+    }
+
+    return createBool(false);
+}
+
+Object* method_Range_current(Object* self)
+{
+    return getAttributeValue(self, "current");
 }
 
 Object* method_Range_toString(Object* range)

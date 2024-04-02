@@ -643,12 +643,12 @@ class CodeGenC(object):
         code += " {\n"
         code += "   Object* return_obj = NULL;\n"
         code += "   Object* " + var_iter + " = NULL;\n"
-        code += "   Object* vector = " + self.visit(node.iterable) + ";\n"
-        code += "   Object** list = getAttributeValue(vector, \"list\");\n"
-        code += "   int size = *(int*)getAttributeValue(vector, \"size\");\n\n"
+        code += "   Object* iterable = " + self.visit(node.iterable) + ";\n"
+        code += "   Object*(*next)(Object*) = getMethodForCurrentType(iterable, \"next\", 0);\n"
+        code += "   Object*(*current)(Object*) = getMethodForCurrentType(iterable, \"current\", 0);\n\n"
 
-        code += "   for(int i = 0; i < size; i++) {\n"
-        code += "      " + var_iter + " = list[i];\n\n"
+        code += "   while(*(bool*)getAttributeValue(next(iterable), \"value\")) {\n"
+        code += "      " + var_iter + " = current(iterable);\n\n"
         code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + "\n"
         code += "   }\n"
 
