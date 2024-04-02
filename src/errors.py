@@ -60,13 +60,17 @@ class SyntacticError(HulkError):
 
 
 class SemanticError(HulkError):
-    WRONG_SIGNATURE = 'Method "%s" already defined in "%s" with a different signature.'
+    WRONG_SIGNATURE = 'Method "%s" already defined in an ancestor with a different signature.'
     SELF_IS_READONLY = 'Variable "self" is read-only.'
-    LOCAL_ALREADY_DEFINED = 'Variable "%s" is already defined in method "%s".'
     INCOMPATIBLE_TYPES = 'Cannot convert "%s" into "%s".'
-    VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined in "%s".'
+    VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined.'
     INVALID_OPERATION = 'Operation is not defined between "%s" and "%s".'
+    INVALID_UNARY_OPERATION = 'Operation is not defined for "%s".'
     INCONSISTENT_USE = 'Inconsistent use of "%s".'
+    EXPECTED_ARGUMENTS = 'Expected %s arguments, but got %s in "%s".'
+    CANNOT_INFER_RETURN_TYPE = 'Cannot infer return type of "%s".'
+    CANNOT_INFER_PARAM_TYPE = 'Cannot infer type of parameter "%s".'
+    CANNOT_INFER_VAR_TYPE = 'Cannot infer type of variable "%s".'
 
     @property
     def error_type(self):
