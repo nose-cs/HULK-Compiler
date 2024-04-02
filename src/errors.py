@@ -71,6 +71,8 @@ class SemanticError(HulkError):
     CANNOT_INFER_RETURN_TYPE = 'Cannot infer return type of "%s". Please specify it.'
     CANNOT_INFER_PARAM_TYPE = 'Cannot infer type of parameter "%s". Please specify it.'
     CANNOT_INFER_VAR_TYPE = 'Cannot infer type of variable "%s". Please specify it.'
+    BASE_OUTSIDE_METHOD = 'Cannot use "base" outside of a method.'
+    METHOD_NOT_DEFINED = 'Method "%s" is not defined in any ancestor.'
 
     @property
     def error_type(self):

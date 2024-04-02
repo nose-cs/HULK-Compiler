@@ -4,7 +4,6 @@ import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.semantics.types as types
 import src.visitor as visitor
 from src.errors import SemanticError
-from src.semantics.types import Method
 from src.semantics.utils import Scope, Context, Function
 
 
@@ -61,6 +60,8 @@ class TypeChecker(object):
                 error_text = SemanticError.INCOMPATIBLE_TYPES % (parent_arg_type.name, parent_param_type.name)
                 self.errors.append(SemanticError(error_text))
 
+        self.current_type = None
+
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
     def visit(self, node: hulk_nodes.AttributeDeclarationNode, scope: Scope):
         inf_type = self.visit(node.expr, scope)
@@ -75,7 +76,7 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode, scope: Scope):
-        method: Method = self.current_type.get_method(node.id)
+        self.current_method = self.current_type.get_method(node.id)
 
         new_scope = scope.children[0]
 
@@ -97,15 +98,17 @@ class TypeChecker(object):
         if parent_method.return_type != return_type:
             self.errors.append(SemanticError(error_text))
             return_type = types.ErrorType()
-        if len(parent_method.param_types) != len(method.param_types):
+        if len(parent_method.param_types) != len(self.current_method.param_types):
             self.errors.append(SemanticError(error_text))
             return_type = types.ErrorType()
 
         for i in range(len(parent_method.param_types)):
-            if parent_method.param_types[i] != method.param_types[i]:
+            if parent_method.param_types[i] != self.current_method.param_types[i]:
                 self.errors.append(SemanticError(error_text))
-                method.param_types[i] = types.ErrorType()
+                self.current_method.param_types[i] = types.ErrorType()
                 return_type = types.ErrorType()
+
+        self.current_method = None
 
         return return_type
 
@@ -252,6 +255,34 @@ class TypeChecker(object):
         except SemanticError as e:
             self.errors.append(e)
             return types.ErrorType()
+
+        if len(args_types) != len(method.param_types):
+            error_text = SemanticError.EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name)
+            self.errors.append(SemanticError(error_text))
+            return types.ErrorType()
+
+        for arg_type, param_type in zip(args_types, method.param_types):
+            if not arg_type.conforms_to(param_type):
+                error_text = SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
+                self.errors.append(SemanticError(error_text))
+                return types.ErrorType()
+
+        return method.return_type
+
+    @visitor.when(hulk_nodes.BaseCallNode)
+    def visit(self, node: hulk_nodes.BaseCallNode, scope: Scope):
+        if self.current_method is None:
+            self.errors.append(SemanticError(SemanticError.BASE_OUTSIDE_METHOD))
+            return types.ErrorType()
+
+        try:
+            method = self.current_type.parent.get_method(self.current_method.name)
+        except SemanticError:
+            error_text = SemanticError.METHOD_NOT_DEFINED % self.current_method.name
+            self.errors.append(SemanticError(error_text))
+            return types.ErrorType()
+
+        args_types = [self.visit(arg, scope) for arg in node.args]
 
         if len(args_types) != len(method.param_types):
             error_text = SemanticError.EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name)

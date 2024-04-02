@@ -26,10 +26,6 @@ class TypeBuilder(object):
     def visit(self, node: hulk_nodes.FunctionDeclarationNode):
         params_names, params_types = self.get_params_names_and_types(node)
 
-        if node.id == 'base':
-            self.errors.append(SemanticError('Cannot declare a function with the name "base", it is a reserved word'))
-            return
-
         if node.return_type is None:
             return_type = AutoType()
         else:
