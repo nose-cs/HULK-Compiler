@@ -97,8 +97,8 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
     def visit(self, node: hulk_nodes.ExpressionBlockNode, scope: Scope):
-        #block_scope = scope.create_child()
-        node.scope = scope #block_scope
+        # block_scope = scope.create_child()
+        node.scope = scope  # block_scope
 
         for expr in node.expressions:
             self.visit(expr, scope.create_child())
@@ -257,3 +257,15 @@ class VarCollector(object):
 
         self.visit(node.obj, scope.create_child())
         self.visit(node.index, scope.create_child())
+
+    @visitor.when(hulk_nodes.ConstantBoolNode)
+    def visit(self, node: hulk_nodes.ConstantBoolNode, scope: Scope):
+        node.scope = scope
+
+    @visitor.when(hulk_nodes.ConstantNumNode)
+    def visit(self, node: hulk_nodes.ConstantNumNode, scope: Scope):
+        node.scope = scope
+
+    @visitor.when(hulk_nodes.ConstantStringNode)
+    def visit(self, node: hulk_nodes.ConstantStringNode, scope: Scope):
+        node.scope = scope

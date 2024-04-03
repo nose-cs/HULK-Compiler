@@ -50,7 +50,7 @@ def semantic_analysis_pipeline(ast, debug=False):
         print(scope)
         print('---------------- INFERRING TYPES ------------------')
     type_inference = TypeInferrer(context, errors)
-    type_inference.visit(ast, scope)
+    type_inference.visit(ast)
     if debug:
         print('Errors: [')
         for error in errors:
@@ -62,7 +62,7 @@ def semantic_analysis_pipeline(ast, debug=False):
         print(scope)
         print('---------------- CHECKING TYPES ------------------')
     type_checker = TypeChecker(context, errors)
-    type_checker.visit(ast, scope)
+    type_checker.visit(ast)
     if debug:
         print('Errors: [')
         for error in errors:
