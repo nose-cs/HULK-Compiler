@@ -108,10 +108,12 @@ Object* createObject();
 Object* replaceObject(Object* obj1, Object* obj2);
 Object* method_Object_equals(Object* obj1, Object* obj2);
 Object* method_Object_toString(Object* obj);
-char* getType(Object* obj);
 
-// Protocol
-void* getMethodForCurrentType(Object* obj, char* method_name, int index);
+// Dynamic
+void* getMethodForCurrentType(Object* obj, char* method_name, char* base_type);
+char* getType(Object* obj);
+Object* isType(Object* obj, char* type);
+Object* isProtocol(Object* obj, char* protocol);
 
 // Print
 Object* function_print(Object* obj);
@@ -207,9 +209,48 @@ Object* method_Object_toString(Object* obj)
     return createString(address);
 }
 
+/////////////////////////////////  Dynamic   ////////////////////////////////////
+
+
 char* getType(Object* obj)
 {
     return getAttributeValue(obj, "parent_type0");
+}
+
+void* getMethodForCurrentType(Object* obj, char* method_name, char* base_type)
+{
+    bool found_base_type = base_type == NULL;
+
+    int index = 0;
+    char* initial_parent_type = malloc(128);
+    sprintf(initial_parent_type, "%s%d", "parent_type", index++);
+    char* type = getAttributeValue(obj, initial_parent_type);
+    free(initial_parent_type);
+
+    while(type != NULL)
+    {
+        if(found_base_type || strcmp(type, base_type) == 0)
+        {
+            found_base_type = true;
+
+            char* full_name = malloc(128);
+            sprintf(full_name, "%s%s%s%s", "method_", type, "_", method_name);
+
+            void* method = getAttributeValue(obj, full_name);
+
+            free(full_name);
+
+            if(method != NULL)
+                return method;
+        }
+
+        char* parent_type = malloc(128);
+        sprintf(parent_type, "%s%d", "parent_type", index++);
+        type = getAttributeValue(obj, parent_type);
+        free(parent_type);
+    }
+
+    return NULL;
 }
 
 Object* isType(Object* obj, char* type)
@@ -254,36 +295,6 @@ Object* isProtocol(Object* obj, char* protocol)
     }
 
     return createBoolean(false);
-}
-
-/////////////////////////////////  Protocol   ////////////////////////////////////
-
-void* getMethodForCurrentType(Object* obj, char* method_name, int index)
-{
-    char* initial_parent_type = malloc(128);
-    sprintf(initial_parent_type, "%s%d", "parent_type", index++);
-    char* type = getAttributeValue(obj, initial_parent_type);
-    free(initial_parent_type);
-
-    while(type != NULL)
-    {
-        char* full_name = malloc(128);
-        sprintf(full_name, "%s%s%s%s", "method_", type, "_", method_name);
-
-        void* method = getAttributeValue(obj, full_name);
-
-        free(full_name);
-
-        if(method != NULL)
-            return method;
-
-        char* parent_type = malloc(128);
-        sprintf(parent_type, "%s%d", "parent_type", index++);
-        type = getAttributeValue(obj, parent_type);
-        free(parent_type);
-    }
-
-    return NULL;
 }
 
 /////////////////////////////////  Print   ////////////////////////////////////
