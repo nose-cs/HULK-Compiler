@@ -685,5 +685,12 @@ class CodeGenC(object):
         code += ")"
 
         return code
-
+    
+    @visitor.when(hulk_nodes.IsNode)
+    def visit(self, node: hulk_nodes.IsNode):
+        try:
+            self.context.get_type(node.ttype)
+            return "isType(" + self.visit(node.expression) + ", \"" + node.ttype + "\")"
+        except:
+            return "isProtocol(" + self.visit(node.expression) + ", \"" + node.ttype + "\")"
 

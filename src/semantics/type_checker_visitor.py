@@ -277,6 +277,7 @@ class TypeChecker(object):
 
         try:
             method = self.current_type.parent.get_method(self.current_method.name)
+            node.method = self.current_method
         except SemanticError:
             error_text = SemanticError.METHOD_NOT_DEFINED % self.current_method.name
             self.errors.append(SemanticError(error_text))

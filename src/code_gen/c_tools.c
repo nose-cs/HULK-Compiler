@@ -212,6 +212,50 @@ char* getType(Object* obj)
     return getAttributeValue(obj, "parent_type0");
 }
 
+Object* isType(Object* obj, char* type)
+{
+    int index = 0;
+    char* initial_parent_type = malloc(128);
+    sprintf(initial_parent_type, "%s%d", "parent_type", index++);
+    char* ptype = getAttributeValue(obj, initial_parent_type);
+    free(initial_parent_type);
+
+    while(ptype != NULL)
+    {
+        if(strcmp(ptype, type) == 0)
+            return createBoolean(true);
+
+        char* parent_type = malloc(128);
+        sprintf(parent_type, "%s%d", "parent_type", index++);
+        ptype = getAttributeValue(obj, parent_type);
+        free(parent_type);
+    }
+
+    return createBoolean(false);
+}
+
+Object* isProtocol(Object* obj, char* protocol)
+{
+    int index = 0;
+    char* initial_protocol = malloc(128);
+    sprintf(initial_protocol, "%s%d", "conforms_protocol", index++);
+    char* pprotocol = getAttributeValue(obj, initial_protocol);
+    free(initial_protocol);
+
+    while(pprotocol != NULL)
+    {
+        if(strcmp(pprotocol, protocol) == 0)
+            return createBoolean(true);
+
+        char* cprotocol = malloc(128);
+        sprintf(cprotocol, "%s%d", "conforms_protocol", index++);
+        pprotocol = getAttributeValue(obj, cprotocol);
+        free(cprotocol);
+    }
+
+    return createBoolean(false);
+}
+
 /////////////////////////////////  Protocol   ////////////////////////////////////
 
 void* getMethodForCurrentType(Object* obj, char* method_name, int index)
@@ -512,6 +556,8 @@ Object* createVectorFromList(int num_elements, Object** list)
     addAttribute(vector, "parent_type0", "Vector");
     addAttribute(vector, "parent_type1", "Object");
 
+    addAttribute(vector, "conforms_protocol0", "Iterable");
+
     addAttribute(vector, "method_Vector_toString", *method_Vector_toString);
     addAttribute(vector, "method_Vector_equals", *method_Vector_equals);
 
@@ -647,6 +693,8 @@ Object* createRange(Object* min, Object* max)
 
     addAttribute(obj, "parent_type0", "Range");
     addAttribute(obj, "parent_type1", "Object");
+
+    addAttribute(obj, "conforms_protocol0", "Iterable");
 
     addAttribute(obj, "method_Range_next", *method_Range_next);
     addAttribute(obj, "method_Range_current", *method_Range_current);
