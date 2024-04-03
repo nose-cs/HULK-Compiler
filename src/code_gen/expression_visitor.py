@@ -258,7 +258,7 @@ class CodeGenC(object):
 
         if isinstance(node.obj, hulk_nodes.VariableNode):
             code = "((Object* (*)(Object*" + args + "))" + \
-                    "getMethodForCurrentType(" + obj + ", \"" + node.method + "\", 0)" + \
+                    "getMethodForCurrentType(" + obj + ", \"" + node.method + "\", NULL)" + \
                     ")(" + obj
 
             for arg in node.args:
@@ -299,7 +299,7 @@ class CodeGenC(object):
 
             code += "   Object* obj = " + obj + ";\n"
             code += "   return ((Object* (*)(Object*" + args + "))" + \
-                    "getMethodForCurrentType(obj, \"" + node.method + "\", 0)" + \
+                    "getMethodForCurrentType(obj, \"" + node.method + "\", NULL)" + \
                     ")(obj"
             
             for arg in node.args:
@@ -373,7 +373,7 @@ class CodeGenC(object):
 
         if isinstance(node.left, hulk_nodes.VariableNode):
             code = "((Object* (*)(Object*, Object*))" + \
-                    "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
+                    "getMethodForCurrentType(" + left + ", \"equals\", NULL)" + \
                     ")(" + left + ", " + self.visit(node.right) + ")"
 
             return code
@@ -409,7 +409,7 @@ class CodeGenC(object):
 
             code += "   Object* obj = " + left + ";\n"
             code += "   return ((Object* (*)(Object*, Object*))" + \
-                    "getMethodForCurrentType(obj, \"equals\", 0)" + \
+                    "getMethodForCurrentType(obj, \"equals\", NULL)" + \
                     ")(obj, " + self.visit(node.right) + ");"
             
             code += "\n}"
@@ -425,7 +425,7 @@ class CodeGenC(object):
 
         if isinstance(node.left, hulk_nodes.VariableNode):
             code = "invertBool(((Object* (*)(Object*, Object*))" + \
-                    "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
+                    "getMethodForCurrentType(" + left + ", \"equals\", NULL)" + \
                     ")(" + left + ", " + self.visit(node.right) + "))"
 
             return code
@@ -461,7 +461,7 @@ class CodeGenC(object):
 
             code += "   Object* obj = " + left + ";\n"
             code += "   return invertBool(((Object* (*)(Object*, Object*))" + \
-                    "getMethodForCurrentType(obj, \"equals\", 0)" + \
+                    "getMethodForCurrentType(obj, \"equals\", NULL)" + \
                     ")(obj, " + self.visit(node.right) + "));"
             
             code += "\n}"
@@ -644,8 +644,8 @@ class CodeGenC(object):
         code += "   Object* return_obj = NULL;\n"
         code += "   Object* " + var_iter + " = NULL;\n"
         code += "   Object* iterable = " + self.visit(node.iterable) + ";\n"
-        code += "   Object*(*next)(Object*) = getMethodForCurrentType(iterable, \"next\", 0);\n"
-        code += "   Object*(*current)(Object*) = getMethodForCurrentType(iterable, \"current\", 0);\n\n"
+        code += "   Object*(*next)(Object*) = getMethodForCurrentType(iterable, \"next\", NULL);\n"
+        code += "   Object*(*current)(Object*) = getMethodForCurrentType(iterable, \"current\", NULL);\n\n"
 
         code += "   while(*(bool*)getAttributeValue(next(iterable), \"value\")) {\n"
         code += "      " + var_iter + " = current(iterable);\n\n"
@@ -676,8 +676,8 @@ class CodeGenC(object):
 
         for i in range(len(node.args)):
             code += ", Object*"
-
-        code += "))getMethodForCurrentType(self, \"" + node.method.name + "\", 1))(self"
+        
+        code += "))getMethodForCurrentType(self, \"" + node.method_name + "\", \"" + node.parent_type.name + "\"))(self"
 
         for arg in node.args:
             code += ", " + self.visit(arg)
@@ -685,5 +685,12 @@ class CodeGenC(object):
         code += ")"
 
         return code
-
+    
+    @visitor.when(hulk_nodes.IsNode)
+    def visit(self, node: hulk_nodes.IsNode):
+        try:
+            self.context.get_type(node.ttype)
+            return "isType(" + self.visit(node.expression) + ", \"" + node.ttype + "\")"
+        except:
+            return "isProtocol(" + self.visit(node.expression) + ", \"" + node.ttype + "\")"
 
