@@ -12,14 +12,20 @@ class CodeGenC(object):
         
         self.blocks_defs = ""
 
-        self.condition_blocks = ""
-        self.index_condition_blocks = 0
+        self.let_in_blocks = ""
+        self.index_let_in_blocks = 0
 
         self.if_else_blocks = ""
         self.index_if_else_blocks = 0
 
-        self.while_blocks = ""
-        self.index_while_blocks = 0
+        self.loop_blocks = ""
+        self.index_loop_blocks = 0
+
+        self.method_call_blocks = ""
+        self.index_method_call_blocks = 0
+
+        self.create_blocks = ""
+        self.index_create_blocks = 0
 
         self.vector_comp = ""
         self.index_vector_comp = 0
@@ -31,10 +37,10 @@ class CodeGenC(object):
         lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
         
         if add_return:
-            lines[-1] = "   return " + lines[-1][3:]
+            lines[-1] = "   return " + lines[-1][3:] + ";"
         
         if collect_last_exp:
-            lines[-1] = "   return_obj = " + lines[-1][3:]
+            lines[-1] = "   return_obj = " + lines[-1][3:] + ";"
 
         return '\n'.join(lines)
 
@@ -48,7 +54,37 @@ class CodeGenC(object):
 
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode):
-        code = "create" + node.idx + " ("
+        vars = node.scope.get_variables(True)
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        if len(vars) > 0:
+            params = params[:-2]     
+
+        params += ")"
+
+        create_block = "Object* createBlock" + str(self.index_create_blocks) + "("
+        index = self.index_create_blocks
+        self.index_create_blocks += 1
+
+        for var in vars:
+            create_block += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            create_block = create_block[:-2]
+
+        create_block += ")"
+
+        self.blocks_defs += create_block + ";\n\n"
+
+        create_block += " {\n"
+
+        def_vars = ""
+
+        code = "   return create" + node.idx + "("
         before = len(code)        
 
         classs = self.context.get_type(node.idx)
@@ -56,10 +92,14 @@ class CodeGenC(object):
 
         while classs is not None and classs.name != "Object":
             for i, param in enumerate(classs.params_names):
-                classs.node.scope.children[0].find_variable(param).setNameC(self.visit(args[i]))
+                var = "v" + str(self.index_var)
+                self.index_var += 1
+
+                def_vars += "   Object* " + var + " = " + self.visit(args[i]) + ";\n"
+                classs.node.scope.children[0].find_variable(param).setNameC(var)
 
             for att in classs.attributes:
-                code += self.visit(att.node.expr) + ", "
+                code += "copyObject(" + self.visit(att.node.expr) + "), "
 
             args = classs.node.parent_args
             classs = classs.parent
@@ -67,9 +107,12 @@ class CodeGenC(object):
         if before != len(code):
             code = code[:-2]
         
-        code += ")"
+        code += ");"
 
-        return code
+        create_block += def_vars + "\n" + code + "\n}"
+        self.create_blocks += create_block + "\n\n"
+
+        return "createBlock" + str(index) + params
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
@@ -85,6 +128,8 @@ class CodeGenC(object):
 
         for expression in node.expressions:
             code += self.visit(expression) + ";\n"
+
+        code = code[:-2]
 
         return code
     
@@ -119,7 +164,7 @@ class CodeGenC(object):
         
         node.scope.find_variable(node.id).setNameC(var)
 
-        return "Object* " + var + " = " + self.visit(node.expr)
+        return "Object* " + var + " = copyObject(" + self.visit(node.expr) + ");"
         
     @visitor.when(hulk_nodes.ConstantNumNode)
     def visit(self, node: hulk_nodes.ConstantNumNode):
@@ -135,21 +180,50 @@ class CodeGenC(object):
     
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode):
-        code = ""
+        vars = node.scope.get_variables(True)
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        if len(vars) > 0:
+            params = params[:-2]     
+
+        params += ")"
+
+        code = "Object* letInNode" + str(self.index_let_in_blocks) + "("
+        index = self.index_let_in_blocks
+        self.index_let_in_blocks += 1
+
+        for var in vars:
+            code += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            code = code[:-2]
+
+        code += ")"
+
+        self.blocks_defs += code + ";\n\n"
+
+        code += " {\n"
 
         for var_declaration in node.var_declarations:
-            code += self.visit(var_declaration) + ";\n"
+            code += "   " + self.visit(var_declaration) + "\n"
 
-        code += self.visit(node.body)
+        code += self.getlinesindented(self.visit(node.body), True) + "\n"
+        code += "}"
 
-        return code
+        self.let_in_blocks += code + "\n\n"
+
+        return "letInNode" + str(index) + params
     
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode):
         code = "function_" + node.idx + "("
 
         for arg in node.args:
-            code += self.visit(arg) + ", "
+            code += "copyObject(" + self.visit(arg) + "), "
 
         if len(node.args) > 0:
             code = code[:-2]
@@ -182,16 +256,61 @@ class CodeGenC(object):
         if len(args) > 0:
             args = ',' + args
 
-        code = "((Object* (*)(Object*" + args + "))" + \
-                "getMethodForCurrentType(" + obj + ", \"" + node.method + "\", 0)" + \
-                ")(" + obj
+        if isinstance(node.obj, hulk_nodes.VariableNode):
+            code = "((Object* (*)(Object*" + args + "))" + \
+                    "getMethodForCurrentType(" + obj + ", \"" + node.method + "\", 0)" + \
+                    ")(" + obj
 
-        for arg in node.args:
-            code += ", " + self.visit(arg)
+            for arg in node.args:
+                code += ", copyObject(" + self.visit(arg) + ")"
 
-        code += ")"
+            code += ")"
 
-        return code
+            return code
+        
+        else:
+            vars = node.scope.get_variables(True)
+
+            params = "("
+
+            for var in vars:
+                params += var.nameC + ", "
+
+            if len(vars) > 0:
+                params = params[:-2]     
+
+            params += ")"
+
+            code = "Object* methodCallBlock" + str(self.index_method_call_blocks) + "("
+            index = self.index_method_call_blocks
+            self.index_method_call_blocks += 1
+
+            for var in vars:
+                code += "Object* " + var.nameC + ", "
+
+            if len(vars) > 0:
+                code = code[:-2]
+
+            code += ")"
+
+            self.blocks_defs += code + ";\n\n"
+
+            code += " {\n"
+
+            code += "   Object* obj = " + obj + ";\n"
+            code += "   return ((Object* (*)(Object*" + args + "))" + \
+                    "getMethodForCurrentType(obj, \"" + node.method + "\", 0)" + \
+                    ")(obj"
+            
+            for arg in node.args:
+                code += ", copyObject(" + self.visit(arg) + ")"
+
+            code += ");\n}"
+
+            self.method_call_blocks += code + "\n\n"
+
+            return "methodCallBlock" + str(index) + params
+        
     
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode):
@@ -206,30 +325,6 @@ class CodeGenC(object):
             params = params[:-2]     
 
         params += ")"
-
-        conditions_codes = []
-
-        for condition in node.conditions:
-            condition_code = "Object* condition" + str(self.index_condition_blocks) + "("
-            index_condition = self.index_condition_blocks
-            self.index_condition_blocks += 1
-
-            for var in vars:
-                condition_code += "Object* " + var.nameC + ", "
-
-            if len(vars) > 0:
-                condition_code = condition_code[:-2]
-
-            condition_code += ")"
-            self.blocks_defs += condition_code + ";\n\n"
-
-            condition_code += " {\n"
-
-            condition_code += self.getlinesindented(self.visit(condition), True) + ";\n}"
-
-            self.condition_blocks += condition_code + "\n\n"
-            conditions_codes.append("condition" + str(index_condition) + params)
-
 
         code = "Object* ifElseBlock" + str(self.index_if_else_blocks) + "("
         index = self.index_if_else_blocks
@@ -247,16 +342,16 @@ class CodeGenC(object):
 
         code += " {\n"
         
-        code += "   if(*((bool*)getAttributeValue(" + conditions_codes[0] + ", \"value\"))) {\n"
+        code += "   if(*((bool*)getAttributeValue(" + self.visit(node.conditions[0]) + ", \"value\"))) {\n"
 
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[0]), True)) + ";\n   }\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[0]), True)) + "\n   }\n"
 
         for i in range(1, len(node.conditions)):
-            code += "   else if(*((bool*)getAttributeValue(" + conditions_codes[i] + ", \"value\"))) {\n"
-            code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[i]), True)) + ";\n   }\n"
+            code += "   else if(*((bool*)getAttributeValue(" + self.visit(node.conditions[i]) + ", \"value\"))) {\n"
+            code += self.getlinesindented(self.getlinesindented(self.visit(node.expressions[i]), True)) + "\n   }\n"
 
         code += "   else {\n"
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.default_expr), True)) + ";\n   }\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.default_expr), True)) + "\n   }\n"
 
         code += "}"
 
@@ -276,21 +371,105 @@ class CodeGenC(object):
     def visit(self, node: hulk_nodes.EqualNode):
         left = self.visit(node.left)
 
-        code = "((Object* (*)(Object*, Object*))" + \
-                "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
-                ")(" + left + ", " + self.visit(node.right) + ")"
+        if isinstance(node.left, hulk_nodes.VariableNode):
+            code = "((Object* (*)(Object*, Object*))" + \
+                    "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
+                    ")(" + left + ", " + self.visit(node.right) + ")"
 
-        return code
+            return code
+        
+        else:
+            vars = node.scope.get_variables(True)
+
+            params = "("
+
+            for var in vars:
+                params += var.nameC + ", "
+
+            if len(vars) > 0:
+                params = params[:-2]     
+
+            params += ")"
+
+            code = "Object* methodCallBlock" + str(self.index_method_call_blocks) + "("
+            index = self.index_method_call_blocks
+            self.index_method_call_blocks += 1
+
+            for var in vars:
+                code += "Object* " + var.nameC + ", "
+
+            if len(vars) > 0:
+                code = code[:-2]
+
+            code += ")"
+
+            self.blocks_defs += code + ";\n\n"
+
+            code += " {\n"
+
+            code += "   Object* obj = " + left + ";\n"
+            code += "   return ((Object* (*)(Object*, Object*))" + \
+                    "getMethodForCurrentType(obj, \"equals\", 0)" + \
+                    ")(obj, " + self.visit(node.right) + ");"
+            
+            code += "\n}"
+
+            self.method_call_blocks += code + "\n\n"
+
+            return "methodCallBlock" + str(index) + params
+
     
     @visitor.when(hulk_nodes.NotEqualNode)
     def visit(self, node: hulk_nodes.NotEqualNode):
         left = self.visit(node.left)
 
-        code = "invertBool(((Object* (*)(Object*, Object*))" + \
-                "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
-                ")(" + left + ", " + self.visit(node.right) + "))"
+        if isinstance(node.left, hulk_nodes.VariableNode):
+            code = "invertBool(((Object* (*)(Object*, Object*))" + \
+                    "getMethodForCurrentType(" + left + ", \"equals\", 0)" + \
+                    ")(" + left + ", " + self.visit(node.right) + "))"
 
-        return code
+            return code
+        
+        else:
+            vars = node.scope.get_variables(True)
+
+            params = "("
+
+            for var in vars:
+                params += var.nameC + ", "
+
+            if len(vars) > 0:
+                params = params[:-2]     
+
+            params += ")"
+
+            code = "Object* methodCallBlock" + str(self.index_method_call_blocks) + "("
+            index = self.index_method_call_blocks
+            self.index_method_call_blocks += 1
+
+            for var in vars:
+                code += "Object* " + var.nameC + ", "
+
+            if len(vars) > 0:
+                code = code[:-2]
+
+            code += ")"
+
+            self.blocks_defs += code + ";\n\n"
+
+            code += " {\n"
+
+            code += "   Object* obj = " + left + ";\n"
+            code += "   return invertBool(((Object* (*)(Object*, Object*))" + \
+                    "getMethodForCurrentType(obj, \"equals\", 0)" + \
+                    ")(obj, " + self.visit(node.right) + "));"
+            
+            code += "\n}"
+
+            self.method_call_blocks += code + "\n\n"
+
+            return "methodCallBlock" + str(index) + params
+        
     
     @visitor.when(hulk_nodes.LessThanNode)
     def visit(self, node: hulk_nodes.LessThanNode):
@@ -314,29 +493,9 @@ class CodeGenC(object):
 
         params += ")"
 
-        condition_code = "Object* condition" + str(self.index_condition_blocks) + "("
-        index_condition = self.index_condition_blocks
-        self.index_condition_blocks += 1
-
-        for var in vars:
-            condition_code += "Object* " + var.nameC + ", "
-
-        if len(vars) > 0:
-            condition_code = condition_code[:-2]
-
-        condition_code += ")"
-        self.blocks_defs += condition_code + ";\n\n"
-
-        condition_code += " {\n"
-
-        condition_code += self.getlinesindented(self.visit(node.condition), True) + ";\n}"
-
-        self.condition_blocks += condition_code + "\n\n"
-
-
-        code = "Object* whileBlock" + str(self.index_while_blocks) + "("
-        index = self.index_while_blocks
-        self.index_while_blocks += 1
+        code = "Object* loopBlock" + str(self.index_loop_blocks) + "("
+        index = self.index_loop_blocks
+        self.index_loop_blocks += 1
 
         for var in vars:
             code += "Object* " + var.nameC + ", "
@@ -351,15 +510,15 @@ class CodeGenC(object):
         code += " {\n"
         code += "   Object* return_obj = NULL;\n"
 
-        code += "   while(*((bool*)getAttributeValue(condition" + str(index_condition) + params + ", \"value\"))) {\n"
-        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + ";\n"
+        code += "   while(*((bool*)getAttributeValue(" + self.visit(node.condition) + ", \"value\"))) {\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + "\n"
         code += "   }\n"
 
         code += "   return return_obj;\n}"
 
-        self.while_blocks += code + "\n\n"
+        self.loop_blocks += code + "\n\n"
 
-        return "whileBlock" + str(index) + params
+        return "loopBlock" + str(index) + params
     
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode):
@@ -395,7 +554,7 @@ class CodeGenC(object):
         self.blocks_defs += selector + ";\n\n"
 
         selector += " {\n"
-        selector += self.getlinesindented(self.visit(node.selector), True) + ";\n}"
+        selector += self.getlinesindented(self.visit(node.selector), True) + "\n}"
 
         self.vector_selector += selector + "\n\n"
 
@@ -443,4 +602,88 @@ class CodeGenC(object):
         self.vector_comp += vector_comp + "\n\n"
 
         return "vectorComprehension" + str(index_vec) + params
+
+    @visitor.when(hulk_nodes.IndexingNode)
+    def visit(self, node: hulk_nodes.IndexingNode):
+        return "getElementOfVector(" + self.visit(node.obj) + ", " + self.visit(node.index) + ")"
+    
+    @visitor.when(hulk_nodes.ForNode)
+    def visit(self, node: hulk_nodes.ForNode):
+        var_iter = "v" + str(self.index_var)
+        self.index_var += 1
+        node.scope.children[0].find_variable(node.var).setNameC(var_iter)
+
+        vars = node.scope.get_variables(True)
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        if len(vars) > 0:
+            params = params[:-2]     
+
+        params += ")"
+
+
+        code = "Object* loopBlock" + str(self.index_loop_blocks) + "("
+        index = self.index_loop_blocks
+        self.index_loop_blocks += 1
+
+        for var in vars:
+            code += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            code = code[:-2]
+
+        code += ")"
+
+        self.blocks_defs += code + ";\n\n"
+
+        code += " {\n"
+        code += "   Object* return_obj = NULL;\n"
+        code += "   Object* " + var_iter + " = NULL;\n"
+        code += "   Object* iterable = " + self.visit(node.iterable) + ";\n"
+        code += "   Object*(*next)(Object*) = getMethodForCurrentType(iterable, \"next\", 0);\n"
+        code += "   Object*(*current)(Object*) = getMethodForCurrentType(iterable, \"current\", 0);\n\n"
+
+        code += "   while(*(bool*)getAttributeValue(next(iterable), \"value\")) {\n"
+        code += "      " + var_iter + " = current(iterable);\n\n"
+        code += self.getlinesindented(self.getlinesindented(self.visit(node.expression), False, True)) + "\n"
+        code += "   }\n"
+
+        code += "   return return_obj;\n}"
+
+        self.loop_blocks += code + "\n\n"
+
+        return "loopBlock" + str(index) + params
+    
+    @visitor.when(hulk_nodes.OrNode)
+    def visit(self, node: hulk_nodes.OrNode):
+        return "boolOr(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.AndNode)
+    def visit(self, node: hulk_nodes.AndNode):
+        return "boolAnd(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.ConcatNode)
+    def visit(self, node: hulk_nodes.ConcatNode):
+        return "stringConcat(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.BaseCallNode)
+    def visit(self, node: hulk_nodes.BaseCallNode):
+        code = "((Object* (*)(Object*"
+
+        for i in range(len(node.args)):
+            code += ", Object*"
+
+        code += "))getMethodForCurrentType(self, \"" + node.method.name + "\", 1))(self"
+
+        for arg in node.args:
+            code += ", " + self.visit(arg)
+
+        code += ")"
+
+        return code
+
 

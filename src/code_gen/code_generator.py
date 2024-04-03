@@ -4,6 +4,7 @@ from src.hulk_grammar.hulk_grammar import G
 from src.parsing import LR1Parser
 from src.evaluation import evaluate_reverse_parse
 from src.semantics.semantic_analysis_pipeline import semantic_analysis_pipeline
+import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 
 class CCodeGenerator:
     def __init__(self) -> None:
@@ -26,7 +27,7 @@ class CCodeGenerator:
             lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
             
             if add_return:
-                lines[-1] = "   return " + lines[-1][3:]
+                lines[-1] = "   return " + lines[-1][3:] + ";"
             
             return '\n'.join(lines)
             
@@ -44,7 +45,7 @@ class CCodeGenerator:
         function_defs = []
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
+            if type.name not in ["Number", "Boolean", "String", "Object", "Range"]:
                 create_def = "Object* create" + type.name + " ("
                 create_params = []
 
@@ -86,7 +87,7 @@ class CCodeGenerator:
                 declarations += "\n"
 
         for function in context.functions.values():
-            if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand', 'range']:
+            if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand', 'range', 'parse']:
                     function_name = "function_" + function.name
                     function_def = "Object* " + function_name + " ("
                     
@@ -105,7 +106,7 @@ class CCodeGenerator:
         declarations += '\n'
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
+            if type.name not in ["Number", "Boolean", "String", "Object", "Range"]:
                 type_create += create_defs[type.name][0] + " {\n"
                 type_create += "   Object* obj = createObject();\n"
 
@@ -118,7 +119,7 @@ class CCodeGenerator:
                 current = type
                 index = 0
                 while current is not None:
-                    type_create += "   addAttribute(obj, \"parent_type" + str(index) + "\",\"" + current.name + "\");\n"
+                    type_create += "   addAttribute(obj, \"parent_type" + str(index) + "\", \"" + current.name + "\");\n"
 
                     if current.name in method_defs:
                         for method in method_defs[current.name]:
@@ -131,22 +132,23 @@ class CCodeGenerator:
                 type_create += "}\n\n"
 
         for type in context.types.values():
-            if type.name not in ["Number", "Bool", "String", "Object", "Range"]:
+            if type.name not in ["Number", "Boolean", "String", "Object", "Range"]:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
                         methods_code += method_def + " {\n"
-                        methods_code += getlinesindented(codgen.visit(method.node), True) + ";\n"
+                        methods_code += getlinesindented(codgen.visit(method.node), True) + "\n"
                         methods_code += "}\n\n"
                 
         for function_def, function_name, function in function_defs:
             functions_code += function_def + " {\n"
-            functions_code += getlinesindented(codgen.visit(function.node), True) + ";\n"
+            functions_code += getlinesindented(codgen.visit(function.node), True) + "\n"
             functions_code += "}\n\n"
 
         main += "\nint main() {\n"
+        main += "   srand(time(NULL));\n\n"
 
-        main += getlinesindented(codgen.visit(ast.expression)) + ";\n"
+        main += getlinesindented(codgen.visit(ast.expression)) + ";"
 
-        main += "   return 0; \n}"
+        main += "\n   return 0; \n}"
 
-        return declarations + type_create + codgen.blocks_defs + codgen.condition_blocks + codgen.if_else_blocks + codgen.while_blocks + codgen.vector_selector + codgen.vector_comp + methods_code + functions_code + main
+        return declarations + type_create + codgen.blocks_defs + codgen.let_in_blocks + codgen.if_else_blocks + codgen.loop_blocks + codgen.method_call_blocks + codgen.create_blocks + codgen.vector_selector + codgen.vector_comp + methods_code + functions_code + main
