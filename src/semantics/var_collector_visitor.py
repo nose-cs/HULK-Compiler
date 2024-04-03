@@ -211,7 +211,7 @@ class VarCollector(object):
     def visit(self, node: hulk_nodes.BaseCallNode, scope: Scope):
         node.scope = scope
         for arg in node.args:
-            self.visit(arg, scope)
+            self.visit(arg, scope.create_child())
 
     @visitor.when(hulk_nodes.AttributeCallNode)
     def visit(self, node: hulk_nodes.AttributeCallNode, scope: Scope):

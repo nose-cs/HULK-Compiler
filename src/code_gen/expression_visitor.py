@@ -669,3 +669,21 @@ class CodeGenC(object):
     @visitor.when(hulk_nodes.ConcatNode)
     def visit(self, node: hulk_nodes.ConcatNode):
         return "stringConcat(" + self.visit(node.left) + ", " + self.visit(node.right) + ")"
+    
+    @visitor.when(hulk_nodes.BaseCallNode)
+    def visit(self, node: hulk_nodes.BaseCallNode):
+        code = "((Object* (*)(Object*"
+
+        for i in range(len(node.args)):
+            code += ", Object*"
+
+        code += "))getMethodForCurrentType(self, \"" + node.method.name + "\", 1))(self"
+
+        for arg in node.args:
+            code += ", " + self.visit(arg)
+
+        code += ")"
+
+        return code
+
+
