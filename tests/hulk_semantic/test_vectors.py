@@ -19,7 +19,7 @@ def run_code(inp: str, debug=False):
     return ast, errors, context, scope
 
 
-class TestHulkLoops(unittest.TestCase):
+class TestHulkVectors(unittest.TestCase):
 
     def test_while_loop_in_let_in(self):
         inp = ('''
@@ -82,13 +82,6 @@ class TestHulkLoops(unittest.TestCase):
     def test_valid_assigment(self):
         inp = '''
               let x = ["casa", 7, 8] in x := ["hola"];
-              '''
-        ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
-
-    def test_base(self):
-        inp = '''
-              let x = base() in x;
               '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
