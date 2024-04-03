@@ -4,7 +4,6 @@ import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.semantics.types as types
 import src.visitor as visitor
 from src.errors import SemanticError
-from src.semantics.types import Method
 from src.semantics.utils import Scope, Context, Function
 
 
@@ -14,6 +13,7 @@ class TypeInferrer(object):
             errors = []
         self.context: Context = context
         self.current_type = None
+        self.current_method = None
         self.errors: List[SemanticError] = errors
 
     @staticmethod
@@ -82,6 +82,8 @@ class TypeInferrer(object):
         for method in node.methods:
             self.visit(method, methods_scope)
 
+        self.current_type = None
+
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
     def visit(self, node: hulk_nodes.AttributeDeclarationNode, scope: Scope):
         inf_type = self.visit(node.expr, scope)
@@ -95,32 +97,34 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
     def visit(self, node: hulk_nodes.MethodDeclarationNode, scope: Scope):
-        method: Method = self.current_type.get_method(node.id)
+        self.current_method = self.current_type.get_method(node.id)
 
         method_scope = scope.children[0]
         return_type = self.visit(node.expr, method_scope)
 
-        if method.return_type == types.AutoType():
+        if self.current_method.return_type == types.AutoType():
             if return_type == types.AutoType():
-                error_text = f"Cannot infer the return type of {method.name} in {self.current_type.name}, please specify it."
+                error_text = f"Cannot infer the return type of {self.current_method.name} in {self.current_type.name}, please specify it."
                 self.errors.append(SemanticError(error_text))
                 return_type = types.ErrorType()
-            method.return_type = return_type
+            self.current_method.return_type = return_type
 
         # Check if we could infer some params types
-        for i in range(len(method.param_types)):
-            if method.param_types[i] == types.AutoType():
-                local_var = method_scope.find_variable(method.param_names[i])
+        for i in range(len(self.current_method.param_types)):
+            if self.current_method.param_types[i] == types.AutoType():
+                local_var = method_scope.find_variable(self.current_method.param_names[i])
                 if local_var.inferred_types:
                     new_type = types.get_most_specialized_type(local_var.inferred_types)
-                    method.param_types[i] = new_type
+                    self.current_method.param_types[i] = new_type
                     local_var.type = new_type
                     if new_type.is_error():
                         self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
                 else:
-                    error_text = f"Cannot infer the type of the param {method.param_names[i]} in {method.name} in {self.current_type.name}, please specify it."
+                    error_text = f"Cannot infer the type of the param {self.current_method.param_names[i]} in {self.current_method.name} in {self.current_type.name}, please specify it."
                     self.errors.append(SemanticError(error_text))
                     local_var.type = types.ErrorType()
+
+        self.current_method = None
 
         return return_type
 
@@ -241,6 +245,22 @@ class TypeInferrer(object):
             self.assign_auto_type(arg, scope, param_type)
 
         return function.return_type
+
+    @visitor.when(hulk_nodes.BaseCallNode)
+    def visit(self, node: hulk_nodes.BaseCallNode, scope: Scope):
+        if self.current_method is None:
+            return types.ErrorType()
+
+        try:
+            method = self.current_type.parent.get_method(self.current_method.name)
+        except SemanticError:
+            return types.ErrorType()
+
+        for arg, param_type in zip(node.args, method.param_types):
+            self.visit(arg, scope)
+            self.assign_auto_type(arg, scope, param_type)
+
+        return method.return_type
 
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode, scope: Scope):
