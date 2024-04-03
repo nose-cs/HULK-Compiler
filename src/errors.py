@@ -52,6 +52,14 @@ class LexicographicError(HulkError):
 
 
 class SyntacticError(HulkError):
+    def __init__(self, text, line, column):
+        super().__init__(text)
+        self.line = line
+        self.column = column
+
+    def __str__(self):
+        return f'({self.line}, {self.column}) - {self.error_type}: {self.text}'
+
     ERROR = 'Error at or near "%s"'
 
     @property

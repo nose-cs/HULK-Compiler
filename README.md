@@ -1,10 +1,10 @@
 # HULK-compiler
 
-| **Nombre**                | **Grupo** | **Github**                                     |
-|---------------------------|-----------|------------------------------------------------|
-| - Daniel Abad Fundora     | C411      | [@DanielAbadF](https://github.com/DanielAbadF) |
-| - Anabel Benítez González | C411      | [@anabel02](https://github.com/anabel02)       |
-| - Enzo Rojas D'Toste      | C411      | [@EnzoDtoste](https://github.com/EnzoDtoste)   |           
+| **Nombre**              | **Grupo** | **Github**                                     |
+|-------------------------|-----------|------------------------------------------------|
+| Daniel Abad Fundora     | C411      | [@DanielAbadF](https://github.com/DanielAbadF) |
+| Anabel Benítez González | C411      | [@anabel02](https://github.com/anabel02)       |
+| Enzo Rojas D'Toste      | C411      | [@EnzoDtoste](https://github.com/EnzoDtoste)   |           
 
 ## Descripción
 

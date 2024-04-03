@@ -1,6 +1,8 @@
 
 
 int main() {
-   print(createString("Hello World!"), "fun_String_toString")
+   srand(time(NULL));
+
+   function_print(copyObject(createString("Hello World!")));
    return 0; 
 }

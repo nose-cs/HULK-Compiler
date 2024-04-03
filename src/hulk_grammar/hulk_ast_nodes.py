@@ -7,13 +7,14 @@ from src.semantics.utils import Scope
 # ---------------------------------------------------Depth 0---------------------------------------------------------- #
 class Node(ABC):
     def __init__(self):
-        self.scope: Scope = None
+        self.scope: Scope
 
 
 # ---------------------------------------------------Depth 1---------------------------------------------------------- #
 
 class ProgramNode(Node):
     def __init__(self, declarations, expression):
+        super().__init__()
         self.declarations = declarations
         self.expression = expression
 
@@ -30,6 +31,7 @@ class DeclarationNode(Node, ABC):
 
 class FunctionDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, expr, return_type=None):
+        super().__init__()
         if len(params) > 0:
             params_ids, params_types = zip(*params)
         else:
@@ -43,6 +45,7 @@ class FunctionDeclarationNode(DeclarationNode):
 
 class TypeDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, body, parent, parent_args=None):
+        super().__init__()
         if params and len(params) > 0:
             params_ids, params_types = zip(*params)
         elif params and len(params) == 0:
@@ -60,6 +63,7 @@ class TypeDeclarationNode(DeclarationNode):
 
 class ProtocolDeclarationNode(DeclarationNode):
     def __init__(self, idx, methods_signature, parent):
+        super().__init__()
         self.idx = idx
         self.methods_signature = methods_signature
         self.parent = parent
@@ -67,6 +71,7 @@ class ProtocolDeclarationNode(DeclarationNode):
 
 class MethodDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, expr, return_type=None):
+        super().__init__()
         if len(params) > 0:
             params_ids, params_types = zip(*params)
         else:
@@ -80,6 +85,7 @@ class MethodDeclarationNode(DeclarationNode):
 
 class MethodSignatureDeclarationNode(DeclarationNode):
     def __init__(self, idx, params, return_type):
+        super().__init__()
         if len(params) > 0:
             params_ids, params_types = zip(*params)
         else:
@@ -92,6 +98,7 @@ class MethodSignatureDeclarationNode(DeclarationNode):
 
 class AttributeDeclarationNode(DeclarationNode):
     def __init__(self, idx, expr, attribute_type=None):
+        super().__init__()
         self.id = idx
         self.expr = expr
         self.attribute_type = attribute_type
@@ -99,28 +106,33 @@ class AttributeDeclarationNode(DeclarationNode):
 
 class TypeInstantiationNode(ExpressionNode):
     def __init__(self, idx, args):
+        super().__init__()
         self.idx = idx
         self.args = args
 
 
 class ExpressionBlockNode(ExpressionNode):
     def __init__(self, expressions):
+        super().__init__()
         self.expressions = expressions
 
 
 class DestructiveAssignmentNode(ExpressionNode):
     def __init__(self, target, expr):
+        super().__init__()
         self.target = target
         self.expr = expr
 
 
 class AtomicNode(ExpressionNode, ABC):
     def __init__(self, lex):
+        super().__init__()
         self.lex = lex
 
 
 class BinaryExpressionNode(ExpressionNode, ABC):
     def __init__(self, left, right):
+        super().__init__()
         self.left = left
         self.right = right
         self.operator = None
@@ -128,12 +140,14 @@ class BinaryExpressionNode(ExpressionNode, ABC):
 
 class UnaryExpressionNode(ExpressionNode, ABC):
     def __init__(self, operand):
+        super().__init__()
         self.operand = operand
         self.operator = None
 
 
 class ConditionalNode(ExpressionNode):
     def __init__(self, cond_expr: List[Tuple], default_expr):
+        super().__init__()
         conditions, expressions = zip(*cond_expr)
         self.conditions = conditions
         self.expressions = expressions
@@ -142,12 +156,14 @@ class ConditionalNode(ExpressionNode):
 
 class WhileNode(ExpressionNode):
     def __init__(self, condition, expression):
+        super().__init__()
         self.condition = condition
         self.expression = expression
 
 
 class ForNode(ExpressionNode):
     def __init__(self, var, iterable, expression):
+        super().__init__()
         self.var = var
         self.iterable = iterable
         self.expression = expression
@@ -155,6 +171,7 @@ class ForNode(ExpressionNode):
 
 class VarDeclarationNode(DeclarationNode):
     def __init__(self, idx, expr, var_type=None):
+        super().__init__()
         self.id = idx
         self.expr = expr
         self.var_type = var_type
@@ -162,17 +179,20 @@ class VarDeclarationNode(DeclarationNode):
 
 class LetInNode(ExpressionNode):
     def __init__(self, var_declarations, body):
+        super().__init__()
         self.var_declarations = var_declarations
         self.body = body
 
 
 class VectorInitializationNode(ExpressionNode):
     def __init__(self, elements):
+        super().__init__()
         self.elements = elements
 
 
 class VectorComprehensionNode(ExpressionNode):
     def __init__(self, selector, var, iterable):
+        super().__init__()
         self.selector = selector
         self.var = var
         self.iterable = iterable
@@ -180,30 +200,35 @@ class VectorComprehensionNode(ExpressionNode):
 
 class IsNode(ExpressionNode):
     def __init__(self, expression, ttype):
+        super().__init__()
         self.expression = expression
         self.ttype = ttype
 
 
 class AsNode(ExpressionNode):
     def __init__(self, expression, ttype):
+        super().__init__()
         self.expression = expression
         self.ttype = ttype
 
 
 class FunctionCallNode(ExpressionNode):
     def __init__(self, idx, args):
+        super().__init__()
         self.idx = idx
         self.args = args
 
 
 class AttributeCallNode(ExpressionNode):
     def __init__(self, obj, attribute):
+        super().__init__()
         self.obj = obj
         self.attribute = attribute
 
 
 class MethodCallNode(ExpressionNode):
     def __init__(self, obj, method, args):
+        super().__init__()
         self.obj = obj
         self.method = method
         self.args = args
@@ -211,12 +236,14 @@ class MethodCallNode(ExpressionNode):
 
 class BaseCallNode(ExpressionNode):
     def __init__(self, args):
+        super().__init__()
         self.args = args
         self.method = None
 
 
 class IndexingNode(ExpressionNode):
     def __init__(self, obj, index):
+        super().__init__()
         self.obj = obj
         self.index = index
 
