@@ -336,7 +336,6 @@ class TypeChecker(object):
         number_type = self.context.get_type('Number')
 
         left_type = self.visit(node.left)
-
         right_type = self.visit(node.right)
 
         if not left_type == types.NumberType() or not right_type == types.NumberType():
@@ -351,7 +350,6 @@ class TypeChecker(object):
         bool_type = self.context.get_type('Boolean')
 
         left_type = self.visit(node.left)
-
         right_type = self.visit(node.right)
 
         if not left_type == types.NumberType() or not right_type == types.NumberType():
@@ -366,7 +364,6 @@ class TypeChecker(object):
         bool_type = self.context.get_type('Boolean')
 
         left_type = self.visit(node.left)
-
         right_type = self.visit(node.right)
 
         if not left_type == types.BoolType() or not right_type == types.BoolType():
@@ -382,7 +379,6 @@ class TypeChecker(object):
         object_type = self.context.get_type('Object')
 
         left_type = self.visit(node.left)
-
         right_type = self.visit(node.right)
 
         if not left_type.conforms_to(object_type) or not right_type.conforms_to(object_type):

@@ -255,6 +255,7 @@ class TypeInferrer(object):
         try:
             method = self.current_type.parent.get_method(self.current_method.name)
         except SemanticError:
+            # todo vit args just for catch more errors
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, method.param_types):
@@ -335,12 +336,13 @@ class TypeInferrer(object):
         number_type = self.context.get_type('Number')
 
         left_type = self.visit(node.left)
+        right_type = self.visit(node.right)
+
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, number_type)
         elif left_type != number_type or left_type.is_error():
             return types.ErrorType()
 
-        right_type = self.visit(node.right)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, number_type)
         elif right_type != number_type or right_type.is_error():
@@ -356,12 +358,13 @@ class TypeInferrer(object):
         number_type = self.context.get_type('Number')
 
         left_type = self.visit(node.left)
+        right_type = self.visit(node.right)
+
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, number_type)
         elif left_type != number_type or left_type.is_error():
             return types.ErrorType()
 
-        right_type = self.visit(node.right)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, number_type)
         elif right_type != number_type or right_type.is_error():
@@ -376,12 +379,13 @@ class TypeInferrer(object):
         bool_type = self.context.get_type('Boolean')
 
         left_type = self.visit(node.left)
+        right_type = self.visit(node.right)
+
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, bool_type)
         elif left_type != bool_type or left_type.is_error():
             return types.ErrorType()
 
-        right_type = self.visit(node.right)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, bool_type)
         elif right_type != bool_type or right_type.is_error():
@@ -397,12 +401,13 @@ class TypeInferrer(object):
         object_type = self.context.get_type('Object')
 
         left_type = self.visit(node.left)
+        right_type = self.visit(node.right)
+
         if left_type == types.AutoType():
             self.assign_auto_type(node.left, scope, object_type)
         elif not left_type.conforms_to(object_type) or left_type.is_error():
             return types.ErrorType()
 
-        right_type = self.visit(node.right)
         if right_type == types.AutoType():
             self.assign_auto_type(node.right, scope, object_type)
         elif not right_type.conforms_to(object_type) or right_type.is_error():
@@ -413,6 +418,7 @@ class TypeInferrer(object):
     @visitor.when(hulk_nodes.EqualityExpressionNode)
     def visit(self, node: hulk_nodes.EqualityExpressionNode):
         bool_type = self.context.get_type('Boolean')
+
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
 
@@ -518,12 +524,14 @@ class TypeInferrer(object):
         number_type = self.context.get_type('Number')
 
         index_type = self.visit(node.index)
+        obj_type = self.visit(node.obj)
+
+        # todo what if its error
         if index_type == types.AutoType():
             self.assign_auto_type(node.index, scope, number_type)
         elif index_type != number_type:
             return types.ErrorType()
 
-        obj_type = self.visit(node.obj)
         if obj_type.is_error():
             return types.ErrorType()
 

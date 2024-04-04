@@ -19,11 +19,11 @@ class ProgramNode(Node):
         self.expression = expression
 
 
-class ExpressionNode(Node, ABC):
+class ExpressionNode(Node):
     pass
 
 
-class DeclarationNode(Node, ABC):
+class DeclarationNode(Node):
     pass
 
 
