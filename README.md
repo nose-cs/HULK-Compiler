@@ -26,8 +26,8 @@ paquetes necesarios ejecute el siguiente comando:
 pip install requirements.txt
 ```
 
-Para compilar un archivo `.hulk` se debe ejecutar el siguiente comando:
+Para compilar y ejecutar un archivo `.hulk` se debe ejecutar el siguiente comando:
 
 ```bash
-python3 src/main.py <archivo.hulk> <archivo.c>
+python3 src/main.py <archivo.hulk>
 ```

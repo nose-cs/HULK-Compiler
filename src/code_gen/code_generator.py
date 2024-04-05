@@ -1,36 +1,13 @@
-from typing import Any
-from src.lexer.hulk_lexer import HulkLexer
-from src.hulk_grammar.hulk_grammar import G
-from src.parsing import LR1Parser
-from src.evaluation import evaluate_reverse_parse
-from src.semantics.semantic_analysis_pipeline import semantic_analysis_pipeline
-import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
+from src.code_gen.expression_visitor import CodeGenC
 
 class CCodeGenerator:
-    def __init__(self) -> None:
-        self.lexer = HulkLexer(True)
-        self.parser = LR1Parser(G)
-        self.type_conforms_to_protocols = {}
+    def __call__(self, ast, context):
+        with open('src/code_gen/c_tools.c') as c_tools:
+                return c_tools.read() + "\n\n" + self.generate(ast, context)
 
-    def __call__(self, hulk_code: str, debug=False) -> Any:
-        tokens, errors = self.lexer(hulk_code)
-
-        derivation, operations = self.parser([t.token_type for t in tokens])
-        ast = evaluate_reverse_parse(derivation, operations, tokens)
-        ast, errors, context, scope = semantic_analysis_pipeline(ast, debug)
-
-        for ttype in context.types.values():
-            self.type_conforms_to_protocols[ttype.name] = []
-
-            for protocol in context.protocols.values():
-                if ttype.conforms_to(protocol):
-                    self.type_conforms_to_protocols[ttype.name].append(protocol)
-
-        return self.generate(ast, context)
 
     def generate(self, ast, context):
-        from src.code_gen.expression_visitor import CodeGenC
-
+        
         def getlinesindented(code: str, add_return=False):
             lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
             
@@ -38,7 +15,15 @@ class CCodeGenerator:
                 lines[-1] = "   return " + lines[-1][3:] + ";"
             
             return '\n'.join(lines)
-            
+
+        type_conforms_to_protocols = {}
+
+        for ttype in context.types.values():
+            type_conforms_to_protocols[ttype.name] = []
+
+            for protocol in context.protocols.values():
+                if ttype.conforms_to(protocol):
+                    type_conforms_to_protocols[ttype.name].append(protocol)
 
         codgen = CodeGenC(context)
 
@@ -138,7 +123,7 @@ class CCodeGenerator:
                 
                 type_create += "\n"
                 index = 0
-                for protocol in self.type_conforms_to_protocols[type.name]:
+                for protocol in type_conforms_to_protocols[type.name]:
                     type_create += "   addAttribute(obj, \"conforms_protocol" + str(index) + "\", \"" + protocol.name + "\");\n"
                     index += 1
 
