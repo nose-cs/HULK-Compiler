@@ -49,13 +49,7 @@ class TypeInferrer(object):
         const_scope = node.scope.children[0]
 
         for attr in node.attributes:
-            attr_type = self.visit(attr)
-            attribute = self.current_type.get_attribute(attr.id)
-            if attribute.type == types.AutoType():
-                if attr_type == types.AutoType():
-                    self.errors.append(SemanticError("Cannot infer the type of the attribute, please specify it."))
-                    attr_type = types.ErrorType()
-                attribute.type = attr_type
+            self.visit(attr)
 
         # Check if we could infer some params types
         for i in range(len(self.current_type.params_types)):
@@ -85,11 +79,19 @@ class TypeInferrer(object):
     def visit(self, node: hulk_nodes.AttributeDeclarationNode):
         inf_type = self.visit(node.expr)
 
-        if node.attribute_type is not None:
+        attribute = self.current_type.get_attribute(node.id)
+        if attribute.type.is_error():
+            attr_type = types.ErrorType()
+        elif attribute.type != types.AutoType():
             attr_type = self.context.get_type_or_protocol(node.attribute_type)
         else:
             attr_type = inf_type
 
+        if attr_type == types.AutoType() and not attr_type.is_error():
+            self.errors.append(SemanticError("Cannot infer the type of the attribute, please specify it."))
+            attr_type = types.ErrorType()
+
+        attribute.type = attr_type
         return attr_type
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
@@ -526,10 +528,9 @@ class TypeInferrer(object):
         index_type = self.visit(node.index)
         obj_type = self.visit(node.obj)
 
-        # todo what if its error
-        if index_type == types.AutoType():
+        if index_type == types.AutoType() and not index_type.is_error():
             self.assign_auto_type(node.index, scope, number_type)
-        elif index_type != number_type:
+        elif index_type != number_type or index_type.is_error():
             return types.ErrorType()
 
         if obj_type.is_error():
