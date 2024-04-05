@@ -108,10 +108,12 @@ Object* createObject();
 Object* replaceObject(Object* obj1, Object* obj2);
 Object* method_Object_equals(Object* obj1, Object* obj2);
 Object* method_Object_toString(Object* obj);
-char* getType(Object* obj);
 
-// Protocol
-void* getMethodForCurrentType(Object* obj, char* method_name, int index);
+// Dynamic
+void* getMethodForCurrentType(Object* obj, char* method_name, char* base_type);
+char* getType(Object* obj);
+Object* isType(Object* obj, char* type);
+Object* isProtocol(Object* obj, char* protocol);
 
 // Print
 Object* function_print(Object* obj);
@@ -207,15 +209,19 @@ Object* method_Object_toString(Object* obj)
     return createString(address);
 }
 
+/////////////////////////////////  Dynamic   ////////////////////////////////////
+
+
 char* getType(Object* obj)
 {
     return getAttributeValue(obj, "parent_type0");
 }
 
-/////////////////////////////////  Protocol   ////////////////////////////////////
-
-void* getMethodForCurrentType(Object* obj, char* method_name, int index)
+void* getMethodForCurrentType(Object* obj, char* method_name, char* base_type)
 {
+    bool found_base_type = base_type == NULL;
+
+    int index = 0;
     char* initial_parent_type = malloc(128);
     sprintf(initial_parent_type, "%s%d", "parent_type", index++);
     char* type = getAttributeValue(obj, initial_parent_type);
@@ -223,15 +229,20 @@ void* getMethodForCurrentType(Object* obj, char* method_name, int index)
 
     while(type != NULL)
     {
-        char* full_name = malloc(128);
-        sprintf(full_name, "%s%s%s%s", "method_", type, "_", method_name);
+        if(found_base_type || strcmp(type, base_type) == 0)
+        {
+            found_base_type = true;
 
-        void* method = getAttributeValue(obj, full_name);
+            char* full_name = malloc(128);
+            sprintf(full_name, "%s%s%s%s", "method_", type, "_", method_name);
 
-        free(full_name);
+            void* method = getAttributeValue(obj, full_name);
 
-        if(method != NULL)
-            return method;
+            free(full_name);
+
+            if(method != NULL)
+                return method;
+        }
 
         char* parent_type = malloc(128);
         sprintf(parent_type, "%s%d", "parent_type", index++);
@@ -240,6 +251,50 @@ void* getMethodForCurrentType(Object* obj, char* method_name, int index)
     }
 
     return NULL;
+}
+
+Object* isType(Object* obj, char* type)
+{
+    int index = 0;
+    char* initial_parent_type = malloc(128);
+    sprintf(initial_parent_type, "%s%d", "parent_type", index++);
+    char* ptype = getAttributeValue(obj, initial_parent_type);
+    free(initial_parent_type);
+
+    while(ptype != NULL)
+    {
+        if(strcmp(ptype, type) == 0)
+            return createBoolean(true);
+
+        char* parent_type = malloc(128);
+        sprintf(parent_type, "%s%d", "parent_type", index++);
+        ptype = getAttributeValue(obj, parent_type);
+        free(parent_type);
+    }
+
+    return createBoolean(false);
+}
+
+Object* isProtocol(Object* obj, char* protocol)
+{
+    int index = 0;
+    char* initial_protocol = malloc(128);
+    sprintf(initial_protocol, "%s%d", "conforms_protocol", index++);
+    char* pprotocol = getAttributeValue(obj, initial_protocol);
+    free(initial_protocol);
+
+    while(pprotocol != NULL)
+    {
+        if(strcmp(pprotocol, protocol) == 0)
+            return createBoolean(true);
+
+        char* cprotocol = malloc(128);
+        sprintf(cprotocol, "%s%d", "conforms_protocol", index++);
+        pprotocol = getAttributeValue(obj, cprotocol);
+        free(cprotocol);
+    }
+
+    return createBoolean(false);
 }
 
 /////////////////////////////////  Print   ////////////////////////////////////
@@ -512,6 +567,8 @@ Object* createVectorFromList(int num_elements, Object** list)
     addAttribute(vector, "parent_type0", "Vector");
     addAttribute(vector, "parent_type1", "Object");
 
+    addAttribute(vector, "conforms_protocol0", "Iterable");
+
     addAttribute(vector, "method_Vector_toString", *method_Vector_toString);
     addAttribute(vector, "method_Vector_equals", *method_Vector_equals);
 
@@ -647,6 +704,8 @@ Object* createRange(Object* min, Object* max)
 
     addAttribute(obj, "parent_type0", "Range");
     addAttribute(obj, "parent_type1", "Object");
+
+    addAttribute(obj, "conforms_protocol0", "Iterable");
 
     addAttribute(obj, "method_Range_next", *method_Range_next);
     addAttribute(obj, "method_Range_current", *method_Range_current);

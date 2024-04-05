@@ -238,8 +238,8 @@ class BaseCallNode(ExpressionNode):
     def __init__(self, args):
         super().__init__()
         self.args = args
-        self.method = None
-
+        self.method_name = None
+        self.parent_type = None
 
 class IndexingNode(ExpressionNode):
     def __init__(self, obj, index):
