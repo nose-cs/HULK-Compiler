@@ -38,6 +38,7 @@ class TestHulkBase(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
 
+
     def test_valid_base_call(self):
         inp = '''
             type B {
@@ -71,8 +72,8 @@ class TestHulkBase(unittest.TestCase):
     def test____(self):
         inp = '''
            type A (x, y) {
-                p = y;
-                r = x;
+                p = y + 9;
+                r = x + y;
                 getc() => 5;
             }
                          

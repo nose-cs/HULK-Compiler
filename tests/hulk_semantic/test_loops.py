@@ -31,7 +31,7 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    # todo
+    # todo cause i visit the body of the let first
     def test_while_in_method(self):
         inp = '''
         function gcd(a, b) => 
