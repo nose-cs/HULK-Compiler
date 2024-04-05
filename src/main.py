@@ -8,9 +8,10 @@ from src.code_gen.code_generator import CCodeGenerator
 from src.errors import IOHulkError
 from src.evaluation import evaluate_reverse_parse
 from src.semantics.semantic_analysis_pipeline import semantic_analysis_pipeline
+import subprocess
 
 
-def run_pipeline(input_path: Path, output_path: Path, debug=False):
+def run_pipeline(input_path: Path, debug=False):
     if not input_path.match('*.hulk'):
         raise IOHulkError(IOHulkError.INVALID_EXTENSION, input_path)
 
@@ -61,18 +62,20 @@ def run_pipeline(input_path: Path, output_path: Path, debug=False):
         print("===================== CODE GENERATION =====================")
 
     code_generator = CCodeGenerator()
-    code = code_generator.generate(ast, context)
+    code = code_generator(ast, context)
 
     try:
-        with open(output_path, 'w') as f:
+        with open('output.c', 'w') as f:
             f.write(code)
     except FileNotFoundError:
-        raise IOHulkError(IOHulkError.ERROR_WRITING_FILE, output_path)
+        raise IOHulkError(IOHulkError.ERROR_WRITING_FILE, 'output.c')
 
     if debug:
         print("C code:")
         print(code)
 
+    subprocess.run(["gcc", "output.c", "-o", "output.exe"], shell=True)
+    subprocess.run(['start', 'cmd', '/k', 'output.exe'], shell=True)
 
 if __name__ == "__main__":
     input_ = sys.argv[1]
