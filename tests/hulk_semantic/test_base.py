@@ -26,9 +26,8 @@ class TestHulkBase(unittest.TestCase):
         let a = base(a, b, c) in a;
         ''')
         ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+        self.assertEqual(4, len(errors), f"Expects 4 error, but got {len(errors)}")
 
-    # todo
     def test_cannot_declare_a_function(self):
         inp = ('''
         function base(a) => a + 8;
@@ -36,7 +35,6 @@ class TestHulkBase(unittest.TestCase):
         ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
-
 
     def test_valid_base_call(self):
         inp = '''
@@ -93,5 +91,20 @@ class TestHulkBase(unittest.TestCase):
                          
             let a = new D(2, 3, 4) in print(a.getc());
         '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test___(self):
+        inp = '''
+              type B {
+                  f(a, b) => a + b;
+             }
+
+             type A inherits B {
+                  f(a, b) => base(a, b) + base(a,b);
+             }
+
+             let x = new A() in x.f(4,5);
+          '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

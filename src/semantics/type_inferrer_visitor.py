@@ -7,7 +7,6 @@ from src.errors import HulkSemanticError
 from src.semantics.utils import Scope, Context, Function
 
 
-# todo destructive assignment
 class TypeInferrer(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -171,15 +170,24 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode):
-        self.visit(node.expr)
+        new_type = self.visit(node.expr)
         old_type = self.visit(node.target)
+
+        if old_type.name == 'Self':
+            return types.ErrorType()
+
+        if new_type == types.AutoType() and not new_type.is_error():
+            return old_type
+
+        if not new_type.conforms_to(old_type):
+            return types.ErrorType()
+
         return old_type
 
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode):
-        cond_types = [self.visit(cond) for cond in node.conditions]
-
-        # todo if any is not bool return ErrorType
+        for cond in node.conditions:
+            self.visit(cond)
 
         expr_types = [self.visit(expression) for expression in node.expressions]
 
@@ -216,6 +224,8 @@ class TypeInferrer(object):
         try:
             function = self.context.get_function(node.idx)
         except HulkSemanticError:
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, function.param_types):
@@ -234,7 +244,8 @@ class TypeInferrer(object):
         try:
             method = self.current_type.parent.get_method(self.current_method.name)
         except HulkSemanticError:
-            # todo visit args just for catch more errors
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, method.param_types):
@@ -246,14 +257,9 @@ class TypeInferrer(object):
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode):
         scope = node.scope
+        obj_type = self.visit(node.obj)
 
-        # todo
-        if not scope.is_defined(node.obj):
-            obj_type = self.visit(node.obj)
-        else:
-            obj_type = scope.find_variable(node.obj).type
-
-        if isinstance(obj_type, types.ErrorType):
+        if obj_type.is_error():
             return types.ErrorType()
 
         try:
@@ -262,6 +268,8 @@ class TypeInferrer(object):
             else:
                 method = obj_type.get_method(node.method)
         except HulkSemanticError:
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, method.param_types):
@@ -272,14 +280,9 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.AttributeCallNode)
     def visit(self, node: hulk_nodes.AttributeCallNode):
-        scope = node.scope
+        obj_type = self.visit(node.obj)
 
-        if not scope.is_defined(node.obj):
-            obj_type = self.visit(node.obj)
-        else:
-            obj_type = scope.find_variable(node.obj).type
-
-        if isinstance(obj_type, types.ErrorType):
+        if obj_type.is_error():
             return types.ErrorType()
 
         if obj_type == types.SelfType():
@@ -304,8 +307,11 @@ class TypeInferrer(object):
 
         try:
             cast_type = self.context.get_type_or_protocol(node.ttype)
-        except HulkSemanticError as e:
+        except HulkSemanticError:
             cast_type = types.ErrorType()
+
+        if expr_type == types.AutoType() and not expr_type.is_error():
+            return cast_type
 
         if not expr_type.conforms_to(cast_type) and not cast_type.conforms_to(expr_type):
             return types.ErrorType()
@@ -404,6 +410,10 @@ class TypeInferrer(object):
 
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
+
+        if (left_type == types.AutoType() and not left_type.is_error()) or (
+                right_type == types.AutoType() and not right_type.is_error()):
+            return bool_type
 
         if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
             return types.ErrorType()
