@@ -3,7 +3,7 @@ from typing import List
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.semantics.types as types
 import src.visitor as visitor
-from src.errors import SemanticError
+from src.errors import HulkSemanticError
 from src.semantics.utils import Scope, Context, Function
 
 
@@ -15,7 +15,7 @@ class TypeInferrer(object):
         self.context: Context = context
         self.current_type = None
         self.current_method = None
-        self.errors: List[SemanticError] = errors
+        self.errors: List[HulkSemanticError] = errors
         self.had_changed = False
 
     def assign_auto_type(self, node: hulk_nodes.Node, scope: Scope, inf_type: types.Type | types.Protocol):
@@ -71,7 +71,7 @@ class TypeInferrer(object):
                     local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
                         param_name = self.current_type.params_names[i]
-                        self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE % param_name))
+                        self.errors.append(HulkSemanticError(HulkSemanticError.INCONSISTENT_USE % param_name))
 
         for expr in node.parent_args:
             self.visit(expr)
@@ -118,7 +118,7 @@ class TypeInferrer(object):
                     self.current_method.param_types[i] = new_type
                     local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
-                        self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
+                        self.errors.append(HulkSemanticError(HulkSemanticError.INCONSISTENT_USE))
 
         self.current_method = None
 
@@ -144,7 +144,7 @@ class TypeInferrer(object):
                     function.param_types[i] = new_type
                     local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
-                        self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
+                        self.errors.append(HulkSemanticError(HulkSemanticError.INCONSISTENT_USE))
 
         return return_type
 
@@ -222,7 +222,7 @@ class TypeInferrer(object):
 
         try:
             function = self.context.get_function(node.idx)
-        except SemanticError:
+        except HulkSemanticError:
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, function.param_types):
@@ -240,7 +240,7 @@ class TypeInferrer(object):
 
         try:
             method = self.current_type.parent.get_method(self.current_method.name)
-        except SemanticError:
+        except HulkSemanticError:
             # todo visit args just for catch more errors
             return types.ErrorType()
 
@@ -268,7 +268,7 @@ class TypeInferrer(object):
                 method = self.current_type.get_method(node.method)
             else:
                 method = obj_type.get_method(node.method)
-        except SemanticError:
+        except HulkSemanticError:
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, method.param_types):
@@ -293,7 +293,7 @@ class TypeInferrer(object):
             try:
                 attr = self.current_type.get_attribute(node.attribute)
                 return attr.type
-            except SemanticError:
+            except HulkSemanticError:
                 return types.ErrorType()
         else:
             # Can't access to a non-self attribute
@@ -467,7 +467,7 @@ class TypeInferrer(object):
     def visit(self, node: hulk_nodes.TypeInstantiationNode):
         try:
             ttype = self.context.get_type(node.idx)
-        except SemanticError:
+        except HulkSemanticError:
             return types.ErrorType()
 
         for arg in node.args:

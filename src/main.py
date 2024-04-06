@@ -4,7 +4,7 @@ from pathlib import Path
 
 from lexer.hulk_lexer import HulkLexer
 from src.code_gen.code_generator import CCodeGenerator
-from src.errors import IOHulkError
+from src.errors import HulkIOError
 from src.evaluation import evaluate_reverse_parse
 from src.parser.hulk_parser import HulkParser
 from src.semantics.semantic_analysis_pipeline import semantic_analysis_pipeline
@@ -12,13 +12,13 @@ from src.semantics.semantic_analysis_pipeline import semantic_analysis_pipeline
 
 def run_pipeline(input_path: Path):
     if not input_path.match('*.hulk'):
-        raise IOHulkError(IOHulkError.INVALID_EXTENSION, input_path)
+        raise HulkIOError(HulkIOError.INVALID_EXTENSION % input_path)
 
     try:
         with open(input_path) as f:
             text = f.read()
     except FileNotFoundError:
-        raise IOHulkError(IOHulkError.ERROR_READING_FILE, input_path)
+        raise HulkIOError(HulkIOError.ERROR_READING_FILE % input_path)
 
     hulk_lexer = HulkLexer()
     tokens, lexicographic_errors = hulk_lexer(text)
@@ -51,7 +51,7 @@ def run_pipeline(input_path: Path):
         with open('output.c', 'w') as f:
             f.write(code)
     except FileNotFoundError:
-        raise IOHulkError(IOHulkError.ERROR_WRITING_FILE, 'output.c')
+        raise HulkIOError(HulkIOError.ERROR_WRITING_FILE % 'output.c')
 
     subprocess.run(["gcc", "output.c", "-o", "output.exe"], shell=True)
     subprocess.run(['start', 'cmd', '/k', 'output.exe'], shell=True)

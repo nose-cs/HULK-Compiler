@@ -3,7 +3,7 @@ from typing import List
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.semantics.types as types
 import src.visitor as visitor
-from src.errors import SemanticError
+from src.errors import HulkSemanticError
 from src.semantics.utils import Context, Function
 
 
@@ -14,7 +14,7 @@ class TypeChecker(object):
         self.context: Context = context
         self.current_type = None
         self.current_method = None
-        self.errors: List[SemanticError] = errors
+        self.errors: List[HulkSemanticError] = errors
 
     @visitor.on('node')
     def visit(self, node: hulk_nodes.Node):
@@ -45,15 +45,15 @@ class TypeChecker(object):
         parent_params_types = self.current_type.parent.params_types
 
         if len(parent_args_types) != len(parent_params_types):
-            error_text = SemanticError.EXPECTED_ARGUMENTS % (
+            error_text = HulkSemanticError.EXPECTED_ARGUMENTS % (
                 len(parent_params_types), len(parent_args_types), self.current_type.parent.name)
-            self.errors.append(SemanticError(error_text))
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         for parent_arg_type, parent_param_type in zip(parent_args_types, parent_params_types):
             if not parent_arg_type.conforms_to(parent_param_type):
-                error_text = SemanticError.INCOMPATIBLE_TYPES % (parent_arg_type.name, parent_param_type.name)
-                self.errors.append(SemanticError(error_text))
+                error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (parent_arg_type.name, parent_param_type.name)
+                self.errors.append(HulkSemanticError(error_text))
 
         self.current_type = None
 
@@ -64,8 +64,8 @@ class TypeChecker(object):
         attr_type = self.current_type.get_attribute(node.id).type
 
         if not inf_type.conforms_to(attr_type):
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (inf_type.name, attr_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (inf_type.name, attr_type.name)
+            self.errors.append(HulkSemanticError(error_text))
 
         return attr_type
 
@@ -81,23 +81,23 @@ class TypeChecker(object):
         # Check if override is correct
         try:
             parent_method = self.current_type.parent.get_method(node.id)
-        except SemanticError:
+        except HulkSemanticError:
             parent_method = None
 
         if parent_method is None:
             return return_type
 
-        error_text = SemanticError.WRONG_SIGNATURE % parent_method
+        error_text = HulkSemanticError.WRONG_SIGNATURE % parent_method
         if parent_method.return_type != return_type:
-            self.errors.append(SemanticError(error_text))
+            self.errors.append(HulkSemanticError(error_text))
             return_type = types.ErrorType()
         if len(parent_method.param_types) != len(self.current_method.param_types):
-            self.errors.append(SemanticError(error_text))
+            self.errors.append(HulkSemanticError(error_text))
             return_type = types.ErrorType()
 
         for i in range(len(parent_method.param_types)):
             if parent_method.param_types[i] != self.current_method.param_types[i]:
-                self.errors.append(SemanticError(error_text))
+                self.errors.append(HulkSemanticError(error_text))
                 self.current_method.param_types[i] = types.ErrorType()
                 return_type = types.ErrorType()
 
@@ -112,8 +112,8 @@ class TypeChecker(object):
         inf_return_type = self.visit(node.expr)
 
         if not inf_return_type.conforms_to(function.return_type):
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (inf_return_type.name, function.return_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (inf_return_type.name, function.return_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return function.return_type
@@ -135,8 +135,8 @@ class TypeChecker(object):
         var_type = scope.find_variable(node.id).type
 
         if not inf_type.conforms_to(var_type):
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (inf_type.name, var_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (inf_type.name, var_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             var_type = types.ErrorType()
 
         return var_type
@@ -155,12 +155,12 @@ class TypeChecker(object):
         old_type = self.visit(node.target)
 
         if old_type.name == 'Self':
-            self.errors.append(SemanticError(SemanticError.SELF_IS_READONLY))
+            self.errors.append(HulkSemanticError(HulkSemanticError.SELF_IS_READONLY))
             return types.ErrorType()
 
         if not new_type.conforms_to(old_type):
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (new_type.name, old_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (new_type.name, old_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return old_type
@@ -171,8 +171,8 @@ class TypeChecker(object):
 
         for cond_type in cond_types:
             if cond_type != types.BoolType():
-                error_text = SemanticError.INCOMPATIBLE_TYPES % (cond_type.name, types.BoolType().name)
-                self.errors.append(SemanticError(error_text))
+                error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (cond_type.name, types.BoolType().name)
+                self.errors.append(HulkSemanticError(error_text))
 
         expr_types = [self.visit(expression) for expression in node.expressions]
 
@@ -185,8 +185,8 @@ class TypeChecker(object):
         cond_type = self.visit(node.condition)
 
         if cond_type != types.BoolType():
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (cond_type.name, types.BoolType().name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (cond_type.name, types.BoolType().name)
+            self.errors.append(HulkSemanticError(error_text))
 
         return self.visit(node.expression)
 
@@ -196,8 +196,8 @@ class TypeChecker(object):
         iterable_protocol = self.context.get_protocol('Iterable')
 
         if not ttype.conforms_to(iterable_protocol):
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (ttype.name, iterable_protocol.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (ttype.name, iterable_protocol.name)
+            self.errors.append(HulkSemanticError(error_text))
 
         return self.visit(node.expression)
 
@@ -207,19 +207,19 @@ class TypeChecker(object):
 
         try:
             function = self.context.get_function(node.idx)
-        except SemanticError as e:
+        except HulkSemanticError as e:
             self.errors.append(e)
             return types.ErrorType()
 
         if len(args_types) != len(function.param_types):
-            error_text = SemanticError.EXPECTED_ARGUMENTS % (len(function.param_types), len(args_types), function.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.EXPECTED_ARGUMENTS % (len(function.param_types), len(args_types), function.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         for arg_type, param_type in zip(args_types, function.param_types):
             if not arg_type.conforms_to(param_type):
-                error_text = SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
-                self.errors.append(SemanticError(error_text))
+                error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
+                self.errors.append(HulkSemanticError(error_text))
                 return types.ErrorType()
 
         return function.return_type
@@ -243,19 +243,19 @@ class TypeChecker(object):
                 method = self.current_type.get_method(node.method)
             else:
                 method = obj_type.get_method(node.method)
-        except SemanticError as e:
+        except HulkSemanticError as e:
             self.errors.append(e)
             return types.ErrorType()
 
         if len(args_types) != len(method.param_types):
-            error_text = SemanticError.EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         for arg_type, param_type in zip(args_types, method.param_types):
             if not arg_type.conforms_to(param_type):
-                error_text = SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
-                self.errors.append(SemanticError(error_text))
+                error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
+                self.errors.append(HulkSemanticError(error_text))
                 return types.ErrorType()
 
         return method.return_type
@@ -263,7 +263,7 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.BaseCallNode)
     def visit(self, node: hulk_nodes.BaseCallNode):
         if self.current_method is None:
-            self.errors.append(SemanticError(SemanticError.BASE_OUTSIDE_METHOD))
+            self.errors.append(HulkSemanticError(HulkSemanticError.BASE_OUTSIDE_METHOD))
             return types.ErrorType()
 
         try:
@@ -271,22 +271,22 @@ class TypeChecker(object):
             method = self.current_type.parent.get_method(self.current_method.name)
             node.method_name = self.current_method.name
             node.parent_type = self.current_type.parent
-        except SemanticError:
-            error_text = SemanticError.METHOD_NOT_DEFINED % self.current_method.name
-            self.errors.append(SemanticError(error_text))
+        except HulkSemanticError:
+            error_text = HulkSemanticError.METHOD_NOT_DEFINED % self.current_method.name
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         args_types = [self.visit(arg) for arg in node.args]
 
         if len(args_types) != len(method.param_types):
-            error_text = SemanticError.EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         for arg_type, param_type in zip(args_types, method.param_types):
             if not arg_type.conforms_to(param_type):
-                error_text = SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
-                self.errors.append(SemanticError(error_text))
+                error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
+                self.errors.append(HulkSemanticError(error_text))
                 return types.ErrorType()
 
         return method.return_type
@@ -308,11 +308,11 @@ class TypeChecker(object):
             try:
                 attr = self.current_type.get_attribute(node.attribute)
                 return attr.type
-            except SemanticError as e:
+            except HulkSemanticError as e:
                 self.errors.append(e)
                 return types.ErrorType()
         else:
-            self.errors.append(SemanticError("Cannot access an attribute from a non-self object"))
+            self.errors.append(HulkSemanticError("Cannot access an attribute from a non-self object"))
             return types.ErrorType()
 
     @visitor.when(hulk_nodes.IsNode)
@@ -330,8 +330,8 @@ class TypeChecker(object):
         cast_type = self.context.get_type_or_protocol(node.ttype)
 
         if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (expression_type.name, cast_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (expression_type.name, cast_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return cast_type
@@ -344,8 +344,8 @@ class TypeChecker(object):
         right_type = self.visit(node.right)
 
         if not left_type == types.NumberType() or not right_type == types.NumberType():
-            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return number_type
@@ -358,8 +358,8 @@ class TypeChecker(object):
         right_type = self.visit(node.right)
 
         if not left_type == types.NumberType() or not right_type == types.NumberType():
-            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return bool_type
@@ -372,8 +372,8 @@ class TypeChecker(object):
         right_type = self.visit(node.right)
 
         if not left_type == types.BoolType() or not right_type == types.BoolType():
-            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return bool_type
@@ -387,8 +387,8 @@ class TypeChecker(object):
         right_type = self.visit(node.right)
 
         if not left_type.conforms_to(object_type) or not right_type.conforms_to(object_type):
-            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return string_type
@@ -399,8 +399,8 @@ class TypeChecker(object):
         right_type = self.visit(node.right)
 
         if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
-            error_text = SemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INVALID_OPERATION % (node.operator, left_type.name, right_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return self.context.get_type('Boolean')
@@ -411,8 +411,8 @@ class TypeChecker(object):
         number_type = self.context.get_type('Number')
 
         if operand_type != types.NumberType():
-            error_text = SemanticError.INVALID_UNARY_OPERATION % (node.operator, operand_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INVALID_UNARY_OPERATION % (node.operator, operand_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return number_type
 
         return number_type
@@ -423,8 +423,8 @@ class TypeChecker(object):
         bool_type = self.context.get_type('Boolean')
 
         if operand_type != types.BoolType():
-            error_text = SemanticError.INVALID_UNARY_OPERATION % (node.operator, operand_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INVALID_UNARY_OPERATION % (node.operator, operand_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return bool_type
@@ -447,8 +447,8 @@ class TypeChecker(object):
 
         # todo
         if not scope.is_defined(node.lex):
-            error_text = SemanticError.VARIABLE_NOT_DEFINED % node.lex
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.VARIABLE_NOT_DEFINED % node.lex
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         var = scope.find_variable(node.lex)
@@ -458,21 +458,21 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.TypeInstantiationNode):
         try:
             ttype = self.context.get_type(node.idx)
-        except SemanticError as e:
+        except HulkSemanticError as e:
             self.errors.append(e)
             return types.ErrorType()
 
         args_types = [self.visit(arg) for arg in node.args]
 
         if len(args_types) != len(ttype.params_types):
-            error_text = SemanticError.EXPECTED_ARGUMENTS % (len(ttype.params_types), len(args_types), ttype.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.EXPECTED_ARGUMENTS % (len(ttype.params_types), len(args_types), ttype.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         for arg_type, param_type in zip(args_types, ttype.params_types):
             if not arg_type.conforms_to(param_type):
-                error_text = SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
-                self.errors.append(SemanticError(error_text))
+                error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)
+                self.errors.append(HulkSemanticError(error_text))
                 return types.ErrorType()
 
         return ttype
@@ -492,8 +492,8 @@ class TypeChecker(object):
         return_type = self.visit(node.selector)
 
         if not ttype.conforms_to(iterable_protocol):
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (ttype.name, iterable_protocol.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (ttype.name, iterable_protocol.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         # todo fix this. Fixed.
@@ -505,8 +505,8 @@ class TypeChecker(object):
 
         index_type = self.visit(node.index)
         if index_type != number_type:
-            error_text = SemanticError.INCOMPATIBLE_TYPES % (index_type.name, number_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (index_type.name, number_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         obj_type = self.visit(node.obj)
@@ -515,8 +515,8 @@ class TypeChecker(object):
             return types.ErrorType()
 
         if not isinstance(obj_type, types.VectorType):
-            error_text = SemanticError.INVALID_UNARY_OPERATION % ('[]', obj_type.name)
-            self.errors.append(SemanticError(error_text))
+            error_text = HulkSemanticError.INVALID_UNARY_OPERATION % ('[]', obj_type.name)
+            self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
         return obj_type.get_element_type()

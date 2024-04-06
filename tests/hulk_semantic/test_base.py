@@ -13,7 +13,6 @@ def run_code(inp: str, debug=False):
     tokens, errors = lexer(inp)
     assert not errors
     derivation, operations, errors = parser(tokens)
-    print(errors)
     assert not errors
     ast = evaluate_reverse_parse(derivation, operations, tokens)
     ast, errors, context, scope = semantic_analysis_pipeline(ast, debug)
@@ -69,6 +68,7 @@ class TestHulkBase(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
 
+    # todo
     def test____(self):
         inp = '''
            type A (x, y) {

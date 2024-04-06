@@ -82,7 +82,9 @@ amper, double_amp, string_literal = G.Terminals('@ @@ <string>')
 # -----------------------------------------------Productions---------------------------------------------------------- #
 
 # A program is 0 or more functions, types or protocols declarations followed by a single expression
+program %= simple_expr, lambda h, s: hulk_ast_nodes.ProgramNode([], s[1])
 program %= eol_expr, lambda h, s: hulk_ast_nodes.ProgramNode([], s[1])
+program %= declarations + simple_expr, lambda h, s: hulk_ast_nodes.ProgramNode(s[1], s[2])
 program %= declarations + eol_expr, lambda h, s: hulk_ast_nodes.ProgramNode(s[1], s[2])
 
 declarations %= declarations + function_declaration, lambda h, s: s[1] + [s[2]]
@@ -112,8 +114,7 @@ simple_expr %= while_loop, lambda h, s: s[1]
 simple_expr %= for_loop, lambda h, s: s[1]
 simple_expr %= destructive_assignment, lambda h, s: s[1]
 
-# todo
-destructive_assignment %= (obj_indexing_or_method_or_attribute_call + dest_eq + expr,
+destructive_assignment %= (or_operation + dest_eq + destructive_assignment,
                            lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3]))
 destructive_assignment %= or_operation, lambda h, s: s[1]
 

@@ -1,19 +1,20 @@
 from src.code_gen.expression_visitor import CodeGenC
 
+
 class CCodeGenerator:
     def __call__(self, ast, context):
         with open('src/code_gen/c_tools.c') as c_tools:
-                return c_tools.read() + "\n\n" + self.generate(ast, context)
+            return c_tools.read() + "\n\n" + self.generate(ast, context)
 
+    @staticmethod
+    def generate(ast, context):
 
-    def generate(self, ast, context):
-        
-        def getlinesindented(code: str, add_return=False):
+        def get_lines_indented(code: str, add_return=False):
             lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
-            
+
             if add_return:
                 lines[-1] = "   return " + lines[-1][3:] + ";"
-            
+
             return '\n'.join(lines)
 
         type_conforms_to_protocols = {}
@@ -53,7 +54,7 @@ class CCodeGenerator:
 
                 if len(create_params) > 0:
                     create_def = create_def[:-2]
-                
+
                 create_def += ")"
 
                 create_defs[type.name] = (create_def, create_params)
@@ -65,7 +66,7 @@ class CCodeGenerator:
                 for method in type.methods:
                     method_name = "method_" + type.name + "_" + method.name
                     method_def = "Object* " + method_name + " (Object* self"
-                    
+
                     method.node.scope.children[0].find_variable("self").setNameC("self")
 
                     for i, name in enumerate(method.param_names):
@@ -76,25 +77,25 @@ class CCodeGenerator:
                     method_def += ")"
                     method_defs[type.name].append((method_def, method_name, method))
                     declarations += method_def + ";\n"
-                        
+
                 declarations += "\n"
 
         for function in context.functions.values():
             if function.name not in ['print', 'sqrt', 'sin', 'cos', 'exp', 'log', 'rand', 'range', 'parse']:
-                    function_name = "function_" + function.name
-                    function_def = "Object* " + function_name + " ("
-                    
-                    for i, name in enumerate(function.param_names):
-                        id_param = "p" + str(i)
-                        function.node.scope.children[0].find_variable(name).setNameC(id_param)
-                        function_def += "Object* " + id_param + ", "
+                function_name = "function_" + function.name
+                function_def = "Object* " + function_name + " ("
 
-                    if len(function.param_names):
-                        function_def = function_def[:-2]
+                for i, name in enumerate(function.param_names):
+                    id_param = "p" + str(i)
+                    function.node.scope.children[0].find_variable(name).setNameC(id_param)
+                    function_def += "Object* " + id_param + ", "
 
-                    function_def += ")"
-                    function_defs.append((function_def, function_name, function))
-                    declarations += function_def + ";\n"
+                if len(function.param_names):
+                    function_def = function_def[:-2]
+
+                function_def += ")"
+                function_defs.append((function_def, function_name, function))
+                declarations += function_def + ";\n"
 
         declarations += '\n'
 
@@ -112,7 +113,8 @@ class CCodeGenerator:
                 current = type
                 index = 0
                 while current is not None:
-                    type_create += "   addAttribute(obj, \"parent_type" + str(index) + "\", \"" + current.name + "\");\n"
+                    type_create += "   addAttribute(obj, \"parent_type" + str(
+                        index) + "\", \"" + current.name + "\");\n"
 
                     if current.name in method_defs:
                         for method in method_defs[current.name]:
@@ -120,11 +122,12 @@ class CCodeGenerator:
 
                     current = current.parent
                     index += 1
-                
+
                 type_create += "\n"
                 index = 0
                 for protocol in type_conforms_to_protocols[type.name]:
-                    type_create += "   addAttribute(obj, \"conforms_protocol" + str(index) + "\", \"" + protocol.name + "\");\n"
+                    type_create += "   addAttribute(obj, \"conforms_protocol" + str(
+                        index) + "\", \"" + protocol.name + "\");\n"
                     index += 1
 
                 type_create += "   return obj;\n"
@@ -135,18 +138,18 @@ class CCodeGenerator:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
                         methods_code += method_def + " {\n"
-                        methods_code += getlinesindented(codgen.visit(method.node), True) + "\n"
+                        methods_code += get_lines_indented(codgen.visit(method.node), True) + "\n"
                         methods_code += "}\n\n"
-                
+
         for function_def, function_name, function in function_defs:
             functions_code += function_def + " {\n"
-            functions_code += getlinesindented(codgen.visit(function.node), True) + "\n"
+            functions_code += get_lines_indented(codgen.visit(function.node), True) + "\n"
             functions_code += "}\n\n"
 
         main += "\nint main() {\n"
         main += "   srand(time(NULL));\n\n"
 
-        main += getlinesindented(codgen.visit(ast.expression)) + ";"
+        main += get_lines_indented(codgen.visit(ast.expression)) + ";"
 
         main += "\n   return 0; \n}"
 

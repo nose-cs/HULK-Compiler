@@ -1,10 +1,11 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
-from src.errors import SemanticError
+from src.errors import HulkSemanticError
 from src.semantics.types import ErrorType, AutoType, Method, SelfType
 from src.semantics.utils import Scope, Context, Function
 
 
+# todo scopes
 class VarCollector(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -116,7 +117,7 @@ class VarCollector(object):
         if node.var_type is not None:
             try:
                 var_type = self.context.get_type_or_protocol(node.var_type)
-            except SemanticError as e:
+            except HulkSemanticError as e:
                 self.errors.append(e)
                 var_type = ErrorType()
         else:
@@ -186,7 +187,7 @@ class VarCollector(object):
         node.scope = scope
         try:
             self.context.get_type_or_protocol(node.ttype)
-        except SemanticError as e:
+        except HulkSemanticError as e:
             self.errors.append(e)
             self.context.create_error_type(node.ttype)
 
@@ -197,7 +198,7 @@ class VarCollector(object):
         node.scope = scope
         try:
             self.context.get_type_or_protocol(node.ttype)
-        except SemanticError as e:
+        except HulkSemanticError as e:
             # todo
             self.errors.append(e)
             self.context.create_error_type(node.ttype)

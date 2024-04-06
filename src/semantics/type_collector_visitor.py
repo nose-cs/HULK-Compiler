@@ -1,6 +1,6 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
-from src.errors import SemanticError
+from src.errors import HulkSemanticError
 
 from src.semantics.utils import Context
 
@@ -66,12 +66,12 @@ class TypeCollector(object):
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         try:
             self.context.create_type(node.idx, node)
-        except SemanticError as e:
+        except HulkSemanticError as e:
             self.errors.append(e)
 
     @visitor.when(hulk_nodes.ProtocolDeclarationNode)
     def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
         try:
             self.context.create_protocol(node.idx, node)
-        except SemanticError as e:
+        except HulkSemanticError as e:
             self.errors.append(e)

@@ -1,7 +1,7 @@
 import itertools as itt
 from typing import Union, List
 
-from src.errors import SemanticError
+from src.errors import HulkSemanticError
 from src.semantics.types import Type, Protocol, AutoType, ErrorType
 
 
@@ -17,11 +17,12 @@ class Function:
         errors = []
         for i in range(len(self.param_types)):
             if self.param_types[i] == AutoType() and not self.param_types[i].is_error():
-                errors.append(SemanticError(SemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
+                errors.append(
+                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
                 self.param_types[i] = ErrorType()
 
         if self.return_type == AutoType() and not self.return_type.is_error():
-            errors.append(SemanticError(SemanticError.CANNOT_INFER_RETURN_TYPE % self.name))
+            errors.append(HulkSemanticError(HulkSemanticError.CANNOT_INFER_RETURN_TYPE % self.name))
             self.return_type = ErrorType()
         return errors
 
@@ -43,17 +44,17 @@ class Context:
 
     def create_error_type(self, name: str) -> Type:
         if name in self.types:
-            raise SemanticError(f'Type with the same name ({name}) already in context.')
+            raise HulkSemanticError(f'Type with the same name ({name}) already in context.')
         if name in self.protocols:
-            raise SemanticError(f'Protocol with the same name ({name}) already in context.')
+            raise HulkSemanticError(f'Protocol with the same name ({name}) already in context.')
         typex = self.types[name] = ErrorType()
         return typex
 
     def create_type(self, name: str, node=None) -> Type:
         if name in self.types:
-            raise SemanticError(f'Type with the same name ({name}) already in context.')
+            raise HulkSemanticError(f'Type with the same name ({name}) already in context.')
         if name in self.protocols:
-            raise SemanticError(f'Protocol with the same name ({name}) already in context.')
+            raise HulkSemanticError(f'Protocol with the same name ({name}) already in context.')
         typex = self.types[name] = Type(name, node)
         return typex
 
@@ -61,13 +62,13 @@ class Context:
         try:
             return self.types[name]
         except KeyError:
-            raise SemanticError(f'Type "{name}" is not defined.')
+            raise HulkSemanticError(f'Type "{name}" is not defined.')
 
     def create_protocol(self, name: str, node=None) -> Protocol:
         if name in self.protocols:
-            raise SemanticError(f'Protocol with the same name ({name}) already in context.')
+            raise HulkSemanticError(f'Protocol with the same name ({name}) already in context.')
         if name in self.types:
-            raise SemanticError(f'Type with the same name ({name}) already in context.')
+            raise HulkSemanticError(f'Type with the same name ({name}) already in context.')
         protocol = self.protocols[name] = Protocol(name, node)
         return protocol
 
@@ -75,17 +76,17 @@ class Context:
         try:
             return self.protocols[name]
         except KeyError:
-            raise SemanticError(f'Protocol "{name}" is not defined.')
+            raise HulkSemanticError(f'Protocol "{name}" is not defined.')
 
     def get_type_or_protocol(self, name: str) -> Union[Type, Protocol]:
         try:
             return self.get_protocol(name)
-        except SemanticError:
+        except HulkSemanticError:
             return self.get_type(name)
 
     def create_function(self, name: str, params_names: list, params_types: list, return_type, node=None) -> Function:
         if name in self.functions:
-            raise SemanticError(f'Function with the same name ({name}) already in context.')
+            raise HulkSemanticError(f'Function with the same name ({name}) already in context.')
         function = self.functions[name] = Function(name, params_names, params_types, return_type, node)
         return function
 
@@ -93,7 +94,7 @@ class Context:
         try:
             return self.functions[name]
         except KeyError:
-            raise SemanticError(f'Function "{name}" is not defined.')
+            raise HulkSemanticError(f'Function "{name}" is not defined.')
 
     def inference_errors(self):
         errors = []
@@ -128,14 +129,16 @@ class VariableInfo:
         self.nameC = name
 
     def inference_errors(self):
-        # If the variable is a parameter, we don't need to check for inference errors because it was already checked
-        if self.is_parameter:
+        # If the variable is a parameter, we don't need to report errors because it was already reported
+        if self.type == AutoType() and self.is_parameter:
+            self.type = ErrorType()
             return []
 
         errors = []
         if self.type == AutoType() and not self.type.is_error():
-            errors.append(SemanticError(SemanticError.CANNOT_INFER_VAR_TYPE % self.name))
             self.type = ErrorType()
+            errors.append(HulkSemanticError(HulkSemanticError.CANNOT_INFER_VAR_TYPE % self.name))
+
         return errors
 
     def set_type_and_clear_inference_types_list(self, ttype: Type | Protocol):

@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 from src.code_gen.code_generator import CCodeGenerator
-from src.errors import IOHulkError
+from src.errors import HulkIOError
 from src.evaluation import evaluate_reverse_parse
 from src.lexer.hulk_lexer import HulkLexer
 from src.parser.hulk_parser import HulkParser
@@ -11,7 +11,7 @@ from src.semantics.semantic_analysis_pipeline import semantic_analysis_pipeline
 
 def run_pipeline(input_path: Path, output_path: Path, debug=False):
     if not input_path.match('*.hulk'):
-        raise IOHulkError(IOHulkError.INVALID_EXTENSION, input_path)
+        raise HulkIOError(HulkIOError.INVALID_EXTENSION % input_path)
 
     if debug:
         print("===================== READING FILE =====================")
@@ -19,7 +19,7 @@ def run_pipeline(input_path: Path, output_path: Path, debug=False):
         with open(input_path) as f:
             text = f.read()
     except FileNotFoundError:
-        raise IOHulkError(IOHulkError.ERROR_READING_FILE, input_path)
+        raise HulkIOError(HulkIOError.ERROR_READING_FILE % input_path)
 
     if debug:
         print("Hulk code:")
@@ -71,7 +71,7 @@ def run_pipeline(input_path: Path, output_path: Path, debug=False):
         with open(output_path, 'w') as f:
             f.write(code)
     except FileNotFoundError:
-        raise IOHulkError(IOHulkError.ERROR_WRITING_FILE, output_path)
+        raise HulkIOError(HulkIOError.ERROR_WRITING_FILE % output_path)
 
     if debug:
         print("C code:")
