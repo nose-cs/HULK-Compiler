@@ -1,10 +1,11 @@
 import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
-from src.errors import SemanticError
+from src.errors import HulkSemanticError
 from src.semantics.types import ErrorType, AutoType, Method, SelfType
 from src.semantics.utils import Scope, Context, Function
 
 
+# todo fix scopes
 class VarCollector(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -49,7 +50,8 @@ class VarCollector(object):
         # Create a new scope that includes the parameters
         new_scope = scope.create_child()
         for i in range(len(self.current_type.params_names)):
-            new_scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i])
+            new_scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i],
+                                      is_parameter=True)
 
         for expr in node.parent_args:
             self.visit(expr, new_scope.create_child())
@@ -78,7 +80,7 @@ class VarCollector(object):
         new_scope = scope.create_child()
 
         for i in range(len(method.param_names)):
-            new_scope.define_variable(method.param_names[i], method.param_types[i])
+            new_scope.define_variable(method.param_names[i], method.param_types[i], is_parameter=True)
 
         self.visit(node.expr, new_scope)
 
@@ -91,36 +93,36 @@ class VarCollector(object):
         new_scope = scope.create_child()
 
         for i in range(len(function.param_names)):
-            new_scope.define_variable(function.param_names[i], function.param_types[i])
+            new_scope.define_variable(function.param_names[i], function.param_types[i], is_parameter=True)
 
         self.visit(node.expr, new_scope)
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
     def visit(self, node: hulk_nodes.ExpressionBlockNode, scope: Scope):
-        #block_scope = scope.create_child()
-        node.scope = scope #block_scope
+        # block_scope = scope.create_child()
+        node.scope = scope  # block_scope
 
         for expr in node.expressions:
             self.visit(expr, scope.create_child())
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope: Scope):
-        node.scope = scope
-
         # I don't want to include the var before to avoid let a = a in print(a);
         self.visit(node.expr, scope.create_child())
+
+        node.scope = scope.create_child()
 
         # Check if the variable type is a defined type, an error type or auto_type (we need to infer it)
         if node.var_type is not None:
             try:
                 var_type = self.context.get_type_or_protocol(node.var_type)
-            except SemanticError as e:
+            except HulkSemanticError as e:
                 self.errors.append(e)
                 var_type = ErrorType()
         else:
             var_type = AutoType()
 
-        scope.define_variable(node.id, var_type)
+        node.scope.define_variable(node.id, var_type)
 
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode, scope: Scope):
@@ -129,9 +131,8 @@ class VarCollector(object):
         # https://matcom.in/hulk/guide/variables/#redefining-symbols
         old_scope = scope
         for declaration in node.var_declarations:
-            new_scope = old_scope.create_child()
-            self.visit(declaration, new_scope)
-            old_scope = new_scope
+            self.visit(declaration, old_scope.create_child())
+            old_scope = declaration.scope
 
         self.visit(node.body, old_scope.create_child())
 
@@ -182,23 +183,11 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
         node.scope = scope
-        try:
-            self.context.get_type_or_protocol(node.ttype)
-        except SemanticError as e:
-            self.errors.append(e)
-            self.context.create_error_type(node.ttype)
-
         self.visit(node.expression, scope.create_child())
 
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         node.scope = scope
-        try:
-            self.context.get_type_or_protocol(node.ttype)
-        except SemanticError as e:
-            self.errors.append(e)
-            self.context.create_error_type(node.ttype)
-
         self.visit(node.expression, scope.create_child())
 
     @visitor.when(hulk_nodes.FunctionCallNode)
@@ -257,3 +246,15 @@ class VarCollector(object):
 
         self.visit(node.obj, scope.create_child())
         self.visit(node.index, scope.create_child())
+
+    @visitor.when(hulk_nodes.ConstantBoolNode)
+    def visit(self, node: hulk_nodes.ConstantBoolNode, scope: Scope):
+        node.scope = scope
+
+    @visitor.when(hulk_nodes.ConstantNumNode)
+    def visit(self, node: hulk_nodes.ConstantNumNode, scope: Scope):
+        node.scope = scope
+
+    @visitor.when(hulk_nodes.ConstantStringNode)
+    def visit(self, node: hulk_nodes.ConstantStringNode, scope: Scope):
+        node.scope = scope

@@ -1,9 +1,12 @@
 import unittest
-from tests.assertt_without_exception import assert_without_exception
+
 from src.lexer.hulk_lexer import HulkLexer
 from src.parsing import LR1Parser
+from tests.assertt_without_exception import assert_without_exception
+
 lexer = HulkLexer()
 parser = LR1Parser()
+
 
 class TestMiscelaneous(unittest.TestCase):
 
@@ -18,7 +21,7 @@ class TestMiscelaneous(unittest.TestCase):
     def lcm(self):
         inp = '''
         function gcd(a,b) => if (a % b == 0) b else gcd(b, a % b);
-        function lcm(a,b) => a*b/gcd(a,b);
+        function lcm(a,b) => a * b / gcd(a,b);
         lcm(13,15);
         
     '''
@@ -33,11 +36,11 @@ class TestMiscelaneous(unittest.TestCase):
         '''
         tokens = lexer._tokenize(inp)
         return assert_without_exception(parser, tokens)
-    
+
     def LeastCommonSubsequence(self):
         inp = '''
             function Max(a,b) => if (a > b) a else b;
-            function MaxSumSubsarray(A) =>
+            function MaxSumSubarray(A) =>
                 let MaxAccum = 0 , Actual = 0 in 
                     for (i in A)
                     {
@@ -50,7 +53,6 @@ class TestMiscelaneous(unittest.TestCase):
               '''
         tokens = lexer._tokenize(inp)
         return assert_without_exception(parser, tokens)
-    
 
     def sucesiveMinsOrd(self):
         inp = '''
@@ -67,7 +69,3 @@ class TestMiscelaneous(unittest.TestCase):
                 else A;
 
         '''
-    
-    
-
-    

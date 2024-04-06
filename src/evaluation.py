@@ -17,12 +17,12 @@ def evaluate_reverse_parse(right_parse, operations, tokens):
             production = next(right_parse)
             head, body = production
             attributes = production.attributes
-            assert all(rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
+            assert all(rule is None for rule in attributes[1:]), 'There must be only synthesized attributes.'
             rule = attributes[0]
 
             if len(body):
-                synteticed = [None] + stack[-len(body):]
-                value = rule(None, synteticed)
+                synthesized = [None] + stack[-len(body):]
+                value = rule(None, synthesized)
                 stack[-len(body):] = [value]
             else:
                 stack.append(rule(None, None))

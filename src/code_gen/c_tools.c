@@ -766,3 +766,5 @@ Object* method_Range_equals(Object* range1, Object* range2)
 
     return boolAnd(method_Number_equals(min1, min2), method_Number_equals(max1, max2));
 }
+
+/////////////////////////////////  Generated Code  ////////////////////////////////////

@@ -21,7 +21,7 @@ class Symbol(object):
 
     def __or__(self, other):
 
-        if isinstance(other, (Sentence)):
+        if isinstance(other, Sentence):
             return SentenceList(Sentence(self), other)
 
         raise TypeError(other)
@@ -275,7 +275,7 @@ class AttributeProduction(Production):
         pass
 
 
-class Grammar():
+class Grammar:
 
     def __init__(self):
 
