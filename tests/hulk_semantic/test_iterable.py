@@ -5,7 +5,6 @@ from src.lexer.hulk_lexer import HulkLexer
 from src.parser.hulk_parser import HulkParser
 from src.semantics.semantic_analysis_pipeline import semantic_analysis_pipeline
 
-
 lexer = HulkLexer()
 parser = HulkParser()
 
@@ -14,6 +13,7 @@ def run_code(inp: str, debug=False):
     tokens, errors = lexer(inp)
     assert not errors
     derivation, operations, errors = parser(tokens)
+    print(errors)
     assert not errors
     ast = evaluate_reverse_parse(derivation, operations, tokens)
     ast, errors, context, scope = semantic_analysis_pipeline(ast, debug)
@@ -88,6 +88,22 @@ class TestHulkLoops(unittest.TestCase):
 
     def test_conf(self):
         inp = ('''
+            type X {
+                current() => true;
+                next() => true;
+            }
+
+            let y: Iterable = new X() in y;
+            ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_autotype(self):
+        inp = ('''
+            function b() => for (i in a()) { i; };
+            
+            function a() => new X();
+            
             type X {
                 current() => true;
                 next() => true;

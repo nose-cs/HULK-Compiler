@@ -284,6 +284,7 @@ class AutoType(Type):
 class StringType(Type):
     def __init__(self):
         super().__init__('String')
+        self.set_parent(ObjectType())
 
     def __eq__(self, other):
         return isinstance(other, StringType) or other.name == self.name
@@ -292,6 +293,7 @@ class StringType(Type):
 class BoolType(Type):
     def __init__(self):
         super().__init__('Boolean')
+        self.set_parent(ObjectType())
 
     def __eq__(self, other):
         return isinstance(other, BoolType) or other.name == self.name
@@ -300,6 +302,7 @@ class BoolType(Type):
 class NumberType(Type):
     def __init__(self) -> None:
         super().__init__('Number')
+        self.set_parent(ObjectType())
 
     def __eq__(self, other):
         return isinstance(other, NumberType) or other.name == self.name

@@ -59,5 +59,4 @@ def run_pipeline(input_path: Path):
 
 if __name__ == "__main__":
     input_ = sys.argv[1]
-    output_ = sys.argv[2]
     run_pipeline(Path(input_))
