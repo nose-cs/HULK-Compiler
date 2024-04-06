@@ -50,9 +50,6 @@ class TypeInferrer(object):
             self.had_changed = False
             self.visit(node)
 
-        inference_errors = self.context.inference_errors() + node.scope.inference_errors()
-        self.errors.extend(inference_errors)
-
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         self.current_type = self.context.get_type(node.idx)

@@ -9,7 +9,6 @@ from src.utils import Token
 class HulkParser(LR1Parser):
     def __init__(self):
         super().__init__(G)
-        self.errors = []
 
     def __call__(self, tokens: List[Token]):
         try:
