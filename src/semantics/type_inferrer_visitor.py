@@ -158,23 +158,16 @@ class TypeInferrer(object):
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode):
         scope = node.scope
-
         inf_type = self.visit(node.expr)
-
         var = scope.find_variable(node.id)
         var.type = var.type if var.type != types.AutoType() or var.type.is_error() else inf_type
-
         return var.type
 
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode):
-
         for declaration in node.var_declarations:
             self.visit(declaration)
-
-        return_type = self.visit(node.body)
-
-        return return_type
+        return self.visit(node.body)
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode):

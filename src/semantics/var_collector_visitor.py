@@ -5,7 +5,7 @@ from src.semantics.types import ErrorType, AutoType, Method, SelfType
 from src.semantics.utils import Scope, Context, Function
 
 
-# todo scopes
+# todo fix scopes
 class VarCollector(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -107,11 +107,10 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope: Scope):
-        node.scope = scope
-
-        # todo
         # I don't want to include the var before to avoid let a = a in print(a);
         self.visit(node.expr, scope.create_child())
+
+        node.scope = scope.create_child()
 
         # Check if the variable type is a defined type, an error type or auto_type (we need to infer it)
         if node.var_type is not None:
@@ -123,7 +122,7 @@ class VarCollector(object):
         else:
             var_type = AutoType()
 
-        scope.define_variable(node.id, var_type)
+        node.scope.define_variable(node.id, var_type)
 
     @visitor.when(hulk_nodes.LetInNode)
     def visit(self, node: hulk_nodes.LetInNode, scope: Scope):
@@ -132,9 +131,8 @@ class VarCollector(object):
         # https://matcom.in/hulk/guide/variables/#redefining-symbols
         old_scope = scope
         for declaration in node.var_declarations:
-            new_scope = old_scope.create_child()
-            self.visit(declaration, new_scope)
-            old_scope = new_scope
+            self.visit(declaration, old_scope.create_child())
+            old_scope = declaration.scope
 
         self.visit(node.body, old_scope.create_child())
 

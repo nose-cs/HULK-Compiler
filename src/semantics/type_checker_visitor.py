@@ -130,7 +130,6 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.VarDeclarationNode):
         scope = node.scope
 
-        # I don't want to include the var before to avoid let a = a in print(a);
         inf_type = self.visit(node.expr)
         var_type = scope.find_variable(node.id).type
 

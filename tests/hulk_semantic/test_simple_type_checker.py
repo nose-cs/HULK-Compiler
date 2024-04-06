@@ -78,3 +78,8 @@ class TestHulkSimpleInference(unittest.TestCase):
         inp = 'let x = 4 in x := false;'
         ast, errors, context, scope = run_code(inp)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_i(self):
+        inp = 'let x = 4, x = x + 1, x = x + 7 in x;'
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
