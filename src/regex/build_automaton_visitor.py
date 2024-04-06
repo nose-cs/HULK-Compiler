@@ -5,7 +5,7 @@ import src.visitor as visitor
 
 class AutomataBuilderVisitor(object):
     @visitor.on('node')
-    def visit(self, node: regex_nodes.Node, scope):
+    def visit(self, node: regex_nodes.Node):
         pass
 
     @visitor.when(regex_nodes.ConcatNode)

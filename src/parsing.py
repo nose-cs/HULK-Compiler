@@ -319,7 +319,7 @@ def build_LR1_automaton(G):
     start = frozenset([start_item])
 
     closure = frozenset(closure_lr1(G, start, firsts))
-    automaton = State(closure, any(item.IsReduceItem for item in closure))
+    automaton = State(closure, final = any(item.IsReduceItem for item in closure))
 
     pending = [closure]
     visited = {closure: automaton}
@@ -333,7 +333,7 @@ def build_LR1_automaton(G):
 
             if len(closure) > 0:
                 if closure not in visited:
-                    visited[closure] = State(closure, any(item.IsReduceItem for item in closure))
+                    visited[closure] = State(closure, final = any(item.IsReduceItem for item in closure))
                     pending.append(closure)
 
                 current_state.add_transition(symbol.Name, visited[closure])

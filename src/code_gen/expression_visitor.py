@@ -48,10 +48,6 @@ class CodeGenC(object):
     def visit(self, node):
         pass
 
-    @visitor.when(hulk_nodes.ProgramNode)
-    def visit(self, node: hulk_nodes.ProgramNode):
-        return self.visit(node.expression)
-
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode):
         vars = node.scope.get_variables(True)
