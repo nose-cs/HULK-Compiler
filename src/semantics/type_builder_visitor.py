@@ -4,7 +4,7 @@ from src.errors import SemanticError
 from src.semantics.types import ErrorType, AutoType
 from src.semantics.utils import Context
 
-
+# todo quitar return
 class TypeBuilder(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -56,6 +56,7 @@ class TypeBuilder(object):
         for i in range(len(node.params_ids)):
             # If the param is already declared, skip it
             if node.params_ids[i] in params_names:
+                # todo
                 continue
             try:
                 if node.params_types[i] is None:
@@ -79,7 +80,7 @@ class TypeBuilder(object):
         self.current_type.params_names, self.current_type.params_types = self.get_params_names_and_types(node)
 
         # Check if the type is inheriting from a forbidden type
-        if node.parent in ['Number', 'Boolean', 'String', 'Self']:
+        if node.parent in ['Number', 'Boolean', 'String']:
             self.errors.append(SemanticError(f'Type {node.idx} is inheriting from a forbidden type  -_-'))
         elif node.parent is not None:
             try:

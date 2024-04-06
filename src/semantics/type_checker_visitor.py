@@ -267,6 +267,7 @@ class TypeChecker(object):
             return types.ErrorType()
 
         try:
+            # todo new function
             method = self.current_type.parent.get_method(self.current_method.name)
             node.method_name = self.current_method.name
             node.parent_type = self.current_type.parent
@@ -294,6 +295,7 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.AttributeCallNode):
         scope = node.scope
 
+        # todo
         if not scope.is_defined(node.obj):
             obj_type = self.visit(node.obj)
         else:
@@ -317,7 +319,8 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.IsNode):
         self.visit(node.expression)
         bool_type = self.context.get_type('Boolean')
-        self.context.get_type_or_protocol(node.ttype)
+        # todo
+        # self.context.get_type_or_protocol(node.ttype)
         return bool_type
 
     @visitor.when(hulk_nodes.AsNode)
@@ -442,6 +445,7 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.VariableNode):
         scope = node.scope
 
+        # todo
         if not scope.is_defined(node.lex):
             error_text = SemanticError.VARIABLE_NOT_DEFINED % node.lex
             self.errors.append(SemanticError(error_text))
@@ -485,12 +489,15 @@ class TypeChecker(object):
         ttype = self.visit(node.iterable)
         iterable_protocol = self.context.get_protocol('Iterable')
 
+        return_type = self.visit(node.selector)
+
         if not ttype.conforms_to(iterable_protocol):
             error_text = SemanticError.INCOMPATIBLE_TYPES % (ttype.name, iterable_protocol.name)
             self.errors.append(SemanticError(error_text))
             return types.ErrorType()
-        # todo fix this
-        return self.visit(node.selector)
+
+        # todo fix this. Fixed.
+        return types.VectorType(return_type)
 
     @visitor.when(hulk_nodes.IndexingNode)
     def visit(self, node: hulk_nodes.IndexingNode):

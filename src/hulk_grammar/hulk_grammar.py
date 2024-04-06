@@ -112,6 +112,7 @@ simple_expr %= while_loop, lambda h, s: s[1]
 simple_expr %= for_loop, lambda h, s: s[1]
 simple_expr %= destructive_assignment, lambda h, s: s[1]
 
+# todo
 destructive_assignment %= (obj_indexing_or_method_or_attribute_call + dest_eq + expr,
                            lambda h, s: hulk_ast_nodes.DestructiveAssignmentNode(s[1], s[3]))
 destructive_assignment %= or_operation, lambda h, s: s[1]

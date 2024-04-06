@@ -1,5 +1,5 @@
 import itertools as itt
-from typing import Union
+from typing import Union, List
 
 from src.errors import SemanticError
 from src.semantics.types import Type, Protocol, AutoType, ErrorType
@@ -12,6 +12,18 @@ class Function:
         self.param_names = param_names
         self.param_types = param_types
         self.return_type = return_type
+
+    def inference_errors(self):
+        errors = []
+        for i in range(len(self.param_types)):
+            if self.param_types[i] == AutoType() and not self.param_types[i].is_error():
+                errors.append(SemanticError(SemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
+                self.param_types[i] = ErrorType()
+
+        if self.return_type == AutoType() and not self.return_type.is_error():
+            errors.append(SemanticError(SemanticError.CANNOT_INFER_RETURN_TYPE % self.name))
+            self.return_type = ErrorType()
+        return errors
 
     def __str__(self):
         params = ', '.join(f'{n}:{t.name}' for n, t in zip(self.param_names, self.param_types))
@@ -83,6 +95,14 @@ class Context:
         except KeyError:
             raise SemanticError(f'Function "{name}" is not defined.')
 
+    def inference_errors(self):
+        errors = []
+        for type_name in self.types:
+            errors.extend(self.types[type_name].inference_errors())
+        for func_name in self.functions:
+            errors.extend(self.functions[func_name].inference_errors())
+        return errors
+
     def __str__(self):
         return ('{\n\t' +
                 '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) +
@@ -95,16 +115,32 @@ class Context:
 
 
 class VariableInfo:
-    def __init__(self, name, vtype):
+    def __init__(self, name, vtype, is_parameter=False):
         self.name = name
         self.type = vtype
         self.inferred_types = []
-        if not isinstance(vtype, AutoType):
-            self.inferred_types.append(vtype)
+        # if not isinstance(vtype, AutoType):
+        #     self.inferred_types.append(vtype)
+        self.is_parameter = is_parameter
         self.nameC = None
 
     def setNameC(self, name: str):
         self.nameC = name
+
+    def inference_errors(self):
+        # If the variable is a parameter, we don't need to check for inference errors because it was already checked
+        if self.is_parameter:
+            return []
+
+        errors = []
+        if self.type == AutoType() and not self.type.is_error():
+            errors.append(SemanticError(SemanticError.CANNOT_INFER_VAR_TYPE % self.name))
+            self.type = ErrorType()
+        return errors
+
+    def set_type_and_clear_inference_types_list(self, ttype: Type | Protocol):
+        self.type = ttype
+        self.inferred_types = []
 
     def __str__(self):
         return f'{self.name} : {self.type.name}'
@@ -115,7 +151,7 @@ class VariableInfo:
 
 class Scope:
     def __init__(self, parent=None):
-        self.locals = []
+        self.locals: List[VariableInfo] = []
         self.parent: Scope = parent
         self.children = []
         self.index = 0 if parent is None else len(parent)
@@ -128,8 +164,8 @@ class Scope:
         self.children.append(child)
         return child
 
-    def define_variable(self, var_name, var_type) -> VariableInfo:
-        info = VariableInfo(var_name, var_type)
+    def define_variable(self, var_name, var_type, is_parameter=False) -> VariableInfo:
+        info = VariableInfo(var_name, var_type, is_parameter)
         self.locals.append(info)
         return info
 
@@ -154,6 +190,14 @@ class Scope:
     def is_local(self, var_name: str) -> bool:
         return any(True for x in self.locals if x.name == var_name)
 
+    def inference_errors(self):
+        errors = []
+        for var in self.locals:
+            errors.extend(var.inference_errors())
+        for child_scope in self.children:
+            errors.extend(child_scope.inference_errors())
+        return errors
+
     def __str__(self):
         return self.tab_level(1, 1, 1)
 
@@ -164,7 +208,3 @@ class Scope:
 
     def __repr__(self):
         return str(self)
-
-    def there_is_auto_type_in_scope(self) -> bool:
-        return any(True for x in self.locals if x.type == AutoType()) or \
-            any(True for child in self.children if child.there_is_auto_type_in_scope())

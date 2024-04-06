@@ -7,6 +7,7 @@ from src.errors import SemanticError
 from src.semantics.utils import Scope, Context, Function
 
 
+# todo destructive assignment
 class TypeInferrer(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -15,9 +16,9 @@ class TypeInferrer(object):
         self.current_type = None
         self.current_method = None
         self.errors: List[SemanticError] = errors
+        self.had_changed = False
 
-    @staticmethod
-    def assign_auto_type(node: hulk_nodes.Node, scope: Scope, inf_type: types.Type | types.Protocol):
+    def assign_auto_type(self, node: hulk_nodes.Node, scope: Scope, inf_type: types.Type | types.Protocol):
         """
         Add the inferred type to the variable in the scope
         :param node: The node that was inferred
@@ -29,7 +30,10 @@ class TypeInferrer(object):
             return
         if isinstance(node, hulk_nodes.VariableNode) and scope.is_defined(node.lex):
             var_info = scope.find_variable(node.lex)
+            if var_info.type != types.AutoType() or var_info.type.is_error():
+                return
             var_info.inferred_types.append(inf_type)
+            self.had_changed = True
 
     @visitor.on('node')
     def visit(self, node: hulk_nodes.Node):
@@ -42,6 +46,13 @@ class TypeInferrer(object):
 
         self.visit(node.expression)
 
+        if self.had_changed:
+            self.had_changed = False
+            self.visit(node)
+
+        inference_errors = self.context.inference_errors() + node.scope.inference_errors()
+        self.errors.extend(inference_errors)
+
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         self.current_type = self.context.get_type(node.idx)
@@ -53,18 +64,17 @@ class TypeInferrer(object):
 
         # Check if we could infer some params types
         for i in range(len(self.current_type.params_types)):
-            if self.current_type.params_types[i] == types.AutoType():
+            if (self.current_type.params_types[i] == types.AutoType()
+                    and not self.current_type.params_types[i].is_error()):
                 local_var = const_scope.find_variable(self.current_type.params_names[i])
                 if local_var.inferred_types:
                     new_type = types.get_most_specialized_type(local_var.inferred_types)
                     self.current_type.params_types[i] = new_type
-                    local_var.type = new_type
+                    # todo try catch: is any error
+                    local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
-                        self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
-                else:
-                    self.errors.append(SemanticError("Cannot infer the type of the param, please specify it."))
-                    local_var.type = types.ErrorType()
-                    self.current_type.params_types[i] = types.ErrorType()
+                        param_name = self.current_type.params_names[i]
+                        self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE % param_name))
 
         for expr in node.parent_args:
             self.visit(expr)
@@ -80,16 +90,13 @@ class TypeInferrer(object):
         inf_type = self.visit(node.expr)
 
         attribute = self.current_type.get_attribute(node.id)
+
         if attribute.type.is_error():
             attr_type = types.ErrorType()
         elif attribute.type != types.AutoType():
-            attr_type = self.context.get_type_or_protocol(node.attribute_type)
+            attr_type = attribute.type
         else:
             attr_type = inf_type
-
-        if attr_type == types.AutoType() and not attr_type.is_error():
-            self.errors.append(SemanticError("Cannot infer the type of the attribute, please specify it."))
-            attr_type = types.ErrorType()
 
         attribute.type = attr_type
         return attr_type
@@ -102,26 +109,19 @@ class TypeInferrer(object):
         return_type = self.visit(node.expr)
 
         if self.current_method.return_type == types.AutoType():
-            if return_type == types.AutoType():
-                error_text = f"Cannot infer the return type of {self.current_method.name} in {self.current_type.name}, please specify it."
-                self.errors.append(SemanticError(error_text))
-                return_type = types.ErrorType()
             self.current_method.return_type = return_type
 
         # Check if we could infer some params types
         for i in range(len(self.current_method.param_types)):
-            if self.current_method.param_types[i] == types.AutoType():
+            if (self.current_method.param_types[i] == types.AutoType()
+                    and not self.current_method.param_types[i].is_error()):
                 local_var = method_scope.find_variable(self.current_method.param_names[i])
                 if local_var.inferred_types:
                     new_type = types.get_most_specialized_type(local_var.inferred_types)
                     self.current_method.param_types[i] = new_type
-                    local_var.type = new_type
+                    local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
                         self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
-                else:
-                    error_text = f"Cannot infer the type of the param {self.current_method.param_names[i]} in {self.current_method.name} in {self.current_type.name}, please specify it."
-                    self.errors.append(SemanticError(error_text))
-                    local_var.type = types.ErrorType()
 
         self.current_method = None
 
@@ -134,28 +134,20 @@ class TypeInferrer(object):
         return_type = self.visit(node.expr)
 
         if function.return_type == types.AutoType():
-            if return_type == types.AutoType():
-                error_text = f"Cannot infer the return type of the function {function.name}, please specify it."
-                self.errors.append(SemanticError(error_text))
-                return_type = types.ErrorType()
             function.return_type = return_type
 
         expr_scope = node.expr.scope
 
         # Check if we could infer some params types
         for i in range(len(function.param_types)):
-            if function.param_types[i] == types.AutoType():
+            if function.param_types[i] == types.AutoType() and not function.param_types[i].is_error():
                 local_var = expr_scope.find_variable(function.param_names[i])
                 if local_var.inferred_types:
                     new_type = types.get_most_specialized_type(local_var.inferred_types)
                     function.param_types[i] = new_type
-                    local_var.type = new_type
+                    local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
                         self.errors.append(SemanticError(SemanticError.INCONSISTENT_USE))
-                else:
-                    error_text = f"Cannot infer the type of the param {function.param_names[i]} in {function.name}, please specify it."
-                    self.errors.append(SemanticError(error_text))
-                    local_var.type = types.ErrorType()
 
         return return_type
 
@@ -170,16 +162,10 @@ class TypeInferrer(object):
     def visit(self, node: hulk_nodes.VarDeclarationNode):
         scope = node.scope
 
-        # I don't want to include the var before to avoid let a = a in print(a);
         inf_type = self.visit(node.expr)
 
         var = scope.find_variable(node.id)
-        var.type = var.type if var.type != types.AutoType() else inf_type
-
-        if var.type == types.AutoType() and not isinstance(var.type, types.ErrorType):
-            error_text = f"Cannot infer the type of the variable {node.id}, please specify it."
-            self.errors.append(SemanticError(error_text))
-            var.type = types.ErrorType()
+        var.type = var.type if var.type != types.AutoType() or var.type.is_error() else inf_type
 
         return var.type
 
@@ -224,6 +210,7 @@ class TypeInferrer(object):
         expr_scope = node.expression.scope
         variable = expr_scope.find_variable(node.var)
 
+        # todo AutoType
         if ttype.conforms_to(iterable_protocol):
             element_type = ttype.get_method('current').return_type
             variable.type = element_type
@@ -257,7 +244,7 @@ class TypeInferrer(object):
         try:
             method = self.current_type.parent.get_method(self.current_method.name)
         except SemanticError:
-            # todo vit args just for catch more errors
+            # todo visit args just for catch more errors
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, method.param_types):
@@ -340,12 +327,12 @@ class TypeInferrer(object):
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
 
-        if left_type == types.AutoType():
+        if left_type == types.AutoType() and not left_type.is_error():
             self.assign_auto_type(node.left, scope, number_type)
         elif left_type != number_type or left_type.is_error():
             return types.ErrorType()
 
-        if right_type == types.AutoType():
+        if right_type == types.AutoType() and not right_type.is_error():
             self.assign_auto_type(node.right, scope, number_type)
         elif right_type != number_type or right_type.is_error():
             return types.ErrorType()
@@ -362,12 +349,12 @@ class TypeInferrer(object):
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
 
-        if left_type == types.AutoType():
+        if left_type == types.AutoType() and not left_type.is_error():
             self.assign_auto_type(node.left, scope, number_type)
         elif left_type != number_type or left_type.is_error():
             return types.ErrorType()
 
-        if right_type == types.AutoType():
+        if right_type == types.AutoType() and not right_type.is_error():
             self.assign_auto_type(node.right, scope, number_type)
         elif right_type != number_type or right_type.is_error():
             return types.ErrorType()
@@ -383,12 +370,12 @@ class TypeInferrer(object):
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
 
-        if left_type == types.AutoType():
+        if left_type == types.AutoType() and not left_type.is_error():
             self.assign_auto_type(node.left, scope, bool_type)
         elif left_type != bool_type or left_type.is_error():
             return types.ErrorType()
 
-        if right_type == types.AutoType():
+        if right_type == types.AutoType() and not right_type.is_error():
             self.assign_auto_type(node.right, scope, bool_type)
         elif right_type != bool_type or right_type.is_error():
             return types.ErrorType()
@@ -405,14 +392,14 @@ class TypeInferrer(object):
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
 
-        if left_type == types.AutoType():
+        if left_type == types.AutoType() and not left_type.is_error():
             self.assign_auto_type(node.left, scope, object_type)
-        elif not left_type.conforms_to(object_type) or left_type.is_error():
+        elif left_type.is_error():
             return types.ErrorType()
 
-        if right_type == types.AutoType():
+        if right_type == types.AutoType() and not right_type.is_error():
             self.assign_auto_type(node.right, scope, object_type)
-        elif not right_type.conforms_to(object_type) or right_type.is_error():
+        elif right_type.is_error():
             return types.ErrorType()
 
         return string_type
@@ -425,8 +412,6 @@ class TypeInferrer(object):
         right_type = self.visit(node.right)
 
         if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
-            return types.ErrorType()
-        if left_type.is_error() or right_type.is_error():
             return types.ErrorType()
 
         return bool_type
@@ -452,7 +437,7 @@ class TypeInferrer(object):
         operand_type = self.visit(node.operand)
         bool_type = self.context.get_type('Boolean')
 
-        if operand_type == types.AutoType():
+        if operand_type == types.AutoType() and not operand_type.is_error():
             self.assign_auto_type(node.operand, scope, bool_type)
         elif operand_type != bool_type or operand_type.is_error():
             return types.ErrorType()

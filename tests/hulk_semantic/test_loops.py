@@ -31,7 +31,6 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    # todo cause i visit the body of the let first
     def test_while_in_method(self):
         inp = '''
         function gcd(a, b) => 
@@ -56,10 +55,9 @@ class TestHulkLoops(unittest.TestCase):
     def test_for_loop(self):
         inp = '''
         function gcd(a: Number, b: Number) {
-            if (a % b == 0) b 
-            else gcd(b, a % b)
-        ;}
-        5;
+            if (a % b == 0) b else gcd(b, a % b);
+        }
+        gcd(10, 5);
         '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

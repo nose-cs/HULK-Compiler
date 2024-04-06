@@ -16,6 +16,13 @@ class Attribute:
     def __repr__(self):
         return str(self)
 
+    def inference_errors(self):
+        errors = []
+        if self.type == AutoType() and not self.type.is_error():
+            errors.append(SemanticError(SemanticError.CANNOT_INFER_ATTR_TYPE % self.name))
+            self.type = ErrorType()
+        return errors
+
 
 class Method:
     def __init__(self, name, param_names, params_types, return_type, node=None):
@@ -45,6 +52,18 @@ class Method:
             if not meth_type.conforms_to(impl_type):
                 return False
         return True
+
+    def inference_errors(self):
+        errors = []
+        for i in range(len(self.param_types)):
+            if self.param_types[i] == AutoType() and not self.param_types[i].is_error():
+                errors.append(SemanticError(SemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
+                self.param_types[i] = ErrorType()
+
+        if self.return_type == AutoType() and not self.return_type.is_error():
+            errors.append(SemanticError(SemanticError.CANNOT_INFER_RETURN_TYPE % self.name))
+            self.return_type = ErrorType()
+        return errors
 
 
 class Protocol:
@@ -117,9 +136,8 @@ class Type:
         self.node = node
         self.params_names = []
         self.params_types = []
-        self.attributes = []
-        self.attributes_types = []
-        self.methods = []
+        self.attributes: List[Attribute] = []
+        self.methods: List[Method] = []
         self.parent = None
         self.looked_for_parent_params = False
 
@@ -200,6 +218,20 @@ class Type:
             # If a method is not defined in the current type (or its ancestors), then it is not conforming
             except SemanticError:
                 return False
+
+    def inference_errors(self):
+        if self.is_error():
+            return []
+        errors = []
+        for attr in self.attributes:
+            errors.extend(attr.inference_errors())
+        for method in self.methods:
+            errors.extend(method.inference_errors())
+        for i in range(len(self.params_types)):
+            if self.params_types[i] == AutoType() and not self.params_types[i].is_error():
+                errors.append(SemanticError(SemanticError.CANNOT_INFER_PARAM_TYPE % (self.params_names[i], self.name)))
+                self.params_types[i] = ErrorType()
+        return errors
 
     def is_error(self):
         return False
