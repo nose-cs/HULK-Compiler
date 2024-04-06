@@ -185,24 +185,11 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.IsNode)
     def visit(self, node: hulk_nodes.IsNode, scope: Scope):
         node.scope = scope
-        try:
-            self.context.get_type_or_protocol(node.ttype)
-        except HulkSemanticError as e:
-            self.errors.append(e)
-            self.context.create_error_type(node.ttype)
-
         self.visit(node.expression, scope.create_child())
 
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode, scope: Scope):
         node.scope = scope
-        try:
-            self.context.get_type_or_protocol(node.ttype)
-        except HulkSemanticError as e:
-            # todo
-            self.errors.append(e)
-            self.context.create_error_type(node.ttype)
-
         self.visit(node.expression, scope.create_child())
 
     @visitor.when(hulk_nodes.FunctionCallNode)

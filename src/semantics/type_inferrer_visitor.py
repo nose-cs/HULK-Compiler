@@ -308,11 +308,15 @@ class TypeInferrer(object):
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode):
         expr_type = self.visit(node.expression)
-        cast_type = self.context.get_type_or_protocol(node.ttype)
+
+        try:
+            cast_type = self.context.get_type_or_protocol(node.ttype)
+        except HulkSemanticError as e:
+            cast_type = types.ErrorType()
+
         if not expr_type.conforms_to(cast_type) and not cast_type.conforms_to(expr_type):
             return types.ErrorType()
-        if expr_type.is_error():
-            return types.ErrorType()
+
         return cast_type
 
     @visitor.when(hulk_nodes.ArithmeticExpressionNode)

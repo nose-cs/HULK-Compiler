@@ -212,7 +212,8 @@ class TypeChecker(object):
             return types.ErrorType()
 
         if len(args_types) != len(function.param_types):
-            error_text = HulkSemanticError.EXPECTED_ARGUMENTS % (len(function.param_types), len(args_types), function.name)
+            error_text = HulkSemanticError.EXPECTED_ARGUMENTS % (
+                len(function.param_types), len(args_types), function.name)
             self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
@@ -319,15 +320,23 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.IsNode):
         self.visit(node.expression)
         bool_type = self.context.get_type('Boolean')
-        # todo
-        # self.context.get_type_or_protocol(node.ttype)
+
+        try:
+            self.context.get_type_or_protocol(node.ttype)
+        except HulkSemanticError as e:
+            self.errors.append(e)
+
         return bool_type
 
     @visitor.when(hulk_nodes.AsNode)
     def visit(self, node: hulk_nodes.AsNode):
         expression_type = self.visit(node.expression)
 
-        cast_type = self.context.get_type_or_protocol(node.ttype)
+        try:
+            cast_type = self.context.get_type_or_protocol(node.ttype)
+        except HulkSemanticError as e:
+            self.errors.append(e)
+            cast_type = types.ErrorType()
 
         if not expression_type.conforms_to(cast_type) and not cast_type.conforms_to(expression_type):
             error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (expression_type.name, cast_type.name)
