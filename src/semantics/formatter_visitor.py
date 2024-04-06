@@ -133,7 +133,7 @@ class Formatter(object):
     @visitor.when(hulk_nodes.WhileNode)
     def visit(self, node: hulk_nodes.WhileNode, tabs=0):
         ans = '\t' * tabs + f'\\__ WhileNode: while(<expr>) <expr>'
-        cond = self.visit(node.condition)
+        cond = self.visit(node.condition, tabs + 1)
         expr = self.visit(node.expression, tabs + 1)
         return f'{ans}\n{cond}\n{expr}'
 
@@ -206,13 +206,13 @@ class Formatter(object):
 
     @visitor.when(hulk_nodes.BaseCallNode)
     def visit(self, node: hulk_nodes.BaseCallNode, tabs=0):
-        ans = '\t' * tabs + f'\\__ base(<expr>, ..., <expr>)'
+        ans = '\t' * tabs + f'\\__ BaseCallNode: base(<expr>, ..., <expr>)'
         args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
         return f'{ans}\n{args}'
 
     @visitor.when(hulk_nodes.IndexingNode)
     def visit(self, node: hulk_nodes.IndexingNode, tabs=0):
-        ans = '\t' * tabs + f'\\IndexingHode: <expr>[<expr>]'
+        ans = '\t' * tabs + f'\\__ IndexingNode: <expr>[<expr>]'
         obj = self.visit(node.obj, tabs + 1)
         index = self.visit(node.index, tabs + 1)
         return f'{ans}\n{obj}\n{index}'

@@ -1,19 +1,19 @@
 import unittest
 
 from src.evaluation import evaluate_reverse_parse
-from src.hulk_grammar.hulk_grammar import G
 from src.lexer.hulk_lexer import HulkLexer
-from src.parsing import LR1Parser
+from src.parser.hulk_parser import HulkParser
 from src.semantics.semantic_analysis_pipeline import semantic_analysis_pipeline
 
 lexer = HulkLexer()
-parser = LR1Parser(G)
+parser = HulkParser()
 
 
 def run_code(inp: str, debug=False):
     tokens, errors = lexer(inp)
     assert not errors
-    derivation, operations = parser([t.token_type for t in tokens])
+    derivation, operations, errors = parser(tokens)
+    assert not errors
     ast = evaluate_reverse_parse(derivation, operations, tokens)
     ast, errors, context, scope = semantic_analysis_pipeline(ast, debug)
     return ast, errors, context, scope
@@ -36,6 +36,7 @@ class TestHulkBase(unittest.TestCase):
         ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
 
     def test_valid_base_call(self):
         inp = '''
@@ -66,3 +67,31 @@ class TestHulkBase(unittest.TestCase):
         '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    # todo
+    def test____(self):
+        inp = '''
+           type A (x, y) {
+                p = y + 9;
+                r = x + y;
+                getc() => 5;
+            }
+                         
+            type B inherits A {
+                p = y;
+                getc() => 2;
+            }
+                         
+            type C (x, y, z) inherits B (x + y, y + z) {
+                         
+            }
+                         
+            type D inherits C {
+                d = x^2;
+                getc() => base() + 5;
+            }
+                         
+            let a = new D(2, 3, 4) in print(a.getc());
+        '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

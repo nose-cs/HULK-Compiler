@@ -5,6 +5,12 @@ from src.pycompiler import Grammar, Production, Item
 from src.utils import ContainerSet
 
 
+class ParserError(Exception):
+    def __init__(self, text, token_index):
+        super().__init__(text)
+        self.token_index = token_index
+
+
 def compute_firsts(G: Grammar):
     first_sets = {symbol: (set() if symbol.IsNonTerminal else {symbol}) for symbol in G.nonTerminals + G.terminals}
     changed = True
@@ -195,12 +201,11 @@ class ShiftReduceParser(ABC):
                             0] == ShiftReduceParser.SHIFT:
                             stack.append(self.table[(stack[-1], Left.Name)][1])
                         else:
-                            raise Exception(
-                                f"Chain cannot be parsed {stack[-1], Left.Name} not in table or table[{stack[-1]}, {Left.Name} ] {self.table[(stack[-1], Left.Name)][0]}")
+                            raise ParserError("Chain cannot be parsed", cursor)
             else:
-                raise Exception(f"Chain cannot be parsed {state, lookahead} not in table")
+                raise ParserError("Chain cannot be parsed", cursor)
 
-        raise Exception("Chain cannot be parsed")
+        raise ParserError("Chain cannot be parsed", cursor)
 
 
 class SLR1Parser(ShiftReduceParser):
