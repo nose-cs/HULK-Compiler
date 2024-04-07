@@ -139,6 +139,7 @@ Object* function_parse(Object* string);
 // String
 Object* createString(char* str);
 Object* stringConcat(Object* string1, Object* string2);
+Object* method_String_size(Object* self);
 Object* method_String_toString(Object* str);
 Object* method_String_equals(Object* string1, Object* string2);
 
@@ -153,6 +154,7 @@ Object* boolAnd(Object* bool1, Object* bool2);
 // Vector
 Object* createVectorFromList(int num_elements, Object** list);
 Object* createVector(int num_elements, ...);
+Object* method_Vector_size(Object* self);
 Object* method_Vector_next(Object* self);
 Object* method_Vector_current(Object* self);
 Object* getElementOfVector(Object* vector, Object* index);
@@ -469,6 +471,7 @@ Object* createString(char* str) {
     addAttribute(obj, "len", len);
     addAttribute(obj, "method_String_toString", *method_String_toString);
     addAttribute(obj, "method_String_equals", *method_String_equals);
+    addAttribute(obj, "method_String_size", *method_String_size);
 
     return obj;
 }
@@ -484,6 +487,10 @@ Object* stringConcat(Object* string1, Object* string2)
     char* result = malloc((len1 + len2) * sizeof(char));
     sprintf(result, "%s%s", str1, str2);
     return createString(result);
+}
+
+Object* method_String_size(Object* self) {
+    return createNumber(*(int*)getAttributeValue(self, "len"));
 }
 
 Object* method_String_toString(Object* str) {
@@ -579,6 +586,8 @@ Object* createVectorFromList(int num_elements, Object** list)
     addAttribute(vector, "list", list);
 
     addAttribute(vector, "current", createNumber(-1));
+
+    addAttribute(vector, "method_Vector_size", *method_Vector_size);
     addAttribute(vector, "method_Vector_next", *method_Vector_next);
     addAttribute(vector, "method_Vector_current", *method_Vector_current);
 
@@ -600,6 +609,10 @@ Object* createVector(int num_elements, ...)
     va_end(elements);
 
     return createVectorFromList(num_elements, list);
+}
+
+Object* method_Vector_size(Object* self) {
+    return createNumber(*(int*)getAttributeValue(self, "size"));
 }
 
 Object* method_Vector_next(Object* self)
