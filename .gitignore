@@ -7,3 +7,4 @@ src/semantics/__pycache__
 src/test/__pycache__
 src/code_gen/__pycache__
 src/code_gen/__pycache__/expression_visitor.cpython-312.pyc
+src/parser/__pycache__

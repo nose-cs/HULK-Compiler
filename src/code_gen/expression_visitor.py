@@ -168,7 +168,7 @@ class CodeGenC(object):
 
     @visitor.when(hulk_nodes.ConstantBoolNode)
     def visit(self, node: hulk_nodes.ConstantBoolNode):
-        return "createBool(" + node.lex + ")"
+        return "createBoolean(" + node.lex + ")"
 
     @visitor.when(hulk_nodes.ConstantStringNode)
     def visit(self, node: hulk_nodes.ConstantStringNode):
