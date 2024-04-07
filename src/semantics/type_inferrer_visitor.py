@@ -35,6 +35,8 @@ class TypeInferrer(object):
                 return
             var_info.inferred_types.append(inf_type)
             self.had_changed = True
+        elif isinstance(node, hulk_nodes.IndexingNode):
+            self.assign_auto_type(node.obj, scope, types.VectorType(inf_type))
 
     @visitor.on('node')
     def visit(self, node: hulk_nodes.Node):
@@ -42,7 +44,7 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode):
-        self.current_iteration += 1
+        # self.current_iteration += 1
 
         for declaration in node.declarations:
             self.visit(declaration)
@@ -358,7 +360,6 @@ class TypeInferrer(object):
     @visitor.when(hulk_nodes.InequalityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode):
         scope = node.scope
-
         bool_type = self.context.get_type('Boolean')
         number_type = self.context.get_type('Number')
 
@@ -502,6 +503,12 @@ class TypeInferrer(object):
     def visit(self, node: hulk_nodes.VectorInitializationNode):
         elements_types = [self.visit(element) for element in node.elements]
         lca = types.get_lowest_common_ancestor(elements_types)
+
+        if lca.is_error():
+            return types.ErrorType()
+        elif lca == types.AutoType():
+            return types.AutoType()
+
         return types.VectorType(lca)
 
     @visitor.when(hulk_nodes.VectorComprehensionNode)
@@ -543,6 +550,8 @@ class TypeInferrer(object):
 
         if obj_type.is_error():
             return types.ErrorType()
+        elif obj_type == types.AutoType():
+            return types.AutoType()
 
         if not isinstance(obj_type, types.VectorType):
             return types.ErrorType()

@@ -124,7 +124,7 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    def test_string(self):
+    def test_str(self):
         inp = ('''
             function a(a: string) {
             for (x in a) x;
@@ -133,3 +133,26 @@ class TestHulkLoops(unittest.TestCase):
             ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test________(self):
+        inp = ('''
+           function Sort(A) => 
+            let  aux = 0 in for (i in range(0, A.size()))
+                for (j in range(i, A.size()))
+                 if(A[j] < A[i])
+                 {
+                    aux := A[i];
+                    A[i] := A[j];
+                    A[j] := aux;
+                    A;
+                }
+                else A;
+
+            let a = Sort([78, 12, 100, 0, 6, 9, 4.5]) in
+                {
+                    print(a);
+                    print(a.size());
+                }
+            ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

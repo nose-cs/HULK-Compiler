@@ -479,11 +479,14 @@ class TypeChecker(object):
 
         return ttype
 
-    # todo error type and auto type
     @visitor.when(hulk_nodes.VectorInitializationNode)
     def visit(self, node: hulk_nodes.VectorInitializationNode):
         elements_types = [self.visit(element) for element in node.elements]
         lca = types.get_lowest_common_ancestor(elements_types)
+
+        if lca.is_error():
+            return types.ErrorType()
+
         return types.VectorType(lca)
 
     @visitor.when(hulk_nodes.VectorComprehensionNode)
