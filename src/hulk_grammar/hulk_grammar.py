@@ -222,11 +222,11 @@ assignments %= assignments + comma + optional_typing_var, lambda h, s: s[1] + [s
 assignments %= optional_typing_var, lambda h, s: [s[1]]
 
 optional_type_annotation %= G.Epsilon, lambda h, s: None
-optional_type_annotation %= type_annotation, lambda h, s: s[1]
+optional_type_annotation %= colon + type_annotation, lambda h, s: s[2]
 
-type_annotation %= colon + idx, lambda h, s: s[2]
-type_annotation %= (colon + idx + o_square_bracket + c_square_bracket,
-                    lambda h, s: hulk_ast_nodes.VectorTypeAnnotationNode(s[2]))
+type_annotation %= idx, lambda h, s: s[1]
+type_annotation %= (type_annotation + o_square_bracket + c_square_bracket,
+                    lambda h, s: hulk_ast_nodes.VectorTypeAnnotationNode(s[1]))
 
 optional_typing_var %= (idx + optional_type_annotation + equal + expr,
                         lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[4], s[2]))
@@ -306,11 +306,11 @@ protocol_declaration %= (protocol + idx + extends + idx + obracket + protocol_bo
 protocol_body %= protocol_body + method_signature, lambda h, s: s[1] + [s[2]]
 protocol_body %= method_signature, lambda h, s: [s[1]]
 
-method_signature %= (idx + opar + typed_params_or_empty + cpar + type_annotation + semicolon,
-                     lambda h, s: hulk_ast_nodes.MethodSignatureDeclarationNode(s[1], s[3], s[5]))
+method_signature %= (idx + opar + typed_params_or_empty + cpar + colon + type_annotation + semicolon,
+                     lambda h, s: hulk_ast_nodes.MethodSignatureDeclarationNode(s[1], s[3], s[6]))
 
 typed_params_or_empty %= typed_params, lambda h, s: s[1]
 typed_params_or_empty %= G.Epsilon, lambda h, s: []
 
-typed_params %= typed_params + comma + idx + type_annotation, lambda h, s: s[1] + [(s[3], s[4])]
-typed_params %= idx + type_annotation, lambda h, s: [(s[1], s[2])]
+typed_params %= typed_params + comma + idx + colon + type_annotation, lambda h, s: s[1] + [(s[3], s[5])]
+typed_params %= idx + colon + type_annotation, lambda h, s: [(s[1], s[3])]

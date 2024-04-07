@@ -503,7 +503,7 @@ class TypeChecker(object):
 
         if return_type.is_error():
             return types.ErrorType()
-        # todo fix this. Fixed.
+
         return types.VectorType(return_type)
 
     @visitor.when(hulk_nodes.IndexingNode)

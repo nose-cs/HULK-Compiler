@@ -44,7 +44,7 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode):
-        # self.current_iteration += 1
+        self.current_iteration += 1
 
         for declaration in node.declarations:
             self.visit(declaration)
@@ -531,6 +531,11 @@ class TypeInferrer(object):
             variable.type = types.ErrorType()
 
         return_type = self.visit(node.selector)
+
+        if return_type.is_error():
+            return types.ErrorType()
+        elif return_type == types.AutoType():
+            return types.AutoType()
 
         return types.VectorType(return_type)
 

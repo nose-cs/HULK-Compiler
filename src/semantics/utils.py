@@ -73,12 +73,8 @@ class Context:
 
     def get_type_or_protocol(self, ttype) -> Union[Type, Protocol, VectorType]:
         if isinstance(ttype, hulk_ast_nodes.VectorTypeAnnotationNode):
-            try:
-                element_type = self.get_protocol(ttype.element_type)
-                return VectorType(element_type)
-            except HulkSemanticError:
-                element_type = self.get_type(ttype.element_type)
-                return VectorType(element_type)
+            element_type = self.get_type_or_protocol(ttype.element_type)
+            return VectorType(element_type)
         else:
             try:
                 return self.get_protocol(ttype)

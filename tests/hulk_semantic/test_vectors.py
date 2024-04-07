@@ -11,9 +11,12 @@ parser = HulkParser()
 
 def run_code(inp: str, debug=False):
     tokens, errors = lexer(inp)
+    if errors:
+        print(errors)
     assert not errors
     derivation, operations, errors = parser(tokens)
-    print(errors)
+    if errors:
+        print(errors)
     assert not errors
     ast = evaluate_reverse_parse(derivation, operations, tokens)
     ast, errors, context, scope = semantic_analysis_pipeline(ast, debug)
@@ -149,5 +152,99 @@ class TestHulkVectors(unittest.TestCase):
                     print(a.size());
                 }
             ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_vector_comp(self):
+        inp = ('''
+            function square(x: Number) => [i ^ 2 || i in range(1, x)];
+
+            let b = 4 in {
+                let a = square(5) in a[2] := 4;
+                let a = 5 in {
+                    if (a == 5) for (i in square(b)) print(i)
+                    else print("Hello World");
+                };
+            }
+            ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test____(self):
+        inp = ('''
+            function square(x: Number) => [i ^ 2 || i in ra(1, x)];
+
+            let b = 4 in {
+                let a = square(5) in a[2] := 4;
+                let a = 5 in {
+                    if (a == 5) for (i in square(b)) print(i)
+                    else print("Hello World");
+                };
+            }
+            ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_error_type(self):
+        inp = ('''
+            function square(x: Number) => [9, "hola", 9 + "hola"];
+
+            let b = 4 in {
+                let a = square(5) in a[2] := 4;
+                let a = 5 in {
+                    if (a == 5) for (i in square(b)) print(i)
+                    else print("Hello World");
+                };
+            }
+            ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_________________(self):
+        inp = ('''
+            function square(x) => let a = new B() in [i ^ 2 || i in a.f(x)];
+            
+            type B {
+                f(x) => let a = new A() in [i ^ 2 || i in a.f(x)];
+            }
+            
+            type A {
+                f(x: Number) => [i || i in range(1, x)];
+            }
+
+            let b = 4 in {
+                let a = square(5) in a[2] := 4;
+                let a = 5 in {
+                    if (a == 5) for (i in square(b)) print(i)
+                    else print("Hello World");
+                };
+            }
+            ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_bidimensional_vector(self):
+        inp = ('''
+                function f(x: Number[][]) =>  [[i ^ 2 || i in a] || a in x];
+
+                let b = f([[0,1,2],[0,1,2]]) in print(b);
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test________________(self):
+        inp = ('''
+                function f(x) => g(x);
+                function g(x) => x + x;
+                f(5);
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test______________________(self):
+        inp = ('''
+                   function fact(x) => let f = 1 in for (i in range(1, x+1)) f := f * i;
+                   fact(6);
+                   ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
