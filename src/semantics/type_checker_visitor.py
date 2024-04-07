@@ -267,7 +267,6 @@ class TypeChecker(object):
             return types.ErrorType()
 
         try:
-            # todo new function
             method = self.current_type.parent.get_method(self.current_method.name)
             node.method_name = self.current_method.name
             node.parent_type = self.current_type.parent

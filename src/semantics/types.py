@@ -57,7 +57,8 @@ class Method:
         errors = []
         for i in range(len(self.param_types)):
             if self.param_types[i] == AutoType() and not self.param_types[i].is_error():
-                errors.append(HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
+                errors.append(
+                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
                 self.param_types[i] = ErrorType()
 
         if self.return_type == AutoType() and not self.return_type.is_error():
@@ -229,7 +230,8 @@ class Type:
             errors.extend(method.inference_errors())
         for i in range(len(self.params_types)):
             if self.params_types[i] == AutoType() and not self.params_types[i].is_error():
-                errors.append(HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.params_names[i], self.name)))
+                errors.append(
+                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.params_names[i], self.name)))
                 self.params_types[i] = ErrorType()
         return errors
 
@@ -335,8 +337,8 @@ class VectorType(Type):
     def __init__(self, element_type) -> None:
         super().__init__(f'{element_type.name}[]')
         self.set_parent(ObjectType())
-        self.define_method('next', [], [], BoolType())
         self.define_method('size', [], [], NumberType())
+        self.define_method('next', [], [], BoolType())
         self.define_method('current', [], [], element_type)
 
     def set_element_type(self, ttype: Union[Type, Protocol]):

@@ -95,3 +95,13 @@ class TestHulkVectors(unittest.TestCase):
             '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_____(self):
+        inp = '''
+            let a = [78, 12, 100, 0, 6, 9, 4.5] in
+            {
+                print(a.size());
+            }
+            '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

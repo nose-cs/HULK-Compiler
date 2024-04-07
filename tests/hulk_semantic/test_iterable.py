@@ -113,3 +113,23 @@ class TestHulkLoops(unittest.TestCase):
             ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_string(self):
+        inp = ('''
+            function a(a: String) {
+            for (x in a) x;
+            }
+            a("holaaaaaaaaaaa");
+            ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_string(self):
+        inp = ('''
+            function a(a: string) {
+            for (x in a) x;
+            }
+            a("holaaaaaaaaaaa");
+            ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")

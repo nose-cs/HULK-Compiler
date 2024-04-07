@@ -23,14 +23,17 @@ class TypeCollector(object):
         # Add the basic types
         object_type = self.context.create_type('Object')
 
-        string_type = self.context.create_type('String')
-        string_type.set_parent(object_type)
-
         number_type = self.context.create_type('Number')
         number_type.set_parent(object_type)
 
         bool_type = self.context.create_type('Boolean')
         bool_type.set_parent(object_type)
+
+        string_type = self.context.create_type('String')
+        string_type.set_parent(object_type)
+        string_type.define_method('size', [], [], number_type)
+        string_type.define_method('next', [], [], bool_type)
+        string_type.define_method('current', [], [], string_type)
 
         # Add the built-in functions
         self.context.create_function('print', ['value'], [object_type], string_type)
