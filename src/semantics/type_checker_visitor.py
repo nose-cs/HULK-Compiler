@@ -501,6 +501,8 @@ class TypeChecker(object):
             self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
+        if return_type.is_error():
+            return types.ErrorType()
         # todo fix this. Fixed.
         return types.VectorType(return_type)
 

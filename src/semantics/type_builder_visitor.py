@@ -133,7 +133,7 @@ class TypeBuilder(object):
         # are going to infer it
         if node.attribute_type is not None:
             try:
-                attribute_type = self.context.get_type(node.attribute_type)
+                attribute_type = self.context.get_type_or_protocol(node.attribute_type)
             except HulkSemanticError as e:
                 self.errors.append(e)
                 attribute_type = ErrorType()

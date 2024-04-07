@@ -1,8 +1,9 @@
 import itertools as itt
 from typing import Union, List
 
+import src.hulk_grammar.hulk_ast_nodes as hulk_ast_nodes
 from src.errors import HulkSemanticError
-from src.semantics.types import Type, Protocol, AutoType, ErrorType
+from src.semantics.types import Type, Protocol, AutoType, ErrorType, VectorType
 
 
 class Function:
@@ -42,14 +43,6 @@ class Context:
         self.protocols = {}
         self.functions = {}
 
-    def create_error_type(self, name: str) -> Type:
-        if name in self.types:
-            raise HulkSemanticError(f'Type with the same name ({name}) already in context.')
-        if name in self.protocols:
-            raise HulkSemanticError(f'Protocol with the same name ({name}) already in context.')
-        typex = self.types[name] = ErrorType()
-        return typex
-
     def create_type(self, name: str, node=None) -> Type:
         if name in self.types:
             raise HulkSemanticError(f'Type with the same name ({name}) already in context.')
@@ -58,11 +51,11 @@ class Context:
         typex = self.types[name] = Type(name, node)
         return typex
 
-    def get_type(self, name: str) -> Type:
+    def get_type(self, ttype) -> Type | VectorType:
         try:
-            return self.types[name]
+            return self.types[ttype]
         except KeyError:
-            raise HulkSemanticError(f'Type "{name}" is not defined.')
+            raise HulkSemanticError(f'Type "{ttype}" is not defined.')
 
     def create_protocol(self, name: str, node=None) -> Protocol:
         if name in self.protocols:
@@ -72,17 +65,25 @@ class Context:
         protocol = self.protocols[name] = Protocol(name, node)
         return protocol
 
-    def get_protocol(self, name: str) -> Protocol:
+    def get_protocol(self, ttype) -> Protocol:
         try:
-            return self.protocols[name]
+            return self.protocols[ttype]
         except KeyError:
-            raise HulkSemanticError(f'Protocol "{name}" is not defined.')
+            raise HulkSemanticError(f'Protocol "{ttype}" is not defined.')
 
-    def get_type_or_protocol(self, name: str) -> Union[Type, Protocol]:
-        try:
-            return self.get_protocol(name)
-        except HulkSemanticError:
-            return self.get_type(name)
+    def get_type_or_protocol(self, ttype) -> Union[Type, Protocol, VectorType]:
+        if isinstance(ttype, hulk_ast_nodes.VectorTypeAnnotationNode):
+            try:
+                element_type = self.get_protocol(ttype.element_type)
+                return VectorType(element_type)
+            except HulkSemanticError:
+                element_type = self.get_type(ttype.element_type)
+                return VectorType(element_type)
+        else:
+            try:
+                return self.get_protocol(ttype)
+            except HulkSemanticError:
+                return self.get_type(ttype)
 
     def create_function(self, name: str, params_names: list, params_types: list, return_type, node=None) -> Function:
         if name in self.functions:

@@ -43,7 +43,7 @@ class TypeCollector(object):
         self.context.create_function('exp', ['value'], [number_type], number_type)
         self.context.create_function('log', ['value'], [number_type], number_type)
         self.context.create_function('rand', [], [], number_type)
-        # self.context.create_function('parse', ['value'], [string_type], number_type)
+        self.context.create_function('parse', ['value'], [string_type], number_type)
 
         # Add iterable protocol
         iterable_protocol = self.context.create_protocol('Iterable')

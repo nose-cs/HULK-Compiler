@@ -341,9 +341,6 @@ class VectorType(Type):
         self.define_method('next', [], [], BoolType())
         self.define_method('current', [], [], element_type)
 
-    def set_element_type(self, ttype: Union[Type, Protocol]):
-        self.get_method('current').return_type = ttype
-
     def get_element_type(self) -> Union[Type, Protocol]:
         return self.get_method('current').return_type
 
