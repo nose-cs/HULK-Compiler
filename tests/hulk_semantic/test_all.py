@@ -190,3 +190,17 @@ class TestHulkAll(unittest.TestCase):
                '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors))
+
+    def test_(self):
+        inp = '''
+                 type D {
+                    getc() => while(false) 5;      
+                }
+                                   
+                if(let a = new D() in true)
+                    print(a.getc())
+                else
+                    1;
+                  '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))

@@ -197,3 +197,46 @@ class TestHulkLoops(unittest.TestCase):
                 ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors))
+
+    def test________(self):
+        inp = ('''
+                protocol A {
+                    f(): Object;
+                }
+
+                protocol B extends A {
+                    f(x: Number): Object;
+                }
+
+                5;
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))
+
+    def test___(self):
+        inp = ('''
+                protocol A {
+                    f(): Object;
+                }
+
+                protocol B extends A {
+                    f(): Object;
+                }
+
+                5;
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))
+
+    def test__________(self):
+        inp = ('''
+                   type A(x) {
+                       x = x + 5;
+                   }
+                   
+                   function f(x) => new A(x);
+
+                   5;
+                   ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))

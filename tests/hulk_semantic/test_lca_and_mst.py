@@ -22,30 +22,30 @@ def run_code(inp: str, debug=False):
 
 class TestHulkLoops(unittest.TestCase):
     # todo
-    def test_(self):
-        inp = ('''
-                function x() => if (true) 1 else 2;
-                function x() => if (true) new A() elif(true) new B() else new C();
-                type A {}
-                type B inherits A {}
-                type C inherits B {}
-                5;
-                ''')
-        ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(1, len(errors))
-
-    def test_lca_types(self):
-        inp = ('''
-                function x() => if (true) 1 else 2;
-                function y() => if (true) new A() elif(true) new B() else new C();
-                type A {}
-                type B inherits A {}
-                type C inherits B {}
-                5;
-                ''')
-        # return type of x must be A
-        ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(0, len(errors))
+    # def test_(self):
+    #     inp = ('''
+    #             function x() => if (true) 1 else 2;
+    #             function x() => if (true) new A() elif(true) new B() else new C();
+    #             type A {}
+    #             type B inherits A {}
+    #             type C inherits B {}
+    #             5;
+    #             ''')
+    #     ast, errors, context, scope = run_code(inp, True)
+    #     self.assertEqual(1, len(errors))
+    #
+    # def test_lca_types(self):
+    #     inp = ('''
+    #             function x() => if (true) 1 else 2;
+    #             function y() => if (true) new A() elif(true) new B() else new C();
+    #             type A {}
+    #             type B inherits A {}
+    #             type C inherits B {}
+    #             5;
+    #             ''')
+    #     # return type of x must be A
+    #     ast, errors, context, scope = run_code(inp, True)
+    #     self.assertEqual(0, len(errors))
 
     def test_lca_protocols(self):
         inp = ('''

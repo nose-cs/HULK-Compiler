@@ -7,7 +7,6 @@ from src.errors import HulkSemanticError
 from src.semantics.utils import Context, Function
 
 
-# todo Check protocols variance
 class TypeChecker(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -86,7 +85,7 @@ class TypeChecker(object):
         return_type = self.current_method.return_type
 
         # Check if override is correct
-        if self.current_type.parent is None:
+        if self.current_type.parent is None or self.current_type.parent.is_error():
             return return_type
 
         try:
@@ -532,3 +531,34 @@ class TypeChecker(object):
             return types.ErrorType()
 
         return obj_type.get_element_type()
+
+    @visitor.when(hulk_nodes.ProtocolDeclarationNode)
+    def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
+        self.current_type = self.context.get_protocol(node.idx)
+        for method in node.methods_signature:
+            self.visit(method)
+        self.current_type = None
+
+    @visitor.when(hulk_nodes.MethodSignatureDeclarationNode)
+    def visit(self, node: hulk_nodes.MethodSignatureDeclarationNode):
+        self.current_method = self.current_type.get_method(node.id)
+
+        return_type = self.current_method.return_type
+
+        # Check if override is correct
+        if self.current_type.parent is None or self.current_type.parent.is_error():
+            return return_type
+
+        try:
+            parent_method: types.Method = self.current_type.parent.get_method(node.id)
+        except HulkSemanticError:
+            return return_type
+
+        error_text = HulkSemanticError.WRONG_SIGNATURE % self.current_method.name
+
+        if not parent_method.can_substitute_with(self.current_method):
+            self.errors.append(HulkSemanticError(error_text))
+
+        self.current_method = None
+
+        return return_type

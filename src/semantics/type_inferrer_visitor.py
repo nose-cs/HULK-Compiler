@@ -489,10 +489,18 @@ class TypeInferrer(object):
         try:
             ttype = self.context.get_type(node.idx)
         except HulkSemanticError:
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
-        for arg in node.args:
+        if ttype.is_error():
+            for arg in node.args:
+                self.visit(arg)
+            return types.ErrorType()
+
+        for arg, param_type in zip(node.args, ttype.params_types):
             self.visit(arg)
+            self.assign_auto_type(arg, node.scope, param_type)
 
         return ttype
 
