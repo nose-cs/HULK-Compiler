@@ -384,7 +384,6 @@ def get_most_specialized_type(types: List[Union[Type, Protocol]], var_name: str)
     return most_specialized
 
 
-# todo test this
 def get_lowest_common_ancestor(types: List[Union[Type, Protocol]]):
     """
     Get the lowest common ancestor of a list of types.

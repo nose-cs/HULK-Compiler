@@ -159,10 +159,10 @@ class TestHulkAll(unittest.TestCase):
 
     def test_lcm(self):
         inp = '''
-        function gcd(a,b) => if (a % b == 0) b else gcd(b, a % b);
-        function lcm(a,b) => a * b / gcd(a,b);
-        lcm(13,15);
-    '''
+            function gcd(a, b) => if (a % b == 0) b else gcd(b, a % b);
+            function lcm(a, b) => a * b / gcd(a,b);
+            lcm(13,15);
+        '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors))
 

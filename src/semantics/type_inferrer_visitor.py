@@ -27,14 +27,13 @@ class TypeInferrer(object):
         :param inf_type: The inferred type
         :rtype: None
         """
-        if inf_type == types.AutoType():
-            return
         if isinstance(node, hulk_nodes.VariableNode) and scope.is_defined(node.lex):
             var_info = scope.find_variable(node.lex)
             if var_info.type != types.AutoType() or var_info.type.is_error():
                 return
             var_info.inferred_types.append(inf_type)
-            self.had_changed = True
+            if not isinstance(inf_type, types.AutoType):
+                self.had_changed = True
         elif isinstance(node, hulk_nodes.IndexingNode):
             self.assign_auto_type(node.obj, scope, types.VectorType(inf_type))
 
@@ -75,7 +74,8 @@ class TypeInferrer(object):
                     self.errors.append(e)
                     new_type = types.ErrorType()
                 self.current_type.params_types[i] = new_type
-                self.had_changed = not isinstance(new_type, types.AutoType)
+                if not isinstance(new_type, types.AutoType):
+                    self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
 
         for expr in node.parent_args:
@@ -126,7 +126,8 @@ class TypeInferrer(object):
                     self.errors.append(e)
                     new_type = types.ErrorType()
                 self.current_method.param_types[i] = new_type
-                self.had_changed = not isinstance(new_type, types.AutoType)
+                if not isinstance(new_type, types.AutoType):
+                    self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
         self.current_method = None
 
@@ -156,7 +157,8 @@ class TypeInferrer(object):
                     self.errors.append(e)
                     new_type = types.ErrorType()
                 function.param_types[i] = new_type
-                self.had_changed = not isinstance(new_type, types.AutoType)
+                if not isinstance(new_type, types.AutoType):
+                    self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
 
         return return_type
@@ -192,9 +194,6 @@ class TypeInferrer(object):
 
         if new_type == types.AutoType() and not new_type.is_error():
             return old_type
-
-        if not new_type.conforms_to(old_type):
-            return types.ErrorType()
 
         return old_type
 
@@ -332,9 +331,6 @@ class TypeInferrer(object):
         if expr_type == types.AutoType() and not expr_type.is_error():
             return cast_type
 
-        if not expr_type.conforms_to(cast_type) and not cast_type.conforms_to(expr_type):
-            return types.ErrorType()
-
         return cast_type
 
     @visitor.when(hulk_nodes.ArithmeticExpressionNode)
@@ -432,9 +428,6 @@ class TypeInferrer(object):
         if (left_type == types.AutoType() and not left_type.is_error()) or (
                 right_type == types.AutoType() and not right_type.is_error()):
             return bool_type
-
-        if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
-            return types.ErrorType()
 
         return bool_type
 

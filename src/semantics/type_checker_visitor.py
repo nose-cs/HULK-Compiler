@@ -7,6 +7,7 @@ from src.errors import HulkSemanticError
 from src.semantics.utils import Context, Function
 
 
+# todo Check protocols variance
 class TypeChecker(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
