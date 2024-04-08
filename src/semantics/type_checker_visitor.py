@@ -32,6 +32,9 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         self.current_type = self.context.get_type(node.idx)
 
+        if self.current_type.is_error():
+            return
+
         for attr in node.attributes:
             self.visit(attr)
 
@@ -461,7 +464,7 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode):
         try:
-            ttype = self.context.get_type(node.idx)
+            ttype = self.context.get_type(node.idx, params_len=len(node.args))
         except HulkSemanticError as e:
             self.errors.append(e)
             return types.ErrorType()

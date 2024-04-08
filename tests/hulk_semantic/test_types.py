@@ -178,7 +178,22 @@ class TestHulkLoops(unittest.TestCase):
                 type A {
                     f(): Object => 5;
                 }
-                let x = 9 in new A();
+                let x = new A() in x.f(2, 3);
                 ''')
         ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+        self.assertEqual(1, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_______(self):
+        inp = ('''
+                type A(x) {
+                    f(): Object => 5;
+                }
+                
+                type A(x, y) {
+                    f(): Object => 5;
+                }
+                
+                let x = new A(), y = new A(2, 3) in x.f(2, 3);
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))

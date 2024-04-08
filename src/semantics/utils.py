@@ -53,11 +53,16 @@ class Context:
         typex = self.types[name] = Type(name, node)
         return typex
 
-    def get_type(self, ttype) -> Type:
+    def get_type(self, name, params_len=None) -> Type:
         try:
-            return self.types[ttype]
+            ttype: Type = self.types[name]
+            if ttype.is_error() and params_len:
+                ttype = ErrorType()
+                ttype.params_names = ['<error>'] * params_len
+                ttype.params_types = [ErrorType()] * params_len
+            return ttype
         except KeyError:
-            raise HulkSemanticError(f'Type "{ttype}" is not defined.')
+            raise HulkSemanticError(f'Type "{name}" is not defined.')
 
     def create_protocol(self, name: str, node=None) -> Protocol:
         if name in self.protocols:
@@ -82,6 +87,14 @@ class Context:
                 return self.get_protocol(ttype)
             except HulkSemanticError:
                 return self.get_type(ttype)
+
+    def set_type_or_protocol_error(self, name):
+        if name in self.types:
+            self.types[name] = ErrorType()
+        elif name in self.protocols:
+            self.protocols[name] = ErrorType()
+        else:
+            raise HulkSemanticError(f'Type or protocol "{name}" is not defined.')
 
     def create_function(self, name: str, params_names: list, params_types: list, return_type, node=None) -> Function:
         if name in self.functions:

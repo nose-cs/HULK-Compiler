@@ -74,6 +74,9 @@ class TypeBuilder(object):
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         self.current_type = self.context.get_type(node.idx)
 
+        if self.current_type.is_error():
+            return
+
         self.current_type.params_names, self.current_type.params_types = self.get_params_names_and_types(node)
 
         # Check if the type is inheriting from a forbidden type
@@ -126,6 +129,7 @@ class TypeBuilder(object):
         try:
             self.current_type.define_method(node.id, params_names, params_types, return_type, node)
         except HulkSemanticError as e:
+
             self.errors.append(e)
 
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
@@ -149,6 +153,10 @@ class TypeBuilder(object):
     @visitor.when(hulk_nodes.ProtocolDeclarationNode)
     def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
         self.current_type = self.context.get_protocol(node.idx)
+
+        if self.current_type.is_error():
+            return
+
         if node.parent is not None:
             try:
                 # Look for a circular dependency

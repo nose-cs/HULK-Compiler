@@ -58,6 +58,9 @@ class TypeInferrer(object):
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         self.current_type = self.context.get_type(node.idx)
 
+        if self.current_type.is_error():
+            return
+
         const_scope = node.scope.children[0]
 
         for attr in node.attributes:

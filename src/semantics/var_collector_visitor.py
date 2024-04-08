@@ -35,6 +35,9 @@ class VarCollector(object):
 
         self.current_type = self.context.get_type(node.idx)
 
+        if self.current_type.is_error():
+            return
+
         # Set parent arguments when they are None
         if node.parent_args is None and node.params_ids is not None:
             node.parent_args = []

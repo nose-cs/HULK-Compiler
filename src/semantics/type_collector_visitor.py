@@ -71,6 +71,7 @@ class TypeCollector(object):
             self.context.create_type(node.idx, node)
         except HulkSemanticError as e:
             self.errors.append(e)
+            self.context.set_type_or_protocol_error(node.idx)
 
     @visitor.when(hulk_nodes.ProtocolDeclarationNode)
     def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
@@ -78,3 +79,4 @@ class TypeCollector(object):
             self.context.create_protocol(node.idx, node)
         except HulkSemanticError as e:
             self.errors.append(e)
+            self.context.set_type_or_protocol_error(node.idx)
