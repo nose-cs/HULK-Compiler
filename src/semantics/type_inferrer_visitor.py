@@ -7,7 +7,6 @@ from src.errors import HulkSemanticError
 from src.semantics.utils import Scope, Context, Function
 
 
-# todo destructive assignment
 class TypeInferrer(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -17,6 +16,8 @@ class TypeInferrer(object):
         self.current_method = None
         self.errors: List[HulkSemanticError] = errors
         self.had_changed = False
+        self.max_iteration = 5
+        self.current_iteration = 0
 
     def assign_auto_type(self, node: hulk_nodes.Node, scope: Scope, inf_type: types.Type | types.Protocol):
         """
@@ -34,6 +35,8 @@ class TypeInferrer(object):
                 return
             var_info.inferred_types.append(inf_type)
             self.had_changed = True
+        elif isinstance(node, hulk_nodes.IndexingNode):
+            self.assign_auto_type(node.obj, scope, types.VectorType(inf_type))
 
     @visitor.on('node')
     def visit(self, node: hulk_nodes.Node):
@@ -41,12 +44,14 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.ProgramNode)
     def visit(self, node: hulk_nodes.ProgramNode):
+        self.current_iteration += 1
+
         for declaration in node.declarations:
             self.visit(declaration)
 
         self.visit(node.expression)
 
-        if self.had_changed:
+        if self.had_changed and self.current_iteration < self.max_iteration:
             self.had_changed = False
             self.visit(node)
 
@@ -67,6 +72,7 @@ class TypeInferrer(object):
                 if local_var.inferred_types:
                     new_type = types.get_most_specialized_type(local_var.inferred_types)
                     self.current_type.params_types[i] = new_type
+                    self.had_changed = True
                     # todo try catch: is any error
                     local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
@@ -105,7 +111,9 @@ class TypeInferrer(object):
         method_scope = node.expr.scope
         return_type = self.visit(node.expr)
 
-        if self.current_method.return_type == types.AutoType():
+        if self.current_method.return_type == types.AutoType() and not self.current_method.return_type.is_error() and (
+                return_type != types.AutoType() or return_type.is_error()):
+            self.had_changed = True
             self.current_method.return_type = return_type
 
         # Check if we could infer some params types
@@ -116,6 +124,7 @@ class TypeInferrer(object):
                 if local_var.inferred_types:
                     new_type = types.get_most_specialized_type(local_var.inferred_types)
                     self.current_method.param_types[i] = new_type
+                    self.had_changed = True
                     local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
                         self.errors.append(HulkSemanticError(HulkSemanticError.INCONSISTENT_USE))
@@ -130,7 +139,9 @@ class TypeInferrer(object):
 
         return_type = self.visit(node.expr)
 
-        if function.return_type == types.AutoType():
+        if function.return_type == types.AutoType() and not function.return_type.is_error() and (
+                return_type != types.AutoType() or return_type.is_error()):
+            self.had_changed = True
             function.return_type = return_type
 
         expr_scope = node.expr.scope
@@ -142,6 +153,7 @@ class TypeInferrer(object):
                 if local_var.inferred_types:
                     new_type = types.get_most_specialized_type(local_var.inferred_types)
                     function.param_types[i] = new_type
+                    self.had_changed = True
                     local_var.set_type_and_clear_inference_types_list(new_type)
                     if new_type.is_error():
                         self.errors.append(HulkSemanticError(HulkSemanticError.INCONSISTENT_USE))
@@ -171,15 +183,24 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.DestructiveAssignmentNode)
     def visit(self, node: hulk_nodes.DestructiveAssignmentNode):
-        self.visit(node.expr)
+        new_type = self.visit(node.expr)
         old_type = self.visit(node.target)
+
+        if old_type.name == 'Self':
+            return types.ErrorType()
+
+        if new_type == types.AutoType() and not new_type.is_error():
+            return old_type
+
+        if not new_type.conforms_to(old_type):
+            return types.ErrorType()
+
         return old_type
 
     @visitor.when(hulk_nodes.ConditionalNode)
     def visit(self, node: hulk_nodes.ConditionalNode):
-        cond_types = [self.visit(cond) for cond in node.conditions]
-
-        # todo if any is not bool return ErrorType
+        for cond in node.conditions:
+            self.visit(cond)
 
         expr_types = [self.visit(expression) for expression in node.expressions]
 
@@ -194,20 +215,25 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.ForNode)
     def visit(self, node: hulk_nodes.ForNode):
-        ttype = self.visit(node.iterable)
         iterable_protocol = self.context.get_protocol('Iterable')
+        ttype = self.visit(node.iterable)
 
         expr_scope = node.expression.scope
         variable = expr_scope.find_variable(node.var)
 
-        # todo AutoType
-        if ttype.conforms_to(iterable_protocol):
+        # Check if we could infer the type of the iterable
+        if ttype.is_error():
+            variable.type = types.ErrorType()
+        elif ttype == types.AutoType():
+            variable.type = types.AutoType()
+        elif ttype.conforms_to(iterable_protocol):
             element_type = ttype.get_method('current').return_type
             variable.type = element_type
         else:
             variable.type = types.ErrorType()
 
-        return self.visit(node.expression)
+        expr_type = self.visit(node.expression)
+        return expr_type
 
     @visitor.when(hulk_nodes.FunctionCallNode)
     def visit(self, node: hulk_nodes.FunctionCallNode):
@@ -216,6 +242,8 @@ class TypeInferrer(object):
         try:
             function = self.context.get_function(node.idx)
         except HulkSemanticError:
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, function.param_types):
@@ -234,7 +262,8 @@ class TypeInferrer(object):
         try:
             method = self.current_type.parent.get_method(self.current_method.name)
         except HulkSemanticError:
-            # todo visit args just for catch more errors
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, method.param_types):
@@ -246,14 +275,9 @@ class TypeInferrer(object):
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode):
         scope = node.scope
+        obj_type = self.visit(node.obj)
 
-        # todo
-        if not scope.is_defined(node.obj):
-            obj_type = self.visit(node.obj)
-        else:
-            obj_type = scope.find_variable(node.obj).type
-
-        if isinstance(obj_type, types.ErrorType):
+        if obj_type.is_error():
             return types.ErrorType()
 
         try:
@@ -262,6 +286,8 @@ class TypeInferrer(object):
             else:
                 method = obj_type.get_method(node.method)
         except HulkSemanticError:
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, method.param_types):
@@ -272,14 +298,9 @@ class TypeInferrer(object):
 
     @visitor.when(hulk_nodes.AttributeCallNode)
     def visit(self, node: hulk_nodes.AttributeCallNode):
-        scope = node.scope
+        obj_type = self.visit(node.obj)
 
-        if not scope.is_defined(node.obj):
-            obj_type = self.visit(node.obj)
-        else:
-            obj_type = scope.find_variable(node.obj).type
-
-        if isinstance(obj_type, types.ErrorType):
+        if obj_type.is_error():
             return types.ErrorType()
 
         if obj_type == types.SelfType():
@@ -304,8 +325,11 @@ class TypeInferrer(object):
 
         try:
             cast_type = self.context.get_type_or_protocol(node.ttype)
-        except HulkSemanticError as e:
+        except HulkSemanticError:
             cast_type = types.ErrorType()
+
+        if expr_type == types.AutoType() and not expr_type.is_error():
+            return cast_type
 
         if not expr_type.conforms_to(cast_type) and not cast_type.conforms_to(expr_type):
             return types.ErrorType()
@@ -336,7 +360,6 @@ class TypeInferrer(object):
     @visitor.when(hulk_nodes.InequalityExpressionNode)
     def visit(self, node: hulk_nodes.ArithmeticExpressionNode):
         scope = node.scope
-
         bool_type = self.context.get_type('Boolean')
         number_type = self.context.get_type('Number')
 
@@ -404,6 +427,10 @@ class TypeInferrer(object):
 
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
+
+        if (left_type == types.AutoType() and not left_type.is_error()) or (
+                right_type == types.AutoType() and not right_type.is_error()):
+            return bool_type
 
         if not left_type.conforms_to(right_type) and not right_type.conforms_to(left_type):
             return types.ErrorType()
@@ -476,6 +503,12 @@ class TypeInferrer(object):
     def visit(self, node: hulk_nodes.VectorInitializationNode):
         elements_types = [self.visit(element) for element in node.elements]
         lca = types.get_lowest_common_ancestor(elements_types)
+
+        if lca.is_error():
+            return types.ErrorType()
+        elif lca == types.AutoType():
+            return types.AutoType()
+
         return types.VectorType(lca)
 
     @visitor.when(hulk_nodes.VectorComprehensionNode)
@@ -487,14 +520,22 @@ class TypeInferrer(object):
 
         variable = selector_scope.find_variable(node.var)
 
-        # todo ttype es autotype
-        if ttype.conforms_to(iterable_protocol) and not ttype.is_error():
+        if ttype.is_error():
+            variable.type = types.ErrorType()
+        elif ttype == types.AutoType():
+            variable.type = types.AutoType()
+        elif ttype.conforms_to(iterable_protocol):
             element_type = ttype.get_method('current').return_type
             variable.type = element_type
         else:
             variable.type = types.ErrorType()
 
         return_type = self.visit(node.selector)
+
+        if return_type.is_error():
+            return types.ErrorType()
+        elif return_type == types.AutoType():
+            return types.AutoType()
 
         return types.VectorType(return_type)
 
@@ -514,6 +555,8 @@ class TypeInferrer(object):
 
         if obj_type.is_error():
             return types.ErrorType()
+        elif obj_type == types.AutoType():
+            return types.AutoType()
 
         if not isinstance(obj_type, types.VectorType):
             return types.ErrorType()

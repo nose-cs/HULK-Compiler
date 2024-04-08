@@ -47,9 +47,9 @@ vector_initialization, expr_list_comma_sep_or_empty = G.NonTerminals(
 # Adding loop expression non-terminals
 while_loop, for_loop = G.NonTerminals('<while_loop> <for_loop>')
 
-# Adding non-terminals to optionally type
-optional_typing_var, optional_typing_param, optional_typing_return = G.NonTerminals(
-    '<optional_typing_var> <optional_typing_param> <optional_typing_return>')
+# Adding non-terminals to optionally specify types
+optional_typing_var, optional_typing_param, optional_type_annotation, type_annotation = G.NonTerminals(
+    '<optional_typing_var> <optional_typing_param> <optional_type_annotation> <type_annotation>')
 
 # ----------------------------------------------Terminals------------------------------------------------------------- #
 
@@ -221,27 +221,25 @@ let_in %= let + assignments + in_ + expr, lambda h, s: hulk_ast_nodes.LetInNode(
 assignments %= assignments + comma + optional_typing_var, lambda h, s: s[1] + [s[3]]
 assignments %= optional_typing_var, lambda h, s: [s[1]]
 
-optional_typing_var %= idx + equal + expr, lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[3])
-optional_typing_var %= (idx + colon + idx + equal + expr,
-                        lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[5], s[3]))
+optional_type_annotation %= G.Epsilon, lambda h, s: None
+optional_type_annotation %= colon + type_annotation, lambda h, s: s[2]
+
+type_annotation %= idx, lambda h, s: s[1]
+type_annotation %= (type_annotation + o_square_bracket + c_square_bracket,
+                    lambda h, s: hulk_ast_nodes.VectorTypeAnnotationNode(s[1]))
+
+optional_typing_var %= (idx + optional_type_annotation + equal + expr,
+                        lambda h, s: hulk_ast_nodes.VarDeclarationNode(s[1], s[4], s[2]))
 
 # Functions can be declared using lambda notation or classic notation
-function_declaration %= (function + idx + opar + params_list_or_empty + cpar + arrow + simple_expr + semicolon,
-                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7]))
-function_declaration %= (function + idx + opar + params_list_or_empty + cpar + expr_block,
-                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[6]))
-function_declaration %= (function + idx + opar + params_list_or_empty + cpar + expr_block + semicolon,
-                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[6]))
-
-# specifying return type
 function_declaration %= (
-    function + idx + opar + params_list_or_empty + cpar + colon + idx + arrow + simple_expr + semicolon,
-    lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[9], s[7]))
-function_declaration %= (function + idx + opar + params_list_or_empty + cpar + colon + idx + expr_block,
-                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[7]))
+    function + idx + opar + params_list_or_empty + cpar + optional_type_annotation + arrow + simple_expr + semicolon,
+    lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[6]))
+function_declaration %= (function + idx + opar + params_list_or_empty + cpar + optional_type_annotation + expr_block,
+                         lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7], s[6]))
 function_declaration %= (
-    function + idx + opar + params_list_or_empty + cpar + colon + idx + expr_block + semicolon,
-    lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[8], s[7]))
+    function + idx + opar + params_list_or_empty + cpar + optional_type_annotation + expr_block + semicolon,
+    lambda h, s: hulk_ast_nodes.FunctionDeclarationNode(s[2], s[4], s[7], s[6]))
 
 params_list_or_empty %= params_list, lambda h, s: s[1]
 params_list_or_empty %= G.Epsilon, lambda h, s: []
@@ -249,8 +247,7 @@ params_list_or_empty %= G.Epsilon, lambda h, s: []
 params_list %= optional_typing_param, lambda h, s: [s[1]]
 params_list %= params_list + comma + optional_typing_param, lambda h, s: s[1] + [s[3]]
 
-optional_typing_param %= idx, lambda h, s: (s[1], None)
-optional_typing_param %= idx + colon + idx, lambda h, s: (s[1], s[3])
+optional_typing_param %= idx + optional_type_annotation, lambda h, s: (s[1], s[2])
 
 # Conditional expressions must have one if and one else and can 0 or more elifs
 conditional %= (if_ + opar + expr + cpar + expr + conditional_ending + else_ + expr,
@@ -288,25 +285,17 @@ type_body %= attribute, lambda h, s: [s[1]]
 type_body %= method_declaration, lambda h, s: [s[1]]
 
 # Method declaration
-method_declaration %= (idx + opar + params_list_or_empty + cpar + arrow + simple_expr + semicolon,
-                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[6]))
-method_declaration %= (idx + opar + params_list_or_empty + cpar + expr_block,
-                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[5]))
-method_declaration %= (idx + opar + params_list_or_empty + cpar + expr_block + semicolon,
-                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[5]))
-
-# specifying return type
-method_declaration %= (idx + opar + params_list_or_empty + cpar + colon + idx + arrow + simple_expr + semicolon,
-                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[8], s[6]))
-method_declaration %= (idx + opar + params_list_or_empty + cpar + colon + idx + expr_block,
-                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[7], s[6]))
-method_declaration %= (idx + opar + params_list_or_empty + cpar + colon + idx + expr_block + semicolon,
-                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[7], s[6]))
+method_declaration %= (
+    idx + opar + params_list_or_empty + cpar + optional_type_annotation + arrow + simple_expr + semicolon,
+    lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[7], s[5]))
+method_declaration %= (idx + opar + params_list_or_empty + cpar + optional_type_annotation + expr_block,
+                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[6], s[5]))
+method_declaration %= (idx + opar + params_list_or_empty + cpar + optional_type_annotation + expr_block + semicolon,
+                       lambda h, s: hulk_ast_nodes.MethodDeclarationNode(s[1], s[3], s[6], s[5]))
 
 # Attribute declaration
-attribute %= idx + equal + eol_expr, lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[3])
-attribute %= (idx + colon + idx + equal + eol_expr,
-              lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[5], s[3]))
+attribute %= (idx + optional_type_annotation + equal + eol_expr,
+              lambda h, s: hulk_ast_nodes.AttributeDeclarationNode(s[1], s[4], s[2]))
 
 # Protocol declaration
 protocol_declaration %= (protocol + idx + obracket + protocol_body + cbracket,
@@ -317,11 +306,11 @@ protocol_declaration %= (protocol + idx + extends + idx + obracket + protocol_bo
 protocol_body %= protocol_body + method_signature, lambda h, s: s[1] + [s[2]]
 protocol_body %= method_signature, lambda h, s: [s[1]]
 
-method_signature %= (idx + opar + typed_params_or_empty + cpar + colon + idx + semicolon,
+method_signature %= (idx + opar + typed_params_or_empty + cpar + colon + type_annotation + semicolon,
                      lambda h, s: hulk_ast_nodes.MethodSignatureDeclarationNode(s[1], s[3], s[6]))
 
 typed_params_or_empty %= typed_params, lambda h, s: s[1]
 typed_params_or_empty %= G.Epsilon, lambda h, s: []
 
-typed_params %= typed_params + comma + idx + colon + idx, lambda h, s: s[1] + [(s[3], s[5])]
-typed_params %= idx + colon + idx, lambda h, s: [(s[1], s[3])]
+typed_params %= typed_params + comma + idx + colon + type_annotation, lambda h, s: s[1] + [(s[3], s[5])]
+typed_params %= idx + colon + type_annotation, lambda h, s: [(s[1], s[3])]

@@ -100,8 +100,22 @@ class TestHulkLoops(unittest.TestCase):
         let iterable = range(0, 10) in
             while (iterable.next())
             let x = iterable.current() in print(x);'''
-        ast, errors, context, scope = run_code(inp)
+        ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_call_to_not_defined_function(self):
+        inp = '''
+        let iterable = t().next() in
+            let x = iterable.current() in print(x);'''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_not_defined_ver(self):
+        inp = '''
+        let iterable = t.next() in
+            let x = iterable.current() in print(x);'''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
 
     def test(self):
         type_test = """

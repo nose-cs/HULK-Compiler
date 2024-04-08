@@ -57,7 +57,8 @@ class Method:
         errors = []
         for i in range(len(self.param_types)):
             if self.param_types[i] == AutoType() and not self.param_types[i].is_error():
-                errors.append(HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
+                errors.append(
+                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
                 self.param_types[i] = ErrorType()
 
         if self.return_type == AutoType() and not self.return_type.is_error():
@@ -229,7 +230,8 @@ class Type:
             errors.extend(method.inference_errors())
         for i in range(len(self.params_types)):
             if self.params_types[i] == AutoType() and not self.params_types[i].is_error():
-                errors.append(HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.params_names[i], self.name)))
+                errors.append(
+                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.params_names[i], self.name)))
                 self.params_types[i] = ErrorType()
         return errors
 
@@ -284,6 +286,7 @@ class AutoType(Type):
 class StringType(Type):
     def __init__(self):
         super().__init__('String')
+        self.set_parent(ObjectType())
 
     def __eq__(self, other):
         return isinstance(other, StringType) or other.name == self.name
@@ -292,6 +295,7 @@ class StringType(Type):
 class BoolType(Type):
     def __init__(self):
         super().__init__('Boolean')
+        self.set_parent(ObjectType())
 
     def __eq__(self, other):
         return isinstance(other, BoolType) or other.name == self.name
@@ -300,6 +304,7 @@ class BoolType(Type):
 class NumberType(Type):
     def __init__(self) -> None:
         super().__init__('Number')
+        self.set_parent(ObjectType())
 
     def __eq__(self, other):
         return isinstance(other, NumberType) or other.name == self.name
@@ -332,12 +337,9 @@ class VectorType(Type):
     def __init__(self, element_type) -> None:
         super().__init__(f'{element_type.name}[]')
         self.set_parent(ObjectType())
-        self.define_method('next', [], [], BoolType())
         self.define_method('size', [], [], NumberType())
+        self.define_method('next', [], [], BoolType())
         self.define_method('current', [], [], element_type)
-
-    def set_element_type(self, ttype: Union[Type, Protocol]):
-        self.get_method('current').return_type = ttype
 
     def get_element_type(self) -> Union[Type, Protocol]:
         return self.get_method('current').return_type

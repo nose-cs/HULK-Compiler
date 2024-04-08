@@ -23,11 +23,14 @@ Para ejecutar el proyecto necesita tener instalada la versión 3.10 de python o 
 paquetes necesarios ejecute el siguiente comando:
 
 ```bash
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
-Para compilar y ejecutar un archivo `.hulk` se debe ejecutar el siguiente comando:
+Para compilar y ejecutar un fichero con extensión `.hulk` se debe ejecutar el siguiente comando:
 
 ```bash
 python3 src/main.py <archivo.hulk>
 ```
+
+El fichero de C generado por el compilador tendrá el mismo nombre que el fichero de
+entrada y estará ubicado en la misma carpeta, pero tendrá la extensión `.c` por supuesto.

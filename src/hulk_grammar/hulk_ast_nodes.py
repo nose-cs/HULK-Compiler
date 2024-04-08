@@ -27,6 +27,12 @@ class DeclarationNode(Node):
     pass
 
 
+class VectorTypeAnnotationNode(Node):
+    def __init__(self, element_type):
+        super().__init__()
+        self.element_type = element_type
+
+
 # ---------------------------------------------------Depth 2---------------------------------------------------------- #
 
 class FunctionDeclarationNode(DeclarationNode):
@@ -240,6 +246,7 @@ class BaseCallNode(ExpressionNode):
         self.args = args
         self.method_name = None
         self.parent_type = None
+
 
 class IndexingNode(ExpressionNode):
     def __init__(self, obj, index):

@@ -52,10 +52,9 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    # todo
     def test_for_loop(self):
         inp = '''
-        function gcd(a: Number, b: Number) {
+        function gcd(a: Number, b: Number): Number {
             if (a % b == 0) b else gcd(b, a % b);
         }
         gcd(10, 5);

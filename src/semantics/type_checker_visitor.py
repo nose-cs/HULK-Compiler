@@ -37,7 +37,7 @@ class TypeChecker(object):
         for method in node.methods:
             self.visit(method)
 
-        if isinstance(self.current_type.parent, types.ErrorType):
+        if self.current_type.parent.is_error():
             return
 
         parent_args_types = [self.visit(expr) for expr in node.parent_args]
@@ -208,6 +208,8 @@ class TypeChecker(object):
             function = self.context.get_function(node.idx)
         except HulkSemanticError as e:
             self.errors.append(e)
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         if len(args_types) != len(function.param_types):
@@ -227,15 +229,9 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.MethodCallNode)
     def visit(self, node: hulk_nodes.MethodCallNode):
         args_types = [self.visit(arg) for arg in node.args]
+        obj_type = self.visit(node.obj)
 
-        scope = node.scope
-        # todo
-        if not scope.is_defined(node.obj):
-            obj_type = self.visit(node.obj)
-        else:
-            obj_type = scope.find_variable(node.obj).type
-
-        if isinstance(obj_type, types.ErrorType):
+        if obj_type.is_error():
             return types.ErrorType()
 
         try:
@@ -245,6 +241,8 @@ class TypeChecker(object):
                 method = obj_type.get_method(node.method)
         except HulkSemanticError as e:
             self.errors.append(e)
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         if len(args_types) != len(method.param_types):
@@ -264,16 +262,19 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.BaseCallNode):
         if self.current_method is None:
             self.errors.append(HulkSemanticError(HulkSemanticError.BASE_OUTSIDE_METHOD))
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         try:
-            # todo new function
             method = self.current_type.parent.get_method(self.current_method.name)
             node.method_name = self.current_method.name
             node.parent_type = self.current_type.parent
         except HulkSemanticError:
             error_text = HulkSemanticError.METHOD_NOT_DEFINED % self.current_method.name
             self.errors.append(HulkSemanticError(error_text))
+            for arg in node.args:
+                self.visit(arg)
             return types.ErrorType()
 
         args_types = [self.visit(arg) for arg in node.args]
@@ -293,15 +294,9 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.AttributeCallNode)
     def visit(self, node: hulk_nodes.AttributeCallNode):
-        scope = node.scope
+        obj_type = self.visit(node.obj)
 
-        # todo
-        if not scope.is_defined(node.obj):
-            obj_type = self.visit(node.obj)
-        else:
-            obj_type = scope.find_variable(node.obj).type
-
-        if isinstance(obj_type, types.ErrorType):
+        if obj_type.is_error():
             return types.ErrorType()
 
         if obj_type == types.SelfType():
@@ -453,7 +448,6 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.VariableNode):
         scope = node.scope
 
-        # todo
         if not scope.is_defined(node.lex):
             error_text = HulkSemanticError.VARIABLE_NOT_DEFINED % node.lex
             self.errors.append(HulkSemanticError(error_text))
@@ -485,11 +479,14 @@ class TypeChecker(object):
 
         return ttype
 
-    # todo error type and auto type
     @visitor.when(hulk_nodes.VectorInitializationNode)
     def visit(self, node: hulk_nodes.VectorInitializationNode):
         elements_types = [self.visit(element) for element in node.elements]
         lca = types.get_lowest_common_ancestor(elements_types)
+
+        if lca.is_error():
+            return types.ErrorType()
+
         return types.VectorType(lca)
 
     @visitor.when(hulk_nodes.VectorComprehensionNode)
@@ -504,7 +501,9 @@ class TypeChecker(object):
             self.errors.append(HulkSemanticError(error_text))
             return types.ErrorType()
 
-        # todo fix this. Fixed.
+        if return_type.is_error():
+            return types.ErrorType()
+
         return types.VectorType(return_type)
 
     @visitor.when(hulk_nodes.IndexingNode)
