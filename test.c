@@ -782,71 +782,48 @@ Object* method_Range_equals(Object* range1, Object* range2)
 
 /////////////////////////////////  Generated Code  ////////////////////////////////////
 
-Object* function_Sort (Object* p0);
+Object* createD ();
 
-Object* letInNode0(Object* p0);
 
-Object* loopBlock0(Object* v0, Object* p0);
+Object* createD () {
+   Object* obj = createObject();
 
-Object* loopBlock1(Object* v1, Object* v0, Object* p0);
 
-Object* ifElseBlock0(Object* v2, Object* v1, Object* v0, Object* p0);
+   addAttribute(obj, "parent_type0", "D");
+   addAttribute(obj, "parent_type1", "Object");
 
-Object* letInNode0(Object* p0) {
-   Object* v0 = copyObject(createNumber(0));
-   return loopBlock0(v0, p0);
+   return obj;
 }
 
-Object* ifElseBlock0(Object* v2, Object* v1, Object* v0, Object* p0) {
-   if(*((bool*)getAttributeValue(numberLessThan(getElementOfVector(p0, v2), getElementOfVector(p0, v1)), "value"))) {
-      replaceObject(v0, getElementOfVector(p0, v1));
-      replaceObject(getElementOfVector(p0, v1), getElementOfVector(p0, v2));
-      replaceObject(getElementOfVector(p0, v2), v0);
-      return p0;
+Object* ifElseBlock0();
+
+Object* letInNode0();
+
+Object* createBlock0();
+
+Object* letInNode0() {
+   Object* v0 = copyObject(createBlock0());
+   return createBoolean(true);
+}
+
+Object* ifElseBlock0() {
+   if(*((bool*)getAttributeValue(letInNode0(), "value"))) {
+      return function_print(copyObject(createString("\"(a]\"'b*\n*b\"b'b")));
    }
    else {
-      return p0;
+      return createNumber(1);
    }
 }
 
-Object* loopBlock1(Object* v1, Object* v0, Object* p0) {
-   Object* return_obj = NULL;
-   Object* v2 = NULL;
-   Object* iterable = function_range(copyObject(v1), copyObject(((Object* (*)(Object*))getMethodForCurrentType(p0, "size", NULL))(p0)));
-   Object*(*next)(Object*) = getMethodForCurrentType(iterable, "next", NULL);
-   Object*(*current)(Object*) = getMethodForCurrentType(iterable, "current", NULL);
+Object* createBlock0() {
 
-   while(*(bool*)getAttributeValue(next(iterable), "value")) {
-      v2 = current(iterable);
-
-      return_obj = ifElseBlock0(v2, v1, v0, p0);
-   }
-   return return_obj;
-}
-
-Object* loopBlock0(Object* v0, Object* p0) {
-   Object* return_obj = NULL;
-   Object* v1 = NULL;
-   Object* iterable = function_range(copyObject(createNumber(0)), copyObject(((Object* (*)(Object*))getMethodForCurrentType(p0, "size", NULL))(p0)));
-   Object*(*next)(Object*) = getMethodForCurrentType(iterable, "next", NULL);
-   Object*(*current)(Object*) = getMethodForCurrentType(iterable, "current", NULL);
-
-   while(*(bool*)getAttributeValue(next(iterable), "value")) {
-      v1 = current(iterable);
-
-      return_obj = loopBlock1(v1, v0, p0);
-   }
-   return return_obj;
-}
-
-Object* function_Sort (Object* p0) {
-   return letInNode0(p0);
+   return createD();
 }
 
 
 int main() {
    srand(time(NULL));
 
-   function_print(copyObject(function_Sort(copyObject(createVector(7, createNumber(78), createNumber(12), createNumber(100), createNumber(0), createNumber(6), createNumber(9), createNumber(4.5))))));
+   ifElseBlock0();
    return 0; 
 }
