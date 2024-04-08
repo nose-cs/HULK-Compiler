@@ -51,7 +51,7 @@ class Context:
         typex = self.types[name] = Type(name, node)
         return typex
 
-    def get_type(self, ttype) -> Type | VectorType:
+    def get_type(self, ttype) -> Type:
         try:
             return self.types[ttype]
         except KeyError:

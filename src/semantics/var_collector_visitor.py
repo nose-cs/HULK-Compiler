@@ -175,7 +175,7 @@ class VarCollector(object):
         node.scope = scope
         expr_scope = scope.create_child()
 
-        expr_scope.define_variable(node.var, AutoType())
+        expr_scope.define_variable(node.var, AutoType(), is_parameter=True)
 
         self.visit(node.iterable, scope.create_child())
         self.visit(node.expression, expr_scope)
@@ -235,7 +235,7 @@ class VarCollector(object):
         node.scope = scope
 
         selector_scope = scope.create_child()
-        selector_scope.define_variable(node.var, AutoType())
+        selector_scope.define_variable(node.var, AutoType(), is_parameter=True)
         self.visit(node.selector, selector_scope)
 
         self.visit(node.iterable, scope.create_child())
