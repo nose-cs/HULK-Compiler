@@ -57,15 +57,16 @@ class TestMiscelaneous(unittest.TestCase):
     def sucesiveMinsOrd(self):
         inp = '''
             function Sort(A) => 
-            let  aux = 0 in for i in range(0, A.size())
-                for j in range(i, A.size())
+            let  aux = 0 in for (i in range(0, A.size()))
+                for (j in range(i, A.size()))
                  if(A[j] < A[i])
                  {
                     aux := A[i];
                     A[i] := A[j];
                     A[j] := aux;
-                    A
+                    A;
                 }
                 else A;
 
+            print(Sort([78, 12, 100, 0, 6, 9, 4.5]));
         '''

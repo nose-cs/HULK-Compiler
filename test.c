@@ -139,6 +139,7 @@ Object* function_parse(Object* string);
 // String
 Object* createString(char* str);
 Object* stringConcat(Object* string1, Object* string2);
+Object* method_String_size(Object* self);
 Object* method_String_toString(Object* str);
 Object* method_String_equals(Object* string1, Object* string2);
 
@@ -153,6 +154,7 @@ Object* boolAnd(Object* bool1, Object* bool2);
 // Vector
 Object* createVectorFromList(int num_elements, Object** list);
 Object* createVector(int num_elements, ...);
+Object* method_Vector_size(Object* self);
 Object* method_Vector_next(Object* self);
 Object* method_Vector_current(Object* self);
 Object* getElementOfVector(Object* vector, Object* index);
@@ -469,6 +471,7 @@ Object* createString(char* str) {
     addAttribute(obj, "len", len);
     addAttribute(obj, "method_String_toString", *method_String_toString);
     addAttribute(obj, "method_String_equals", *method_String_equals);
+    addAttribute(obj, "method_String_size", *method_String_size);
 
     return obj;
 }
@@ -484,6 +487,10 @@ Object* stringConcat(Object* string1, Object* string2)
     char* result = malloc((len1 + len2) * sizeof(char));
     sprintf(result, "%s%s", str1, str2);
     return createString(result);
+}
+
+Object* method_String_size(Object* self) {
+    return createNumber(*(int*)getAttributeValue(self, "len"));
 }
 
 Object* method_String_toString(Object* str) {
@@ -579,6 +586,8 @@ Object* createVectorFromList(int num_elements, Object** list)
     addAttribute(vector, "list", list);
 
     addAttribute(vector, "current", createNumber(-1));
+
+    addAttribute(vector, "method_Vector_size", *method_Vector_size);
     addAttribute(vector, "method_Vector_next", *method_Vector_next);
     addAttribute(vector, "method_Vector_current", *method_Vector_current);
 
@@ -600,6 +609,10 @@ Object* createVector(int num_elements, ...)
     va_end(elements);
 
     return createVectorFromList(num_elements, list);
+}
+
+Object* method_Vector_size(Object* self) {
+    return createNumber(*(int*)getAttributeValue(self, "size"));
 }
 
 Object* method_Vector_next(Object* self)
@@ -767,141 +780,73 @@ Object* method_Range_equals(Object* range1, Object* range2)
     return boolAnd(method_Number_equals(min1, min2), method_Number_equals(max1, max2));
 }
 
-Object* createA (Object* A_p, Object* A_r);
-Object* method_A_getc (Object* self);
-Object* method_A_qwerty (Object* self);
+/////////////////////////////////  Generated Code  ////////////////////////////////////
 
-Object* createB (Object* B_p, Object* A_p, Object* A_r);
-Object* method_B_getc (Object* self);
+Object* function_Sort (Object* p0);
 
-Object* createC (Object* B_p, Object* A_p, Object* A_r);
+Object* letInNode0(Object* p0);
 
-Object* createD (Object* D_d, Object* B_p, Object* A_p, Object* A_r);
-Object* method_D_getc (Object* self);
+Object* loopBlock0(Object* v0, Object* p0);
 
+Object* loopBlock1(Object* v1, Object* v0, Object* p0);
 
-Object* createA (Object* A_p, Object* A_r) {
-   Object* obj = createObject();
+Object* ifElseBlock0(Object* v2, Object* v1, Object* v0, Object* p0);
 
-   addAttribute(obj, "A_p", A_p);
-   addAttribute(obj, "A_r", A_r);
-
-   addAttribute(obj, "parent_type0", "A");
-   addAttribute(obj, "method_A_getc", *method_A_getc);
-   addAttribute(obj, "method_A_qwerty", *method_A_qwerty);
-   addAttribute(obj, "parent_type1", "Object");
-
-   addAttribute(obj, "conforms_protocol0", "ABC");
-   addAttribute(obj, "conforms_protocol1", "AZX");
-   return obj;
+Object* letInNode0(Object* p0) {
+   Object* v0 = copyObject(createNumber(0));
+   return loopBlock0(v0, p0);
 }
 
-Object* createB (Object* B_p, Object* A_p, Object* A_r) {
-   Object* obj = createObject();
-
-   addAttribute(obj, "B_p", B_p);
-   addAttribute(obj, "A_p", A_p);
-   addAttribute(obj, "A_r", A_r);
-
-   addAttribute(obj, "parent_type0", "B");
-   addAttribute(obj, "method_B_getc", *method_B_getc);
-   addAttribute(obj, "parent_type1", "A");
-   addAttribute(obj, "method_A_getc", *method_A_getc);
-   addAttribute(obj, "method_A_qwerty", *method_A_qwerty);
-   addAttribute(obj, "parent_type2", "Object");
-
-   addAttribute(obj, "conforms_protocol0", "ABC");
-   addAttribute(obj, "conforms_protocol1", "AZX");
-   return obj;
+Object* ifElseBlock0(Object* v2, Object* v1, Object* v0, Object* p0) {
+   if(*((bool*)getAttributeValue(numberLessThan(getElementOfVector(p0, v2), getElementOfVector(p0, v1)), "value"))) {
+      replaceObject(v0, getElementOfVector(p0, v1));
+      replaceObject(getElementOfVector(p0, v1), getElementOfVector(p0, v2));
+      replaceObject(getElementOfVector(p0, v2), v0);
+      return p0;
+   }
+   else {
+      return p0;
+   }
 }
 
-Object* createC (Object* B_p, Object* A_p, Object* A_r) {
-   Object* obj = createObject();
+Object* loopBlock1(Object* v1, Object* v0, Object* p0) {
+   Object* return_obj = NULL;
+   Object* v2 = NULL;
+   Object* iterable = function_range(copyObject(v1), copyObject(((Object* (*)(Object*))getMethodForCurrentType(p0, "size", NULL))(p0)));
+   Object*(*next)(Object*) = getMethodForCurrentType(iterable, "next", NULL);
+   Object*(*current)(Object*) = getMethodForCurrentType(iterable, "current", NULL);
 
-   addAttribute(obj, "B_p", B_p);
-   addAttribute(obj, "A_p", A_p);
-   addAttribute(obj, "A_r", A_r);
+   while(*(bool*)getAttributeValue(next(iterable), "value")) {
+      v2 = current(iterable);
 
-   addAttribute(obj, "parent_type0", "C");
-   addAttribute(obj, "parent_type1", "B");
-   addAttribute(obj, "method_B_getc", *method_B_getc);
-   addAttribute(obj, "parent_type2", "A");
-   addAttribute(obj, "method_A_getc", *method_A_getc);
-   addAttribute(obj, "method_A_qwerty", *method_A_qwerty);
-   addAttribute(obj, "parent_type3", "Object");
-
-   addAttribute(obj, "conforms_protocol0", "ABC");
-   addAttribute(obj, "conforms_protocol1", "AZX");
-   return obj;
+      return_obj = ifElseBlock0(v2, v1, v0, p0);
+   }
+   return return_obj;
 }
 
-Object* createD (Object* D_d, Object* B_p, Object* A_p, Object* A_r) {
-   Object* obj = createObject();
+Object* loopBlock0(Object* v0, Object* p0) {
+   Object* return_obj = NULL;
+   Object* v1 = NULL;
+   Object* iterable = function_range(copyObject(createNumber(0)), copyObject(((Object* (*)(Object*))getMethodForCurrentType(p0, "size", NULL))(p0)));
+   Object*(*next)(Object*) = getMethodForCurrentType(iterable, "next", NULL);
+   Object*(*current)(Object*) = getMethodForCurrentType(iterable, "current", NULL);
 
-   addAttribute(obj, "D_d", D_d);
-   addAttribute(obj, "B_p", B_p);
-   addAttribute(obj, "A_p", A_p);
-   addAttribute(obj, "A_r", A_r);
+   while(*(bool*)getAttributeValue(next(iterable), "value")) {
+      v1 = current(iterable);
 
-   addAttribute(obj, "parent_type0", "D");
-   addAttribute(obj, "method_D_getc", *method_D_getc);
-   addAttribute(obj, "parent_type1", "C");
-   addAttribute(obj, "parent_type2", "B");
-   addAttribute(obj, "method_B_getc", *method_B_getc);
-   addAttribute(obj, "parent_type3", "A");
-   addAttribute(obj, "method_A_getc", *method_A_getc);
-   addAttribute(obj, "method_A_qwerty", *method_A_qwerty);
-   addAttribute(obj, "parent_type4", "Object");
-
-   addAttribute(obj, "conforms_protocol0", "ABC");
-   addAttribute(obj, "conforms_protocol1", "AZX");
-   return obj;
+      return_obj = loopBlock1(v1, v0, p0);
+   }
+   return return_obj;
 }
 
-Object* letInNode0();
-
-Object* createBlock0(Object* v0);
-
-Object* letInNode0() {
-   Object* v0 = copyObject(createBlock0(v0));
-   return function_print(copyObject(((Object* (*)(Object*))getMethodForCurrentType(v0, "getc", NULL))(v0)));
-}
-
-Object* createBlock0(Object* v0) {
-   Object* v1 = createNumber(2);
-   Object* v2 = createNumber(3);
-   Object* v3 = createNumber(4);
-   Object* v4 = v1;
-   Object* v5 = v2;
-   Object* v6 = v3;
-   Object* v7 = numberSum(v4, v5);
-   Object* v8 = numberSum(v5, v6);
-   Object* v9 = v7;
-   Object* v10 = v8;
-
-   return createD(copyObject(numberPow(v1, createNumber(2))), copyObject(v8), copyObject(v10), copyObject(v9));
-}
-
-Object* method_A_getc (Object* self) {
-   return createNumber(3);
-}
-
-Object* method_A_qwerty (Object* self) {
-   return createString("abc");
-}
-
-Object* method_B_getc (Object* self) {
-   return numberSum(createNumber(6), ((Object* (*)(Object*))getMethodForCurrentType(self, "getc", "A"))(self));
-}
-
-Object* method_D_getc (Object* self) {
-   return numberSum(((Object* (*)(Object*))getMethodForCurrentType(self, "getc", "C"))(self), createNumber(5));
+Object* function_Sort (Object* p0) {
+   return letInNode0(p0);
 }
 
 
 int main() {
    srand(time(NULL));
 
-   letInNode0();
+   function_print(copyObject(function_Sort(copyObject(createVector(7, createNumber(78), createNumber(12), createNumber(100), createNumber(0), createNumber(6), createNumber(9), createNumber(4.5))))));
    return 0; 
 }
