@@ -103,6 +103,7 @@ expr_block %= obracket + expr_list + cbracket, lambda h, s: hulk_ast_nodes.Expre
 
 expr_list %= eol_expr + expr_list, lambda h, s: [s[1]] + s[2]
 expr_list %= eol_expr, lambda h, s: [s[1]]
+expr_list %= simple_expr, lambda h, s: [s[1]]
 
 # An expression is a simple expression or an expression block
 expr %= expr_block, lambda h, s: s[1]

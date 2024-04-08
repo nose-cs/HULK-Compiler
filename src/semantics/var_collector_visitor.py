@@ -5,7 +5,6 @@ from src.semantics.types import ErrorType, AutoType, Method, SelfType
 from src.semantics.utils import Scope, Context, Function
 
 
-# todo fix scopes
 class VarCollector(object):
     def __init__(self, context, errors=None) -> None:
         if errors is None:
@@ -69,7 +68,6 @@ class VarCollector(object):
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
     def visit(self, node: hulk_nodes.AttributeDeclarationNode, scope: Scope):
         node.scope = scope
-
         self.visit(node.expr, scope.create_child())
 
     @visitor.when(hulk_nodes.MethodDeclarationNode)
@@ -102,17 +100,16 @@ class VarCollector(object):
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
     def visit(self, node: hulk_nodes.ExpressionBlockNode, scope: Scope):
-        # block_scope = scope.create_child()
-        node.scope = scope  # block_scope
+        block_scope = scope.create_child()
+        node.scope = block_scope
 
         for expr in node.expressions:
-            self.visit(expr, scope.create_child())
+            self.visit(expr, block_scope)
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope: Scope):
         # I don't want to include the var before to avoid let a = a in print(a);
         self.visit(node.expr, scope.create_child())
-
         node.scope = scope.create_child()
 
         # Check if the variable type is a defined type, an error type or auto_type (we need to infer it)
@@ -134,7 +131,7 @@ class VarCollector(object):
         # https://matcom.in/hulk/guide/variables/#redefining-symbols
         old_scope = scope
         for declaration in node.var_declarations:
-            self.visit(declaration, old_scope.create_child())
+            self.visit(declaration, old_scope)
             old_scope = declaration.scope
 
         self.visit(node.body, old_scope.create_child())
@@ -223,10 +220,6 @@ class VarCollector(object):
         for arg in node.args:
             self.visit(arg, scope.create_child())
 
-    @visitor.when(hulk_nodes.VariableNode)
-    def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
-        node.scope = scope
-
     @visitor.when(hulk_nodes.VectorInitializationNode)
     def visit(self, node: hulk_nodes.VectorInitializationNode, scope: Scope):
         node.scope = scope
@@ -249,6 +242,10 @@ class VarCollector(object):
 
         self.visit(node.obj, scope.create_child())
         self.visit(node.index, scope.create_child())
+
+    @visitor.when(hulk_nodes.VariableNode)
+    def visit(self, node: hulk_nodes.VariableNode, scope: Scope):
+        node.scope = scope
 
     @visitor.when(hulk_nodes.ConstantBoolNode)
     def visit(self, node: hulk_nodes.ConstantBoolNode, scope: Scope):

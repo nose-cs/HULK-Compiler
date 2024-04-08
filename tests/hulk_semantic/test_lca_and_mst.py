@@ -97,7 +97,7 @@ class TestHulkLoops(unittest.TestCase):
     def test_lca_error(self):
         inp = ('''
             function x(x: Iterable, y: Range, z: Number[]) => if (true) x + y elif(true) y else z;
-            let x = [9], y = range(1, 10) in x(x, y, x).length;
+            let x = [9], y = range(1, 10) in x({x}, {y}, {x}).length;
         ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors))
