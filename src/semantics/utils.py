@@ -16,10 +16,12 @@ class Function:
 
     def inference_errors(self):
         errors = []
-        for i in range(len(self.param_types)):
-            if self.param_types[i] == AutoType() and not self.param_types[i].is_error():
-                errors.append(
-                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
+
+        for i, param_type in enumerate(self.param_types):
+            if isinstance(param_type, AutoType):
+                param_name = self.param_names[i]
+                error_message = HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (param_name, self.name)
+                errors.append(HulkSemanticError(error_message))
                 self.param_types[i] = ErrorType()
 
         if self.return_type == AutoType() and not self.return_type.is_error():
@@ -117,8 +119,6 @@ class VariableInfo:
         self.name = name
         self.type = vtype
         self.inferred_types = []
-        # if not isinstance(vtype, AutoType):
-        #     self.inferred_types.append(vtype)
         self.is_parameter = is_parameter
         self.nameC = None
 

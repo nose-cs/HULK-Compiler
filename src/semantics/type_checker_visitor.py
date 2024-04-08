@@ -73,33 +73,34 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
         self.current_method = self.current_type.get_method(node.id)
 
-        return_type = self.visit(node.expr)
+        inf_type = self.visit(node.expr)
 
+        if not inf_type.conforms_to(self.current_method.return_type):
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (inf_type.name, self.current_method.return_type.name)
+            self.errors.append(HulkSemanticError(error_text))
+
+        return_type = self.current_method.return_type
+
+        # Check if override is correct
         if self.current_type.parent is None:
             return return_type
 
-        # Check if override is correct
         try:
             parent_method = self.current_type.parent.get_method(node.id)
         except HulkSemanticError:
-            parent_method = None
-
-        if parent_method is None:
             return return_type
 
-        error_text = HulkSemanticError.WRONG_SIGNATURE % parent_method
+        error_text = HulkSemanticError.WRONG_SIGNATURE % self.current_method.name
+
         if parent_method.return_type != return_type:
             self.errors.append(HulkSemanticError(error_text))
-            return_type = types.ErrorType()
-        if len(parent_method.param_types) != len(self.current_method.param_types):
+        elif len(parent_method.param_types) != len(self.current_method.param_types):
             self.errors.append(HulkSemanticError(error_text))
-            return_type = types.ErrorType()
-
-        for i in range(len(parent_method.param_types)):
-            if parent_method.param_types[i] != self.current_method.param_types[i]:
-                self.errors.append(HulkSemanticError(error_text))
-                self.current_method.param_types[i] = types.ErrorType()
-                return_type = types.ErrorType()
+        else:
+            for i, parent_param_type in enumerate(parent_method.param_types):
+                param_type = self.current_method.param_types[i]
+                if parent_param_type != param_type:
+                    self.errors.append(HulkSemanticError(error_text))
 
         self.current_method = None
 

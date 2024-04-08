@@ -136,3 +136,49 @@ class TestHulkLoops(unittest.TestCase):
         """
 
         assert run_code(type_test, True)
+
+    def test____(self):
+        inp = ('''
+                type A {
+                    f() => 5;
+                }
+                type B inherits A {
+                    f() => "hola";
+                }
+                let x = 9 in new A();
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_____(self):
+        inp = ('''
+                type A {
+                    f(a: String) => 5;
+                }
+                type B inherits A {
+                    f(b: Number) => "hola";
+                }
+                let x = 9 in new A();
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_________(self):
+        inp = ('''
+                type A {
+                    f(): String => 5;
+                }
+                let x = 9 in new A();
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test______(self):
+        inp = ('''
+                type A {
+                    f(): Object => 5;
+                }
+                let x = 9 in new A();
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")

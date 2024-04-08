@@ -65,24 +65,23 @@ class TypeInferrer(object):
             self.visit(attr)
 
         # Check if we could infer some params types
-        for i in range(len(self.current_type.params_types)):
-            if (self.current_type.params_types[i] == types.AutoType()
-                    and not self.current_type.params_types[i].is_error()):
-                local_var = const_scope.find_variable(self.current_type.params_names[i])
-                if local_var.inferred_types:
-                    new_type = types.get_most_specialized_type(local_var.inferred_types)
-                    self.current_type.params_types[i] = new_type
-                    self.had_changed = True
-                    # todo try catch: is any error
-                    local_var.set_type_and_clear_inference_types_list(new_type)
-                    if new_type.is_error():
-                        param_name = self.current_type.params_names[i]
-                        self.errors.append(HulkSemanticError(HulkSemanticError.INCONSISTENT_USE % param_name))
+        for i, param_type in enumerate(self.current_type.params_types):
+            param_name = self.current_type.params_names[i]
+            local_var = const_scope.find_variable(param_name)
+            if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
+                try:
+                    new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
+                except HulkSemanticError as e:
+                    self.errors.append(e)
+                    new_type = types.ErrorType()
+                self.current_type.params_types[i] = new_type
+                self.had_changed = not isinstance(new_type, types.AutoType)
+                local_var.set_type_and_clear_inference_types_list(new_type)
 
         for expr in node.parent_args:
             self.visit(expr)
 
-        # Infer the params types and return type of the methods
+            # Infer the params types and return type of the methods
         for method in node.methods:
             self.visit(method)
 
@@ -117,18 +116,18 @@ class TypeInferrer(object):
             self.current_method.return_type = return_type
 
         # Check if we could infer some params types
-        for i in range(len(self.current_method.param_types)):
-            if (self.current_method.param_types[i] == types.AutoType()
-                    and not self.current_method.param_types[i].is_error()):
-                local_var = method_scope.find_variable(self.current_method.param_names[i])
-                if local_var.inferred_types:
-                    new_type = types.get_most_specialized_type(local_var.inferred_types)
-                    self.current_method.param_types[i] = new_type
-                    self.had_changed = True
-                    local_var.set_type_and_clear_inference_types_list(new_type)
-                    if new_type.is_error():
-                        self.errors.append(HulkSemanticError(HulkSemanticError.INCONSISTENT_USE))
-
+        for i, param_type in enumerate(self.current_method.param_types):
+            param_name = self.current_method.param_names[i]
+            local_var = method_scope.find_variable(param_name)
+            if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
+                try:
+                    new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
+                except HulkSemanticError as e:
+                    self.errors.append(e)
+                    new_type = types.ErrorType()
+                self.current_method.param_types[i] = new_type
+                self.had_changed = not isinstance(new_type, types.AutoType)
+                local_var.set_type_and_clear_inference_types_list(new_type)
         self.current_method = None
 
         return return_type
@@ -147,16 +146,18 @@ class TypeInferrer(object):
         expr_scope = node.expr.scope
 
         # Check if we could infer some params types
-        for i in range(len(function.param_types)):
-            if function.param_types[i] == types.AutoType() and not function.param_types[i].is_error():
-                local_var = expr_scope.find_variable(function.param_names[i])
-                if local_var.inferred_types:
-                    new_type = types.get_most_specialized_type(local_var.inferred_types)
-                    function.param_types[i] = new_type
-                    self.had_changed = True
-                    local_var.set_type_and_clear_inference_types_list(new_type)
-                    if new_type.is_error():
-                        self.errors.append(HulkSemanticError(HulkSemanticError.INCONSISTENT_USE))
+        for i, param_type in enumerate(function.param_types):
+            param_name = function.param_names[i]
+            local_var = expr_scope.find_variable(param_name)
+            if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
+                try:
+                    new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
+                except HulkSemanticError as e:
+                    self.errors.append(e)
+                    new_type = types.ErrorType()
+                function.param_types[i] = new_type
+                self.had_changed = not isinstance(new_type, types.AutoType)
+                local_var.set_type_and_clear_inference_types_list(new_type)
 
         return return_type
 

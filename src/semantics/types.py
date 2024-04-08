@@ -55,10 +55,12 @@ class Method:
 
     def inference_errors(self):
         errors = []
-        for i in range(len(self.param_types)):
-            if self.param_types[i] == AutoType() and not self.param_types[i].is_error():
-                errors.append(
-                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
+
+        for i, param_type in enumerate(self.param_types):
+            if isinstance(param_type, AutoType) and not param_type.is_error():
+                param_name = self.param_names[i]
+                error_message = HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (param_name, self.name)
+                errors.append(HulkSemanticError(error_message))
                 self.param_types[i] = ErrorType()
 
         if self.return_type == AutoType() and not self.return_type.is_error():
@@ -228,10 +230,11 @@ class Type:
             errors.extend(attr.inference_errors())
         for method in self.methods:
             errors.extend(method.inference_errors())
-        for i in range(len(self.params_types)):
-            if self.params_types[i] == AutoType() and not self.params_types[i].is_error():
-                errors.append(
-                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.params_names[i], self.name)))
+        for i, param_type in enumerate(self.params_types):
+            if isinstance(param_type, AutoType):
+                param_name = self.params_names[i]
+                error_message = HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (param_name, self.name)
+                errors.append(HulkSemanticError(error_message))
                 self.params_types[i] = ErrorType()
         return errors
 
@@ -355,15 +358,16 @@ class VectorType(Type):
         return isinstance(other, VectorType) or other.name == self.name
 
 
-def get_most_specialized_type(types: List[Union[Type, Protocol]]):
+def get_most_specialized_type(types: List[Union[Type, Protocol]], var_name: str):
     """
     Get the most specialized type in a list of types.
     If there is some ErrorType in the list, it will return an ErrorType.
     If there is some AutoType in the list, it will return an AutoType.
-    If there is no specialized type, it will return an ErrorType.
+    If there is no specialized type, it will raise a HulkSemanticError.
 
     :param types: List of types or protocols
     :type types: List[Union[Type, Protocol]]
+    :param var_name: Name of the variable that is being checked.
     :return: The most specialized type in the list.
     :rtype: Type or Protocol
     """
@@ -376,7 +380,7 @@ def get_most_specialized_type(types: List[Union[Type, Protocol]]):
         if typex.conforms_to(most_specialized):
             most_specialized = typex
         elif not most_specialized.conforms_to(typex):
-            return ErrorType()
+            raise HulkSemanticError(HulkSemanticError.INCONSISTENT_USE % var_name)
     return most_specialized
 
 

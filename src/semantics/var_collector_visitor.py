@@ -49,9 +49,10 @@ class VarCollector(object):
 
         # Create a new scope that includes the parameters
         new_scope = scope.create_child()
-        for i in range(len(self.current_type.params_names)):
-            new_scope.define_variable(self.current_type.params_names[i], self.current_type.params_types[i],
-                                      is_parameter=True)
+
+        for i, param_name in enumerate(self.current_type.params_names):
+            param_type = self.current_type.params_types[i]
+            new_scope.define_variable(param_name, param_type, is_parameter=True)
 
         for expr in node.parent_args:
             self.visit(expr, new_scope.create_child())
@@ -79,8 +80,9 @@ class VarCollector(object):
 
         new_scope = scope.create_child()
 
-        for i in range(len(method.param_names)):
-            new_scope.define_variable(method.param_names[i], method.param_types[i], is_parameter=True)
+        for i, param_name in enumerate(method.param_names):
+            param_type = method.param_types[i]
+            new_scope.define_variable(param_name, param_type, is_parameter=True)
 
         self.visit(node.expr, new_scope)
 
@@ -92,8 +94,9 @@ class VarCollector(object):
 
         new_scope = scope.create_child()
 
-        for i in range(len(function.param_names)):
-            new_scope.define_variable(function.param_names[i], function.param_types[i], is_parameter=True)
+        for i, param_name in enumerate(function.param_names):
+            param_type = function.param_types[i]
+            new_scope.define_variable(param_name, param_type, is_parameter=True)
 
         self.visit(node.expr, new_scope)
 

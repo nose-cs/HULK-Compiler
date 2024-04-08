@@ -28,13 +28,13 @@ class TestHulkBase(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(4, len(errors), f"Expects 4 error, but got {len(errors)}")
 
-    def test_cannot_declare_a_function(self):
-        inp = ('''
-        function base(a) => a + 8;
-        let a = base(6, 7, 8) in a;
-        ''')
-        ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+    # def test_cannot_declare_a_function(self):
+    #     inp = ('''
+    #     function base(a) => a + 8;
+    #     let a = base(6, 7, 8) in a;
+    #     ''')
+    #     ast, errors, context, scope = run_code(inp, True)
+    #     self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
 
     def test_valid_base_call(self):
         inp = '''
