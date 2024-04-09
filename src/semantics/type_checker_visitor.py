@@ -31,6 +31,9 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         self.current_type = self.context.get_type(node.idx)
 
+        if self.current_type.is_error():
+            return
+
         for attr in node.attributes:
             self.visit(attr)
 
@@ -73,33 +76,34 @@ class TypeChecker(object):
     def visit(self, node: hulk_nodes.MethodDeclarationNode):
         self.current_method = self.current_type.get_method(node.id)
 
-        return_type = self.visit(node.expr)
+        inf_type = self.visit(node.expr)
 
-        if self.current_type.parent is None:
-            return return_type
+        if not inf_type.conforms_to(self.current_method.return_type):
+            error_text = HulkSemanticError.INCOMPATIBLE_TYPES % (inf_type.name, self.current_method.return_type.name)
+            self.errors.append(HulkSemanticError(error_text))
+
+        return_type = self.current_method.return_type
 
         # Check if override is correct
+        if self.current_type.parent is None or self.current_type.parent.is_error():
+            return return_type
+
         try:
             parent_method = self.current_type.parent.get_method(node.id)
         except HulkSemanticError:
-            parent_method = None
-
-        if parent_method is None:
             return return_type
 
-        error_text = HulkSemanticError.WRONG_SIGNATURE % parent_method
+        error_text = HulkSemanticError.WRONG_SIGNATURE % self.current_method.name
+
         if parent_method.return_type != return_type:
             self.errors.append(HulkSemanticError(error_text))
-            return_type = types.ErrorType()
-        if len(parent_method.param_types) != len(self.current_method.param_types):
+        elif len(parent_method.param_types) != len(self.current_method.param_types):
             self.errors.append(HulkSemanticError(error_text))
-            return_type = types.ErrorType()
-
-        for i in range(len(parent_method.param_types)):
-            if parent_method.param_types[i] != self.current_method.param_types[i]:
-                self.errors.append(HulkSemanticError(error_text))
-                self.current_method.param_types[i] = types.ErrorType()
-                return_type = types.ErrorType()
+        else:
+            for i, parent_param_type in enumerate(parent_method.param_types):
+                param_type = self.current_method.param_types[i]
+                if parent_param_type != param_type:
+                    self.errors.append(HulkSemanticError(error_text))
 
         self.current_method = None
 
@@ -459,7 +463,7 @@ class TypeChecker(object):
     @visitor.when(hulk_nodes.TypeInstantiationNode)
     def visit(self, node: hulk_nodes.TypeInstantiationNode):
         try:
-            ttype = self.context.get_type(node.idx)
+            ttype = self.context.get_type(node.idx, params_len=len(node.args))
         except HulkSemanticError as e:
             self.errors.append(e)
             return types.ErrorType()
@@ -527,3 +531,34 @@ class TypeChecker(object):
             return types.ErrorType()
 
         return obj_type.get_element_type()
+
+    @visitor.when(hulk_nodes.ProtocolDeclarationNode)
+    def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
+        self.current_type = self.context.get_protocol(node.idx)
+        for method in node.methods_signature:
+            self.visit(method)
+        self.current_type = None
+
+    @visitor.when(hulk_nodes.MethodSignatureDeclarationNode)
+    def visit(self, node: hulk_nodes.MethodSignatureDeclarationNode):
+        self.current_method = self.current_type.get_method(node.id)
+
+        return_type = self.current_method.return_type
+
+        # Check if override is correct
+        if self.current_type.parent is None or self.current_type.parent.is_error():
+            return return_type
+
+        try:
+            parent_method: types.Method = self.current_type.parent.get_method(node.id)
+        except HulkSemanticError:
+            return return_type
+
+        error_text = HulkSemanticError.WRONG_SIGNATURE % self.current_method.name
+
+        if not parent_method.can_substitute_with(self.current_method):
+            self.errors.append(HulkSemanticError(error_text))
+
+        self.current_method = None
+
+        return return_type

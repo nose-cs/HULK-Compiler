@@ -49,29 +49,33 @@ class TypeBuilder(object):
         params_names = []
         params_types = []
 
-        for i in range(len(node.params_ids)):
-            if node.params_ids[i] in params_names:
-                index = params_names.index(node.params_ids[i])
-                self.errors.append(HulkSemanticError(f'Parameter {node.params_ids[i]} is already declared'))
+        for i, param_name in enumerate(node.params_ids):
+            param_type = node.params_types[i]
+            # Check if the parameter is already declared and set it to ErrorType
+            if param_name in params_names:
+                self.errors.append(HulkSemanticError(f'Parameter {param_name} is already declared'))
+                index = params_names.index(param_name)
                 params_types[index] = ErrorType()
             else:
-                try:
-                    if node.params_types[i] is None:
-                        param_type = AutoType()
-                        params_types.append(param_type)
-                    else:
-                        param_type = self.context.get_type_or_protocol(node.params_types[i])
-                        params_types.append(param_type)
-                except HulkSemanticError as e:
-                    self.errors.append(e)
-                    params_types.append(ErrorType())
-                params_names.append(node.params_ids[i])
+                if param_type is None:
+                    param_type = AutoType()
+                else:
+                    try:
+                        param_type = self.context.get_type_or_protocol(param_type)
+                    except HulkSemanticError as e:
+                        self.errors.append(e)
+                        param_type = ErrorType()
+                params_types.append(param_type)
+                params_names.append(param_name)
 
         return params_names, params_types
 
     @visitor.when(hulk_nodes.TypeDeclarationNode)
     def visit(self, node: hulk_nodes.TypeDeclarationNode):
         self.current_type = self.context.get_type(node.idx)
+
+        if self.current_type.is_error():
+            return
 
         self.current_type.params_names, self.current_type.params_types = self.get_params_names_and_types(node)
 
@@ -125,6 +129,7 @@ class TypeBuilder(object):
         try:
             self.current_type.define_method(node.id, params_names, params_types, return_type, node)
         except HulkSemanticError as e:
+
             self.errors.append(e)
 
     @visitor.when(hulk_nodes.AttributeDeclarationNode)
@@ -148,6 +153,10 @@ class TypeBuilder(object):
     @visitor.when(hulk_nodes.ProtocolDeclarationNode)
     def visit(self, node: hulk_nodes.ProtocolDeclarationNode):
         self.current_type = self.context.get_protocol(node.idx)
+
+        if self.current_type.is_error():
+            return
+
         if node.parent is not None:
             try:
                 # Look for a circular dependency

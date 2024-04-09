@@ -16,10 +16,12 @@ class Function:
 
     def inference_errors(self):
         errors = []
-        for i in range(len(self.param_types)):
-            if self.param_types[i] == AutoType() and not self.param_types[i].is_error():
-                errors.append(
-                    HulkSemanticError(HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (self.param_names[i], self.name)))
+
+        for i, param_type in enumerate(self.param_types):
+            if isinstance(param_type, AutoType):
+                param_name = self.param_names[i]
+                error_message = HulkSemanticError.CANNOT_INFER_PARAM_TYPE % (param_name, self.name)
+                errors.append(HulkSemanticError(error_message))
                 self.param_types[i] = ErrorType()
 
         if self.return_type == AutoType() and not self.return_type.is_error():
@@ -51,11 +53,16 @@ class Context:
         typex = self.types[name] = Type(name, node)
         return typex
 
-    def get_type(self, ttype) -> Type:
+    def get_type(self, name, params_len=None) -> Type:
         try:
-            return self.types[ttype]
+            ttype: Type = self.types[name]
+            if ttype.is_error() and params_len:
+                ttype = ErrorType()
+                ttype.params_names = ['<error>'] * params_len
+                ttype.params_types = [ErrorType()] * params_len
+            return ttype
         except KeyError:
-            raise HulkSemanticError(f'Type "{ttype}" is not defined.')
+            raise HulkSemanticError(f'Type "{name}" is not defined.')
 
     def create_protocol(self, name: str, node=None) -> Protocol:
         if name in self.protocols:
@@ -80,6 +87,14 @@ class Context:
                 return self.get_protocol(ttype)
             except HulkSemanticError:
                 return self.get_type(ttype)
+
+    def set_type_or_protocol_error(self, name):
+        if name in self.types:
+            self.types[name] = ErrorType()
+        elif name in self.protocols:
+            self.protocols[name] = ErrorType()
+        else:
+            raise HulkSemanticError(f'Type or protocol "{name}" is not defined.')
 
     def create_function(self, name: str, params_names: list, params_types: list, return_type, node=None) -> Function:
         if name in self.functions:
@@ -117,8 +132,6 @@ class VariableInfo:
         self.name = name
         self.type = vtype
         self.inferred_types = []
-        # if not isinstance(vtype, AutoType):
-        #     self.inferred_types.append(vtype)
         self.is_parameter = is_parameter
         self.nameC = None
 

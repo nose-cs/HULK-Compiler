@@ -136,3 +136,107 @@ class TestHulkLoops(unittest.TestCase):
         """
 
         assert run_code(type_test, True)
+
+    def test____(self):
+        inp = ('''
+                type A {
+                    f() => 5;
+                }
+                type B inherits A {
+                    f() => "hola";
+                }
+                let x = 9 in new A();
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_____(self):
+        inp = ('''
+                type A {
+                    f(a: String) => 5;
+                }
+                type B inherits A {
+                    f(b: Number) => "hola";
+                }
+                let x = 9 in new A();
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test_________(self):
+        inp = ('''
+                type A {
+                    f(): String => 5;
+                }
+                let x = 9 in new A();
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
+
+    def test______(self):
+        inp = ('''
+                type A {
+                    f(): Object => 5;
+                }
+                let x = new A() in x.f(2, 3);
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors), f"Expects 0 error, but got {len(errors)}")
+
+    def test_______(self):
+        inp = ('''
+                type A(x) {
+                    f(): Object => 5;
+                }
+                
+                type A(x, y) {
+                    f(): Object => 5;
+                }
+                
+                let x = new A(), y = new A(2, 3) in x.f(2, 3);
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))
+
+    def test________(self):
+        inp = ('''
+                protocol A {
+                    f(): Object;
+                }
+
+                protocol B extends A {
+                    f(x: Number): Object;
+                }
+
+                5;
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))
+
+    def test___(self):
+        inp = ('''
+                protocol A {
+                    f(): Object;
+                }
+
+                protocol B extends A {
+                    f(): Object;
+                }
+
+                5;
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))
+
+    def test__________(self):
+        inp = ('''
+                   type A(x) {
+                       x = x + 5;
+                   }
+                   
+                   function f(x) => new A(x);
+
+                   5;
+                   ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))
