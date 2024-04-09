@@ -958,7 +958,6 @@ Object* method_Range_equals(Object* range1, Object* range2)
 
 Object* createD ();
 Object* method_D_getc (Object* self);
-Object* method_D_getd (Object* self, Object* p0);
 
 
 Object* createD () {
@@ -967,7 +966,6 @@ Object* createD () {
 
    addAttribute(obj, "parent_type0", "D");
    addAttribute(obj, "method_D_getc", *method_D_getc);
-   addAttribute(obj, "method_D_getd", *method_D_getd);
    addAttribute(obj, "parent_type1", "Object");
 
    return obj;
@@ -981,10 +979,7 @@ Object* createBlock0();
 
 Object* letInNode0() {
    Object* v0 = copyObject(createBlock0());
-   ((Object* (*)(Object*,Object*))getMethodForCurrentType(v0, "getd", NULL))(v0, copyObject(((Object* (*)(Object*))getMethodForCurrentType(v0, "getc", NULL))(v0)));
-   replaceObject(v0, ((Object* (*)(Object*))getMethodForCurrentType(v0, "getc", NULL))(v0));
-   function_print(copyObject(v0));
-   return ((Object* (*)(Object*))getMethodForCurrentType(v0, "getc", NULL))(v0);
+   return function_print(copyObject(((Object* (*)(Object*))getMethodForCurrentType(v0, "getc", NULL))(v0)));
 }
 
 Object* loopBlock0(Object* self) {
@@ -1005,13 +1000,6 @@ Object* method_D_getc (Object* self) {
        throwError("Null Reference");
 
    return loopBlock0(self);
-}
-
-Object* method_D_getd (Object* self, Object* p0) {
-   if(self == NULL)
-       throwError("Null Reference");
-
-   return numberSum(p0, createNumber(5));
 }
 
 
