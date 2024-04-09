@@ -782,48 +782,11 @@ Object* method_Range_equals(Object* range1, Object* range2)
 
 /////////////////////////////////  Generated Code  ////////////////////////////////////
 
-Object* createD ();
-
-
-Object* createD () {
-   Object* obj = createObject();
-
-
-   addAttribute(obj, "parent_type0", "D");
-   addAttribute(obj, "parent_type1", "Object");
-
-   return obj;
-}
-
-Object* ifElseBlock0();
-
-Object* letInNode0();
-
-Object* createBlock0();
-
-Object* letInNode0() {
-   Object* v0 = copyObject(createBlock0());
-   return createBoolean(true);
-}
-
-Object* ifElseBlock0() {
-   if(*((bool*)getAttributeValue(letInNode0(), "value"))) {
-      return function_print(copyObject(createString("\"(a]\"'b*\n*b\"b'b")));
-   }
-   else {
-      return createNumber(1);
-   }
-}
-
-Object* createBlock0() {
-
-   return createD();
-}
 
 
 int main() {
    srand(time(NULL));
 
-   ifElseBlock0();
+   function_print(copyObject(stringConcat(stringConcat(stringConcat(createString("Hello"), createString(" ")), createString("World")), createString("!"))));
    return 0; 
 }
