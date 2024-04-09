@@ -34,7 +34,7 @@ class TypeInferrer(object):
             var_info.inferred_types.append(inf_type)
             if not isinstance(inf_type, types.AutoType):
                 self.had_changed = True
-        elif isinstance(node, hulk_nodes.IndexingNode):
+        if isinstance(node, hulk_nodes.IndexingNode):
             self.assign_auto_type(node.obj, scope, types.VectorType(inf_type))
 
     @visitor.on('node')
@@ -85,6 +85,7 @@ class TypeInferrer(object):
         for i, param_type in enumerate(self.current_type.params_types):
             param_name = self.current_type.params_names[i]
             local_var = const_scope.find_variable(param_name)
+            local_var.type = param_type
             if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
                 try:
                     new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
@@ -95,8 +96,8 @@ class TypeInferrer(object):
                 if not isinstance(new_type, types.AutoType):
                     self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
-            if isinstance(self.current_type.params_types[i], types.AutoType) and self.current_type.param_vars[
-                i].inferred_types:
+            if (isinstance(self.current_type.params_types[i], types.AutoType)
+                    and self.current_type.param_vars[i].inferred_types):
                 new_type = types.get_lowest_common_ancestor(self.current_type.param_vars[i].inferred_types)
                 self.current_type.params_types[i] = new_type
                 if not isinstance(new_type, types.AutoType):
@@ -141,6 +142,7 @@ class TypeInferrer(object):
         for i, param_type in enumerate(self.current_method.param_types):
             param_name = self.current_method.param_names[i]
             local_var = method_scope.find_variable(param_name)
+            local_var.type = param_type
             if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
                 try:
                     new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
@@ -151,8 +153,8 @@ class TypeInferrer(object):
                 if not isinstance(new_type, types.AutoType):
                     self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
-            if isinstance(self.current_method.param_types[i], types.AutoType) and self.current_method.param_vars[
-                i].inferred_types:
+            if (isinstance(self.current_method.param_types[i], types.AutoType)
+                    and self.current_method.param_vars[i].inferred_types):
                 new_type = types.get_lowest_common_ancestor(self.current_method.param_vars[i].inferred_types)
                 self.current_method.param_types[i] = new_type
                 if not isinstance(new_type, types.AutoType):
@@ -179,6 +181,7 @@ class TypeInferrer(object):
         for i, param_type in enumerate(function.param_types):
             param_name = function.param_names[i]
             local_var = expr_scope.find_variable(param_name)
+            local_var.type = param_type
             if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
                 try:
                     new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
@@ -227,8 +230,8 @@ class TypeInferrer(object):
         if old_type.name == 'Self':
             return types.ErrorType()
 
-        if new_type == types.AutoType() and not new_type.is_error():
-            return old_type
+        if isinstance(new_type, types.AutoType) and not isinstance(old_type, types.AutoType):
+            self.assign_auto_type(node.expr, node.scope, old_type)
 
         return old_type
 
@@ -302,6 +305,8 @@ class TypeInferrer(object):
         if self.current_method is None:
             return types.ErrorType()
 
+        args_types = [self.visit(arg) for arg in node.args]
+
         try:
             method = self.current_type.parent.get_method(self.current_method.name)
         except HulkSemanticError:
@@ -310,8 +315,16 @@ class TypeInferrer(object):
             return types.ErrorType()
 
         for arg, param_type in zip(node.args, method.param_types):
-            self.visit(arg)
             self.assign_auto_type(arg, scope, param_type)
+
+        for i, func_param_type in enumerate(method.param_types):
+            if len(args_types) <= i:
+                break
+            arg_type = args_types[i]
+            if func_param_type == types.AutoType() and not func_param_type.is_error():
+                var = method.param_vars[i]
+                var.inferred_types.append(arg_type)
+                self.had_changed = True
 
         return method.return_type
 

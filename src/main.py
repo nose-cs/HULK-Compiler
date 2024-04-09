@@ -28,7 +28,7 @@ def run_pipeline(input_path: Path, output_path: Path):
         print_error(error)
         return
 
-    hulk_lexer = HulkLexer(True)
+    hulk_lexer = HulkLexer()
     tokens, lexicographic_errors = hulk_lexer(text)
 
     if lexicographic_errors:
@@ -45,7 +45,7 @@ def run_pipeline(input_path: Path, output_path: Path):
             print_error(err)
         return
 
-    ast, semantic_errors, context, scope = semantic_analysis_pipeline(ast, debug=True)
+    ast, semantic_errors, context, scope = semantic_analysis_pipeline(ast)
 
     if semantic_errors:
         for err in semantic_errors:
