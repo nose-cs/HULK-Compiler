@@ -392,7 +392,7 @@ Object* method_Number_equals(Object* number1, Object* number2) {
     if(number1 == NULL || number2 == NULL)
         throwError("Null Reference");
 
-    if(strcmp(getType(number1), getType(number2)) != 0)
+    if(strcmp(getType(number1), "Number") != 0 || strcmp(getType(number2), "Number") != 0)
         return createBoolean(false);
 
     double* value1 = getAttributeValue(number1, "value");
@@ -615,7 +615,7 @@ Object* method_String_equals(Object* string1, Object* string2) {
     if(string1 == NULL || string2 == NULL)
         throwError("Null Reference");
 
-    if(strcmp(getType(string1), getType(string2)) != 0)
+    if(strcmp(getType(string1), "String") != 0 || strcmp(getType(string2), "String") != 0)
         return createBoolean(false);
 
     char* value1 = getAttributeValue(string1, "value");
@@ -657,7 +657,7 @@ Object* method_Boolean_equals(Object* bool1, Object* bool2) {
     if(bool1 == NULL || bool2 == NULL)
         throwError("Null Reference");
 
-    if(strcmp(getType(bool1), getType(bool2)) != 0)
+    if(strcmp(getType(bool1), "Boolean") != 0 || strcmp(getType(bool2), "Boolean") != 0)
         return createBoolean(false);
 
     bool* value1 = getAttributeValue(bool1, "value");
@@ -832,7 +832,7 @@ Object* method_Vector_equals(Object* vector1, Object* vector2)
     if(vector1 == NULL || vector2 == NULL)
         throwError("Null Reference");
 
-    if(strcmp(getType(vector1), getType(vector2)) != 0)
+    if(strcmp(getType(vector1), "Vector") != 0 || strcmp(getType(vector2), "Vector") != 0)
         return createBoolean(false);
 
     int* size1 = getAttributeValue(vector1, "size");
@@ -944,6 +944,9 @@ Object* method_Range_equals(Object* range1, Object* range2)
 {
     if(range1 == NULL || range2 == NULL)
         throwError("Null Reference");
+
+    if(strcmp(getType(range1), "Range") != 0 || strcmp(getType(range2), "Range") != 0)
+        return createBoolean(false);
 
     Object* min1 = getAttributeValue(range1, "min");
     Object* max1 = getAttributeValue(range1, "max");
