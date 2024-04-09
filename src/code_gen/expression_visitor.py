@@ -606,13 +606,15 @@ class CodeGenC(object):
 
         vector_comp += " {\n"
 
-        vector_comp += "   Object* vector = " + self.visit(node.iterable) + ";\n"
-        vector_comp += "   Object** list = getAttributeValue(vector, \"list\");\n"
-        vector_comp += "   int size = *(int*)getAttributeValue(vector, \"size\");\n\n"
+        vector_comp += "   Object* iterable = " + self.visit(node.iterable) + ";\n"
+        vector_comp += "   Object*(*next)(Object*) = getMethodForCurrentType(iterable, \"next\", NULL);\n"
+        vector_comp += "   Object*(*current)(Object*) = getMethodForCurrentType(iterable, \"current\", NULL);\n\n"
+        vector_comp += "   int size = *(int*)getAttributeValue(iterable, \"size\");\n\n"
 
         vector_comp += "   Object** new_list = malloc(size * sizeof(Object*));\n\n"
 
         vector_comp += "   for(int i = 0; i < size; i++) {\n"
+        vector_comp += "      next(iterable);\n"
         vector_comp += "      new_list[i] = selector" + str(index_selector)
 
         params = "("
@@ -620,7 +622,7 @@ class CodeGenC(object):
         for var in vars:
             params += var.nameC + ", "
 
-        vector_comp += params + "list[i]);\n"
+        vector_comp += params + "current(iterable));\n"
 
         if len(vars) > 0:
             params = params[:-2]
