@@ -32,6 +32,9 @@ class CodeGenC(object):
         self.vector_selector = ""
         self.index_vector_selector = 0
 
+        self.expression_block = ""
+        self.index_expression_block = 0
+
     @staticmethod
     def get_lines_indented(code: str, add_return=False, collect_last_exp=False):
         lines = ["   " + line for line in code.split('\n') if len(line.strip(' ')) > 0]
@@ -120,14 +123,49 @@ class CodeGenC(object):
 
     @visitor.when(hulk_nodes.ExpressionBlockNode)
     def visit(self, node: hulk_nodes.ExpressionBlockNode):
-        code = ""
+        vars = node.scope.get_variables(True)
+
+        params = "("
+
+        for var in vars:
+            params += var.nameC + ", "
+
+        if len(vars) > 0:
+            params = params[:-2]
+
+        params += ")"
+
+        code = "Object* expressionBlock" + str(self.index_expression_block) + "("
+        index = self.index_expression_block
+        self.index_expression_block += 1
+
+        for var in vars:
+            code += "Object* " + var.nameC + ", "
+
+        if len(vars) > 0:
+            code = code[:-2]
+
+        code += ")"
+
+        self.blocks_defs += code + ";\n\n"
+
+        code += " {\n"
+
+        expression_code = ""
 
         for expression in node.expressions:
-            code += self.visit(expression) + ";\n"
+            expression_code += self.visit(expression) + ";\n"
 
-        code = code[:-2]
+        expression_code = self.get_lines_indented(expression_code[:-2], True)
 
-        return code
+        code += expression_code
+
+        code += "}"
+
+
+        self.expression_block += code + "\n\n"
+
+        return "expressionBlock" + str(index) + params
 
     @visitor.when(hulk_nodes.PlusNode)
     def visit(self, node: hulk_nodes.PlusNode):

@@ -581,10 +581,13 @@ Object* createString(char* str) {
     return obj;
 }
 
-Object* stringConcat(Object* string1, Object* string2)
+Object* stringConcat(Object* obj1, Object* obj2)
 {
-    if(string1 == NULL || string2 == NULL)
+    if(obj1 == NULL || obj2 == NULL)
         throwError("Null Reference");
+
+    Object* string1 = ((Object* (*)(Object*))getMethodForCurrentType(obj1, "toString", NULL))(obj1);
+    Object* string2 = ((Object* (*)(Object*))getMethodForCurrentType(obj2, "toString", NULL))(obj2);
 
     char* str1 = getAttributeValue(string1, "value");
     int len1 = *(int*)getAttributeValue(string1, "len");
@@ -592,8 +595,10 @@ Object* stringConcat(Object* string1, Object* string2)
     char* str2 = getAttributeValue(string2, "value");
     int len2 = *(int*)getAttributeValue(string2, "len");
 
-    char* result = malloc((len1 + len2) * sizeof(char));
+    char* result = malloc((len1 + len2 + 1) * sizeof(char));
     sprintf(result, "%s%s", str1, str2);
+    result[len1 + len2] = '\0';
+
     return createString(result);
 }
 
@@ -876,6 +881,12 @@ Object* createRange(Object* min, Object* max)
     addAttribute(obj, "min", min);
     addAttribute(obj, "max", max);
     addAttribute(obj, "current", numberMinus(min, createNumber(1)));
+
+    int* size = malloc(sizeof(int));
+    *size = (int)(*(double*)getAttributeValue(max, "value")) - (int)(*(double*)getAttributeValue(min, "value"));
+    printf("%d", *size);
+
+    addAttribute(obj, "size", size);
 
     addAttribute(obj, "parent_type0", "Range");
     addAttribute(obj, "parent_type1", "Object");
