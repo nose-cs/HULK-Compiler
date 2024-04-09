@@ -30,6 +30,7 @@ class Method:
         self.node = node
         self.param_names = param_names
         self.param_types = params_types
+        self.param_vars = []
         self.return_type = return_type
 
     def __str__(self):
@@ -141,6 +142,7 @@ class Type:
         self.node = node
         self.params_names = []
         self.params_types = []
+        self.param_vars = []
         self.attributes: List[Attribute] = []
         self.methods: List[Method] = []
         self.parent = None

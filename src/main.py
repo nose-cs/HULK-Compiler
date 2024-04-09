@@ -45,7 +45,7 @@ def run_pipeline(input_path: Path, output_path: Path):
             print_error(err)
         return
 
-    ast, semantic_errors, context, scope = semantic_analysis_pipeline(ast)
+    ast, semantic_errors, context, scope = semantic_analysis_pipeline(ast, debug=True)
 
     if semantic_errors:
         for err in semantic_errors:

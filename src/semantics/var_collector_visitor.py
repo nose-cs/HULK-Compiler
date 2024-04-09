@@ -2,7 +2,7 @@ import src.hulk_grammar.hulk_ast_nodes as hulk_nodes
 import src.visitor as visitor
 from src.errors import HulkSemanticError
 from src.semantics.types import ErrorType, AutoType, Method, SelfType
-from src.semantics.utils import Scope, Context, Function
+from src.semantics.utils import Scope, Context, Function, VariableInfo
 
 
 class VarCollector(object):
@@ -55,6 +55,7 @@ class VarCollector(object):
         for i, param_name in enumerate(self.current_type.params_names):
             param_type = self.current_type.params_types[i]
             new_scope.define_variable(param_name, param_type, is_parameter=True)
+            self.current_type.param_vars.append(VariableInfo(param_name, param_type))
 
         for expr in node.parent_args:
             self.visit(expr, new_scope.create_child())
@@ -84,6 +85,7 @@ class VarCollector(object):
         for i, param_name in enumerate(method.param_names):
             param_type = method.param_types[i]
             new_scope.define_variable(param_name, param_type, is_parameter=True)
+            method.param_vars.append(VariableInfo(param_name, param_type))
 
         self.visit(node.expr, new_scope)
 
@@ -98,6 +100,7 @@ class VarCollector(object):
         for i, param_name in enumerate(function.param_names):
             param_type = function.param_types[i]
             new_scope.define_variable(param_name, param_type, is_parameter=True)
+            function.param_vars.append(VariableInfo(param_name, param_type))
 
         self.visit(node.expr, new_scope)
 

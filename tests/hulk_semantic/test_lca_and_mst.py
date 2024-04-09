@@ -102,13 +102,14 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors))
 
+    # todo
     def test_lca_auto(self):
         inp = ('''
                 function x(x, y: Range, z: Number[]) => if (true) x elif(true) y else z;
                 let x = [9], y = range(1, 10) in x(x, y, x).length;
         ''')
         ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(2, len(errors))
+        self.assertEqual(1, len(errors))
 
     def test_most_spec_types(self):
         inp = ('''

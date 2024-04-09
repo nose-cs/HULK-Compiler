@@ -12,6 +12,7 @@ class Function:
         self.node = node
         self.param_names = param_names
         self.param_types = param_types
+        self.param_vars = []
         self.return_type = return_type
 
     def inference_errors(self):
@@ -156,7 +157,7 @@ class VariableInfo:
         self.inferred_types = []
 
     def __str__(self):
-        return f'{self.name} : {self.type.name}'
+        return f'{self.name} : {self.type.name} inf:{[inf.name for inf in self.inferred_types]}'
 
     def __repr__(self):
         return str(self)
