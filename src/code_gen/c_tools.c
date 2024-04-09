@@ -348,7 +348,7 @@ Object* function_print(Object* obj)
     if(obj == NULL || obj->lists == NULL)
     {
         printf("Null\n");
-        return "Null";
+        return createString("Null");
     }
 
     Object* str = ((Object* (*)(Object*))getMethodForCurrentType(obj, "toString", 0))(obj);

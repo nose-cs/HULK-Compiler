@@ -1,4 +1,7 @@
+import sys
 from typing import List
+
+import dill
 
 import src.hulk_grammar.hulk_grammar as hulk_grammar
 from src.errors import HulkSyntacticError
@@ -8,8 +11,25 @@ from src.utils import Token
 
 
 class HulkParser(LR1Parser):
-    def __init__(self):
-        super().__init__(hulk_grammar.G)
+    def __init__(self, rebuild=False, save=False):
+        if rebuild:
+            super().__init__(hulk_grammar.G)
+        else:
+            try:
+                with open('parser/hulk_parser_table.pkl', 'rb') as table_pkl:
+                    self.table = dill.load(table_pkl)
+                with open('parser/hulk_parser_verbose.pkl', 'rb') as verbose_pkl:
+                    self.verbose = dill.load(verbose_pkl)
+            except:
+                super().__init__(hulk_grammar.G)
+
+        if save:
+            sys.setrecursionlimit(10000)
+
+            with open('parser/hulk_parser_table.pkl', 'wb') as table_pkl:
+                dill.dump(self.table, table_pkl)
+            with open('parser/hulk_parser_verbose.pkl', 'wb') as verbose_pkl:
+                dill.dump(self.verbose, verbose_pkl)
 
     def __call__(self, tokens: List[Token]):
         try:
