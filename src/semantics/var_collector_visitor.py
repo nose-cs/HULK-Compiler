@@ -107,7 +107,7 @@ class VarCollector(object):
         node.scope = block_scope
 
         for expr in node.expressions:
-            self.visit(expr, block_scope)
+            self.visit(expr, block_scope.create_child())
 
     @visitor.when(hulk_nodes.VarDeclarationNode)
     def visit(self, node: hulk_nodes.VarDeclarationNode, scope: Scope):

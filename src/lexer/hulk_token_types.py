@@ -21,6 +21,7 @@ class TokenType(Enum):
     STRING = auto()
     NUMBER = auto()
     BOOLEAN = auto()
+    PI = auto()
 
     # Arithmetic operators
     PLUS = auto()

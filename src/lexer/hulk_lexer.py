@@ -6,6 +6,7 @@ import src.hulk_grammar.hulk_grammar as hulk_grammar
 from src.errors import HulkLexicographicError
 from src.lexer.hulk_token_types import TokenType
 from src.lexer.lexer import Lexer
+from src.utils import Token
 
 operators = [
     ("{", TokenType.OPEN_BRACKET), ("}", TokenType.CLOSE_BRACKET), (";", TokenType.SEMICOLON),
@@ -26,7 +27,7 @@ reserved_words = [("let", TokenType.LET), ("in", TokenType.IN),
                   ("new", TokenType.NEW), ("is", TokenType.IS), ("as", TokenType.AS),
                   ("protocol", TokenType.PROTOCOL), ("extends", TokenType.EXTENDS),
                   ("type", TokenType.TYPE), ("inherits", TokenType.INHERITS), ("base", TokenType.BASE),
-                  ("true|false", TokenType.BOOLEAN)]
+                  ("true|false", TokenType.BOOLEAN), ("PI", TokenType.PI)]
 
 nonzero_digits = '|'.join(str(n) for n in range(1, 10))
 digits = '|'.join(str(n) for n in range(10))
@@ -90,6 +91,9 @@ class HulkLexer(Lexer):
     def __call__(self, text):
         tokens = super().__call__(text)
         errors = self.report_errors(tokens)
+        tokens = [
+            token if token.token_type != TokenType.PI else Token('3.141592', TokenType.NUMBER, token.row, token.column)
+            for token in tokens]
         filtered_tokens = [token for token in tokens if token.is_valid and
                            token.token_type not in [TokenType.SPACES, TokenType.ESCAPED_CHAR,
                                                     TokenType.UNTERMINATED_STRING]]

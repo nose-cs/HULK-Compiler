@@ -541,6 +541,9 @@ class TypeChecker(object):
 
     @visitor.when(hulk_nodes.MethodSignatureDeclarationNode)
     def visit(self, node: hulk_nodes.MethodSignatureDeclarationNode):
+        if self.current_type.is_error():
+            return types.ErrorType()
+
         self.current_method = self.current_type.get_method(node.id)
 
         return_type = self.current_method.return_type
