@@ -968,3 +968,61 @@ Object* method_Range_equals(Object* range1, Object* range2)
 }
 
 /////////////////////////////////  Generated Code  ////////////////////////////////////
+
+
+Object* letInNode0();
+
+Object* selector0 (Object* v1);
+
+Object* vectorComprehension0 ();
+
+Object* loopBlock0(Object* v0);
+
+Object* letInNode0() {
+   Object* v0 = copyObject(vectorComprehension0());
+   return loopBlock0(v0);
+}
+
+Object* loopBlock0(Object* v0) {
+   Object* return_obj = NULL;
+   Object* v2 = NULL;
+   Object* iterable = v0;
+   Object*(*next)(Object*) = getMethodForCurrentType(iterable, "next", NULL);
+   Object*(*current)(Object*) = getMethodForCurrentType(iterable, "current", NULL);
+
+   while(*(bool*)getAttributeValue(next(iterable), "value")) {
+      v2 = current(iterable);
+
+      return_obj = function_print(copyObject(v2));
+   }
+   return return_obj;
+}
+
+Object* selector0 (Object* v1) {
+   return numberPow(v1, createNumber(2));
+}
+
+Object* vectorComprehension0 () {
+   Object* iterable = function_range(copyObject(createNumber(1)), copyObject(createNumber(10)));
+   Object*(*next)(Object*) = getMethodForCurrentType(iterable, "next", NULL);
+   Object*(*current)(Object*) = getMethodForCurrentType(iterable, "current", NULL);
+
+   int size = *(int*)getAttributeValue(iterable, "size");
+
+   Object** new_list = malloc(size * sizeof(Object*));
+
+   for(int i = 0; i < size; i++) {
+      next(iterable);
+      new_list[i] = selector0(current(iterable));
+   }
+
+   return createVectorFromList(size, new_list);
+}
+
+
+int main() {
+   srand(time(NULL));
+
+   letInNode0();
+   return 0; 
+}
