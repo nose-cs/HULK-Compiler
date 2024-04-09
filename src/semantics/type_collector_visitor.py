@@ -35,6 +35,9 @@ class TypeCollector(object):
         string_type.define_method('next', [], [], bool_type)
         string_type.define_method('current', [], [], string_type)
 
+        object_type.define_method('equals', ['other'], [object_type], bool_type)
+        object_type.define_method('toString', [], [], string_type)
+
         # Add the built-in functions
         self.context.create_function('print', ['value'], [object_type], string_type)
         self.context.create_function('sqrt', ['value'], [number_type], number_type)

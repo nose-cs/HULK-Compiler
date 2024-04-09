@@ -63,6 +63,14 @@ class TypeInferrer(object):
 
         const_scope = node.scope.children[0]
 
+        if self.current_type.parent.is_error():
+            for arg in node.parent_args:
+                self.visit(arg)
+        else:
+            for arg, param_type in zip(node.parent_args, self.current_type.parent.params_types):
+                self.visit(arg)
+                self.assign_auto_type(arg, arg.scope, param_type)
+
         for attr in node.attributes:
             self.visit(attr)
 
@@ -80,9 +88,6 @@ class TypeInferrer(object):
                 if not isinstance(new_type, types.AutoType):
                     self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
-
-        for expr in node.parent_args:
-            self.visit(expr)
 
             # Infer the params types and return type of the methods
         for method in node.methods:

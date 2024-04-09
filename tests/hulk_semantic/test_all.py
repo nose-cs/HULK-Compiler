@@ -204,3 +204,93 @@ class TestHulkAll(unittest.TestCase):
                   '''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors))
+
+    def test__(self):
+        inp = '''
+                    type D {
+                        getc() => while(false) 5;
+                        equals() => true;
+                    }
+                                       
+                    let a = new D() in
+                        print(a.getc());
+                     '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))
+
+    def test_______(self):
+        inp = '''
+            function f(x: Object) => x;
+            let x: Iterable = new Range(1, 3) in f(x);
+            '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))
+
+    def test___(self):
+        inp = '''
+            function f(x: Number) => x;
+            let x: Iterable = new Range(1, 3) in f(x);
+            '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))
+
+    def test______(self):
+        inp = '''
+            type A inherits B {
+                x = x;
+                y = y;
+            }
+            type B (x, y) {
+                x = x + y;
+            }
+            5;
+        '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))
+
+    def test_____(self):
+        inp = '''
+               type A inherits B {
+                   x = x;
+                   y = y;
+               }
+               type B (x, y) inherits A {
+                   x = x + y;
+               }
+               5;
+           '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))
+
+    def test_________(self):
+        inp = '''
+                type A inherits B {
+                    x = x;
+                    y = y;
+                }
+                
+                type B inherits C {
+                    x = x;
+                    y = y;
+                }
+                
+                type C (x, y) {
+                    x = x + y | y;
+                    y = y;
+                }
+                
+                5;
+            '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))
+
+    def test___________(self):
+        inp = '''
+                type C (x, y) {
+                    x = x + y;
+                    y = y | y;
+                }
+                5;
+            '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(1, len(errors))

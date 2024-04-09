@@ -3,7 +3,7 @@ from src.code_gen.expression_visitor import CodeGenC
 
 class CCodeGenerator:
     def __call__(self, ast, context):
-        with open('src/code_gen/c_tools.c') as c_tools:
+        with open('code_gen/c_tools.c') as c_tools:
             return c_tools.read() + "\n\n" + self.generate(ast, context)
 
     @staticmethod

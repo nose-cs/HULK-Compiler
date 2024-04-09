@@ -109,7 +109,9 @@ class Protocol:
             return False
 
     def conforms_to(self, other):
-        if isinstance(other, Type):
+        if other == ObjectType():
+            return True
+        elif isinstance(other, Type):
             return False
         return self == other or (self.parent is not None and self.parent.conforms_to(
             other)) or self._not_ancestor_conforms_to(other)
