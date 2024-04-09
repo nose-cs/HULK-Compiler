@@ -42,7 +42,7 @@ unsigned int hash(char* key, int capacity) {
 }
 
 void addAttribute(Object* obj, char* key, void* value) {
-    if(obj == NULL)
+    if(obj == NULL || obj->lists == NULL)
         throwError("Null Reference");
 
     unsigned int index = hash(key, OBJECT_DICT_CAPACITY);
@@ -54,7 +54,7 @@ void addAttribute(Object* obj, char* key, void* value) {
 }
 
 void* getAttributeValue(Object* obj, char* key) {
-    if(obj == NULL)
+    if(obj == NULL || obj->lists == NULL)
         throwError("Null Reference");
 
     unsigned int index = hash(key, OBJECT_DICT_CAPACITY);
@@ -71,7 +71,7 @@ void* getAttributeValue(Object* obj, char* key) {
 }
 
 Attribute* getAttribute(Object* obj, char* key) {
-    if(obj == NULL)
+    if(obj == NULL || obj->lists == NULL)
         throwError("Null Reference");
 
     unsigned int index = hash(key, OBJECT_DICT_CAPACITY);
@@ -88,7 +88,7 @@ Attribute* getAttribute(Object* obj, char* key) {
 }
 
 void replaceAttribute(Object* obj, char* key, void* value) {
-    if(obj == NULL)
+    if(obj == NULL || obj->lists == NULL)
         throwError("Null Reference");
 
     Attribute* att = getAttribute(obj, key);
@@ -97,7 +97,7 @@ void replaceAttribute(Object* obj, char* key, void* value) {
 }
 
 void removeAttribute(Object* obj, char* key) {
-    if(obj == NULL)
+    if(obj == NULL || obj->lists == NULL)
         throwError("Null Reference");
 
     unsigned int index = hash(key, OBJECT_DICT_CAPACITY);
@@ -216,10 +216,15 @@ Object* createObject() {
 
 Object* replaceObject(Object* obj1, Object* obj2)
 {
-    if(obj1 == NULL || obj2 == NULL)
-        throwError("Null Reference");
+    if(obj1 == NULL && obj2 != NULL)
+        obj1 = copyObject(obj2);
+    
+    else if(obj1 != NULL && obj2 == NULL)
+        obj1->lists = NULL;
 
-    obj1->lists = obj2->lists;
+    else if(obj1 != NULL && obj2 != NULL)
+        obj1->lists = obj2->lists;
+
     return obj1;
 }
 
@@ -340,9 +345,9 @@ Object* isProtocol(Object* obj, char* protocol)
 
 Object* function_print(Object* obj)
 {
-    if(obj == NULL)
+    if(obj == NULL || obj->lists == NULL)
     {
-        printf("Null");
+        printf("Null\n");
         return "Null";
     }
 
