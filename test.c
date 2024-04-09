@@ -11,6 +11,13 @@
 #define true 1
 #define false 0
 
+/////////////////////////////////  Error   ////////////////////////////////////
+
+void throwError(const char *message) {
+    fprintf(stderr, "Error: %s\n", message);
+    exit(1);
+}
+
 /////////////////////////////////  Types   ////////////////////////////////////
 
 typedef struct Attribute
@@ -35,6 +42,9 @@ unsigned int hash(char* key, int capacity) {
 }
 
 void addAttribute(Object* obj, char* key, void* value) {
+    if(obj == NULL || obj->lists == NULL)
+        throwError("Null Reference");
+
     unsigned int index = hash(key, OBJECT_DICT_CAPACITY);
     Attribute* newAtt = malloc(sizeof(Attribute));
     newAtt->key = strdup(key);
@@ -44,6 +54,9 @@ void addAttribute(Object* obj, char* key, void* value) {
 }
 
 void* getAttributeValue(Object* obj, char* key) {
+    if(obj == NULL || obj->lists == NULL)
+        throwError("Null Reference");
+
     unsigned int index = hash(key, OBJECT_DICT_CAPACITY);
     Attribute* current = obj->lists[index];
 
@@ -58,6 +71,9 @@ void* getAttributeValue(Object* obj, char* key) {
 }
 
 Attribute* getAttribute(Object* obj, char* key) {
+    if(obj == NULL || obj->lists == NULL)
+        throwError("Null Reference");
+
     unsigned int index = hash(key, OBJECT_DICT_CAPACITY);
     Attribute* current = obj->lists[index];
 
@@ -72,12 +88,18 @@ Attribute* getAttribute(Object* obj, char* key) {
 }
 
 void replaceAttribute(Object* obj, char* key, void* value) {
+    if(obj == NULL || obj->lists == NULL)
+        throwError("Null Reference");
+
     Attribute* att = getAttribute(obj, key);
     free(att->value);
     att->value = value;
 }
 
 void removeAttribute(Object* obj, char* key) {
+    if(obj == NULL || obj->lists == NULL)
+        throwError("Null Reference");
+
     unsigned int index = hash(key, OBJECT_DICT_CAPACITY);
     Attribute* current = obj->lists[index];
     Attribute* previous = NULL;
@@ -194,7 +216,15 @@ Object* createObject() {
 
 Object* replaceObject(Object* obj1, Object* obj2)
 {
-    obj1->lists = obj2->lists;
+    if(obj1 == NULL && obj2 != NULL)
+        obj1 = copyObject(obj2);
+    
+    else if(obj1 != NULL && obj2 == NULL)
+        obj1->lists = NULL;
+
+    else if(obj1 != NULL && obj2 != NULL)
+        obj1->lists = obj2->lists;
+
     return obj1;
 }
 
@@ -216,11 +246,17 @@ Object* method_Object_toString(Object* obj)
 
 char* getType(Object* obj)
 {
+    if(obj == NULL)
+        throwError("Null Reference");
+
     return getAttributeValue(obj, "parent_type0");
 }
 
 void* getMethodForCurrentType(Object* obj, char* method_name, char* base_type)
 {
+    if(obj == NULL)
+        throwError("Null Reference");
+
     bool found_base_type = base_type == NULL;
 
     int index = 0;
@@ -257,6 +293,9 @@ void* getMethodForCurrentType(Object* obj, char* method_name, char* base_type)
 
 Object* isType(Object* obj, char* type)
 {
+    if(obj == NULL)
+        throwError("Null Reference");
+
     int index = 0;
     char* initial_parent_type = malloc(128);
     sprintf(initial_parent_type, "%s%d", "parent_type", index++);
@@ -279,6 +318,9 @@ Object* isType(Object* obj, char* type)
 
 Object* isProtocol(Object* obj, char* protocol)
 {
+    if(obj == NULL)
+        throwError("Null Reference");
+
     int index = 0;
     char* initial_protocol = malloc(128);
     sprintf(initial_protocol, "%s%d", "conforms_protocol", index++);
@@ -303,6 +345,12 @@ Object* isProtocol(Object* obj, char* protocol)
 
 Object* function_print(Object* obj)
 {
+    if(obj == NULL || obj->lists == NULL)
+    {
+        printf("Null\n");
+        return "Null";
+    }
+
     Object* str = ((Object* (*)(Object*))getMethodForCurrentType(obj, "toString", 0))(obj);
     
     char* value = getAttributeValue(str, "value");
@@ -330,6 +378,9 @@ Object* createNumber(double number) {
 }
 
 Object* method_Number_toString(Object* number) {
+    if(number == NULL)
+        throwError("Null Reference");
+
     double* value = getAttributeValue(number, "value");
 
     char *str = malloc(30);
@@ -338,6 +389,9 @@ Object* method_Number_toString(Object* number) {
 }
 
 Object* method_Number_equals(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     if(strcmp(getType(number1), getType(number2)) != 0)
         return createBoolean(false);
 
@@ -348,6 +402,9 @@ Object* method_Number_equals(Object* number1, Object* number2) {
 }
 
 Object* numberSum(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -355,6 +412,9 @@ Object* numberSum(Object* number1, Object* number2) {
 }
 
 Object* numberMinus(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -362,6 +422,9 @@ Object* numberMinus(Object* number1, Object* number2) {
 }
 
 Object* numberMultiply(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -369,13 +432,22 @@ Object* numberMultiply(Object* number1, Object* number2) {
 }
 
 Object* numberDivision(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
+
+    if(*value2 == 0)
+        throwError("Zero Division");
 
     return createNumber(*value1 / *value2);
 }
 
 Object* numberPow(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double value = *(double*)getAttributeValue(number1, "value");
     double exp = *(double*)getAttributeValue(number2, "value");
 
@@ -383,30 +455,45 @@ Object* numberPow(Object* number1, Object* number2) {
 }
 
 Object* function_sqrt(Object* number) {
+    if(number == NULL)
+        throwError("Null Reference");
+    
     double value = *(double*)getAttributeValue(number, "value");
 
     return createNumber(sqrt(value));
 }
 
 Object* function_sin(Object* angle) {
+    if(angle == NULL)
+        throwError("Null Reference");
+    
     double vangle = *(double*)getAttributeValue(angle, "value");
 
     return createNumber(sin(vangle));
 }
 
 Object* function_cos(Object* angle) {
+    if(angle == NULL)
+        throwError("Null Reference");
+
     double vangle = *(double*)getAttributeValue(angle, "value");
 
     return createNumber(cos(vangle));
 }
 
 Object* function_exp(Object* number) {
+    if(number == NULL)
+        throwError("Null Reference");
+
     double value = *(double*)getAttributeValue(number, "value");
 
     return createNumber(exp(value));
 }
 
 Object* function_log(Object* number) {
+    if(number == NULL)
+        throwError("Null Reference");
+
     double value = *(double*)getAttributeValue(number, "value");
 
     return createNumber(log(value));
@@ -417,6 +504,9 @@ Object* function_rand() {
 }
 
 Object* numberGreaterThan(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+    
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -424,6 +514,9 @@ Object* numberGreaterThan(Object* number1, Object* number2) {
 }
 
 Object* numberGreaterOrEqualThan(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -431,6 +524,9 @@ Object* numberGreaterOrEqualThan(Object* number1, Object* number2) {
 }
 
 Object* numberLessThan(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -438,6 +534,9 @@ Object* numberLessThan(Object* number1, Object* number2) {
 }
 
 Object* numberLessOrEqualThan(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -445,6 +544,9 @@ Object* numberLessOrEqualThan(Object* number1, Object* number2) {
 }
 
 Object* numberMod(Object* number1, Object* number2) {
+    if(number1 == NULL || number2 == NULL)
+        throwError("Null Reference");
+
     double* value1 = getAttributeValue(number1, "value");
     double* value2 = getAttributeValue(number2, "value");
 
@@ -452,6 +554,9 @@ Object* numberMod(Object* number1, Object* number2) {
 }
 
 Object* function_parse(Object* string) {
+    if(string == NULL)
+        throwError("Null Reference");
+
     char* value = getAttributeValue(string, "value");
     return createNumber(strtod(value, NULL));
 }
@@ -478,6 +583,9 @@ Object* createString(char* str) {
 
 Object* stringConcat(Object* string1, Object* string2)
 {
+    if(string1 == NULL || string2 == NULL)
+        throwError("Null Reference");
+
     char* str1 = getAttributeValue(string1, "value");
     int len1 = *(int*)getAttributeValue(string1, "len");
 
@@ -490,14 +598,23 @@ Object* stringConcat(Object* string1, Object* string2)
 }
 
 Object* method_String_size(Object* self) {
+    if(self == NULL)
+        throwError("Null Reference");
+
     return createNumber(*(int*)getAttributeValue(self, "len"));
 }
 
 Object* method_String_toString(Object* str) {
+    if(str == NULL)
+        throwError("Null Reference");
+
     return str;
 }
 
 Object* method_String_equals(Object* string1, Object* string2) {
+    if(string1 == NULL || string2 == NULL)
+        throwError("Null Reference");
+
     if(strcmp(getType(string1), getType(string2)) != 0)
         return createBoolean(false);
 
@@ -525,6 +642,9 @@ Object* createBoolean(bool boolean) {
 }
 
 Object* method_Boolean_toString(Object* boolean) {
+    if(boolean == NULL)
+        throwError("Null Reference");
+
     bool* value = getAttributeValue(boolean, "value");
 
     if(*value == true)
@@ -534,6 +654,9 @@ Object* method_Boolean_toString(Object* boolean) {
 }
 
 Object* method_Boolean_equals(Object* bool1, Object* bool2) {
+    if(bool1 == NULL || bool2 == NULL)
+        throwError("Null Reference");
+
     if(strcmp(getType(bool1), getType(bool2)) != 0)
         return createBoolean(false);
 
@@ -544,6 +667,9 @@ Object* method_Boolean_equals(Object* bool1, Object* bool2) {
 }
 
 Object* invertBoolean(Object* boolean) {
+    if(boolean == NULL)
+        throwError("Null Reference");
+
     bool* value = getAttributeValue(boolean, "value");
 
     return createBoolean(!*value);
@@ -551,6 +677,9 @@ Object* invertBoolean(Object* boolean) {
 
 Object* boolOr(Object* bool1, Object* bool2)
 {
+    if(bool1 == NULL || bool2 == NULL)
+        throwError("Null Reference");
+
     bool vbool1 = *(bool*)getAttributeValue(bool1, "value");
     bool vbool2 = *(bool*)getAttributeValue(bool2, "value");
 
@@ -559,6 +688,9 @@ Object* boolOr(Object* bool1, Object* bool2)
 
 Object* boolAnd(Object* bool1, Object* bool2)
 {
+    if(bool1 == NULL || bool2 == NULL)
+        throwError("Null Reference");
+
     bool vbool1 = *(bool*)getAttributeValue(bool1, "value");
     bool vbool2 = *(bool*)getAttributeValue(bool2, "value");
 
@@ -612,11 +744,17 @@ Object* createVector(int num_elements, ...)
 }
 
 Object* method_Vector_size(Object* self) {
+    if(self == NULL)
+        throwError("Null Reference");
+
     return createNumber(*(int*)getAttributeValue(self, "size"));
 }
 
 Object* method_Vector_next(Object* self)
 {
+    if(self == NULL)
+        throwError("Null Reference");
+
     int size = *(int*)getAttributeValue(self, "size");
     double* current = getAttributeValue((Object*)getAttributeValue(self, "current"), "value");
     
@@ -631,16 +769,31 @@ Object* method_Vector_next(Object* self)
 
 Object* method_Vector_current(Object* self)
 {
+    if(self == NULL)
+        throwError("Null Reference");
+
     return getElementOfVector(self, getAttributeValue(self, "current"));
 }
 
 Object* getElementOfVector(Object* vector, Object* index)
 {
-    return ((Object**)getAttributeValue(vector, "list"))[(int)*(double*)getAttributeValue(index, "value")];
+    if(vector == NULL || index == NULL)
+        throwError("Null Reference");
+
+    int i = (int)*(double*)getAttributeValue(index, "value");
+    int size = *(int*)getAttributeValue(vector, "size");
+
+    if(i >= size)
+        throwError("Index out of range");
+
+    return ((Object**)getAttributeValue(vector, "list"))[i];
 }
 
 Object* method_Vector_toString(Object* vector)
 {
+    if(vector == NULL)
+        throwError("Null Reference");
+
     int* size = getAttributeValue(vector, "size");
 
     int total_size = 3 + ((*size > 0 ? *size : 1) - 1) * 2;
@@ -676,6 +829,9 @@ Object* method_Vector_toString(Object* vector)
 
 Object* method_Vector_equals(Object* vector1, Object* vector2)
 {
+    if(vector1 == NULL || vector2 == NULL)
+        throwError("Null Reference");
+
     if(strcmp(getType(vector1), getType(vector2)) != 0)
         return createBoolean(false);
 
@@ -704,11 +860,17 @@ Object* method_Vector_equals(Object* vector1, Object* vector2)
 
 Object* function_range(Object* start, Object* end)
 {
+    if(start == NULL || end == NULL)
+        throwError("Null Reference");
+
     return createRange(start, end);
 }
 
 Object* createRange(Object* min, Object* max)
 {
+    if(min == NULL || max == NULL)
+        throwError("Null Reference");
+
     Object* obj = createObject();
 
     addAttribute(obj, "min", min);
@@ -731,6 +893,9 @@ Object* createRange(Object* min, Object* max)
 
 Object* method_Range_next(Object* self)
 {
+    if(self == NULL)
+        throwError("Null Reference");
+
     int max = *(double*)getAttributeValue((Object*)getAttributeValue(self, "max"), "value");
     double* current = getAttributeValue((Object*)getAttributeValue(self, "current"), "value");
     
@@ -745,11 +910,17 @@ Object* method_Range_next(Object* self)
 
 Object* method_Range_current(Object* self)
 {
+    if(self == NULL)
+        throwError("Null Reference");
+
     return getAttributeValue(self, "current");
 }
 
 Object* method_Range_toString(Object* range)
 {
+    if(range == NULL)
+        throwError("Null Reference");
+
     Object* min = getAttributeValue(range, "min");
     Object* max = getAttributeValue(range, "max");
 
@@ -771,6 +942,9 @@ Object* method_Range_toString(Object* range)
 
 Object* method_Range_equals(Object* range1, Object* range2)
 {
+    if(range1 == NULL || range2 == NULL)
+        throwError("Null Reference");
+
     Object* min1 = getAttributeValue(range1, "min");
     Object* max1 = getAttributeValue(range1, "max");
 
@@ -783,6 +957,7 @@ Object* method_Range_equals(Object* range1, Object* range2)
 /////////////////////////////////  Generated Code  ////////////////////////////////////
 
 Object* createD ();
+Object* method_D_getc (Object* self);
 
 
 Object* createD () {
@@ -790,12 +965,13 @@ Object* createD () {
 
 
    addAttribute(obj, "parent_type0", "D");
+   addAttribute(obj, "method_D_getc", *method_D_getc);
    addAttribute(obj, "parent_type1", "Object");
 
    return obj;
 }
 
-Object* ifElseBlock0();
+Object* loopBlock0(Object* self);
 
 Object* letInNode0();
 
@@ -803,16 +979,15 @@ Object* createBlock0();
 
 Object* letInNode0() {
    Object* v0 = copyObject(createBlock0());
-   return createBoolean(true);
+   return function_print(copyObject(((Object* (*)(Object*))getMethodForCurrentType(v0, "getc", NULL))(v0)));
 }
 
-Object* ifElseBlock0() {
-   if(*((bool*)getAttributeValue(letInNode0(), "value"))) {
-      return function_print(copyObject(createString("\"(a]\"'b*\n*b\"b'b")));
+Object* loopBlock0(Object* self) {
+   Object* return_obj = NULL;
+   while(*((bool*)getAttributeValue(createBoolean(false), "value"))) {
+      return_obj = createNumber(5);
    }
-   else {
-      return createNumber(1);
-   }
+   return return_obj;
 }
 
 Object* createBlock0() {
@@ -820,10 +995,17 @@ Object* createBlock0() {
    return createD();
 }
 
+Object* method_D_getc (Object* self) {
+   if(self == NULL)
+       throwError("Null Reference");
+
+   return loopBlock0(self);
+}
+
 
 int main() {
    srand(time(NULL));
 
-   ifElseBlock0();
+   letInNode0();
    return 0; 
 }
