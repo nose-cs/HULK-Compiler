@@ -66,33 +66,32 @@ class TestHulkBase(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
 
-    # todo
-    # def test____(self):
-    #     inp = '''
-    #        type A (x, y) {
-    #             p = y + 9;
-    #             r = x + y;
-    #             getc() => 5;
-    #         }
-    #
-    #         type B inherits A {
-    #             p = y;
-    #             getc() => 2;
-    #         }
-    #
-    #         type C (x, y, z) inherits B (x + y, y + z) {
-    #
-    #         }
-    #
-    #         type D inherits C {
-    #             d = x^2;
-    #             getc() => base() + 5;
-    #         }
-    #
-    #         let a = new D(2, 3, 4) in print(a.getc());
-    #     '''
-    #     ast, errors, context, scope = run_code(inp, True)
-    #     self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+    def test____(self):
+        inp = '''
+           type A (x, y) {
+                p = y + 9;
+                r = x + y;
+                getc() => 5;
+            }
+
+            type B inherits A {
+                p = y;
+                getc() => 2;
+            }
+
+            type C (x, y, z) inherits B (x + y, y + z) {
+
+            }
+
+            type D inherits C {
+                d = x^2;
+                getc() => base() + 5;
+            }
+
+            let a = new D(2, 3, 4) in print(a.getc());
+        '''
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
     def test___(self):
         inp = '''
