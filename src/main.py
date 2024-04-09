@@ -28,7 +28,9 @@ def run_pipeline(input_path: Path, output_path: Path):
         print_error(error)
         return
 
-    hulk_lexer = HulkLexer()
+    hulk_lexer = HulkLexer(rebuild=True)
+    hulk_parser = HulkParser(rebuild=True)
+
     tokens, lexicographic_errors = hulk_lexer(text)
 
     if lexicographic_errors:
@@ -36,7 +38,6 @@ def run_pipeline(input_path: Path, output_path: Path):
             print_error(err)
         return
 
-    hulk_parser = HulkParser()
     derivation, operations, syntactic_errors = hulk_parser(tokens)
     ast = evaluate_reverse_parse(derivation, operations, tokens)
 
