@@ -418,7 +418,7 @@ class CodeGenC(object):
         left = self.visit(node.left)
 
         if isinstance(node.left, hulk_nodes.VariableNode):
-            code = "invertBool(((Object* (*)(Object*, Object*))" + \
+            code = "invertBoolean(((Object* (*)(Object*, Object*))" + \
                    "getMethodForCurrentType(" + left + ", \"equals\", NULL)" + \
                    ")(" + left + ", " + self.visit(node.right) + "))"
 
@@ -454,7 +454,7 @@ class CodeGenC(object):
             code += " {\n"
 
             code += "   Object* obj = " + left + ";\n"
-            code += "   return invertBool(((Object* (*)(Object*, Object*))" + \
+            code += "   return invertBoolean(((Object* (*)(Object*, Object*))" + \
                     "getMethodForCurrentType(obj, \"equals\", NULL)" + \
                     ")(obj, " + self.visit(node.right) + "));"
 
