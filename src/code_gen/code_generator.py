@@ -138,6 +138,8 @@ class CCodeGenerator:
                 if type.name in method_defs:
                     for method_def, method_name, method in method_defs[type.name]:
                         methods_code += method_def + " {\n"
+                        methods_code += "   if(self == NULL)\n"
+                        methods_code += "       throwError(\"Null Reference\");\n\n"
                         methods_code += get_lines_indented(codgen.visit(method.node), True) + "\n"
                         methods_code += "}\n\n"
 
