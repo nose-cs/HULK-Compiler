@@ -86,6 +86,7 @@ class TypeInferrer(object):
             param_name = self.current_type.params_names[i]
             local_var = const_scope.find_variable(param_name)
             local_var.type = param_type
+            # Check if we could infer the param type in the body
             if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
                 try:
                     new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
@@ -96,6 +97,7 @@ class TypeInferrer(object):
                 if not isinstance(new_type, types.AutoType):
                     self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
+            # Check if we could infer the param type in a call
             if (isinstance(self.current_type.params_types[i], types.AutoType)
                     and self.current_type.param_vars[i].inferred_types):
                 new_type = types.get_lowest_common_ancestor(self.current_type.param_vars[i].inferred_types)
@@ -143,6 +145,7 @@ class TypeInferrer(object):
             param_name = self.current_method.param_names[i]
             local_var = method_scope.find_variable(param_name)
             local_var.type = param_type
+            # Check if we could infer the param type in the body
             if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
                 try:
                     new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
@@ -153,6 +156,7 @@ class TypeInferrer(object):
                 if not isinstance(new_type, types.AutoType):
                     self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
+            # Check if we could infer the param type in a call
             if (isinstance(self.current_method.param_types[i], types.AutoType)
                     and self.current_method.param_vars[i].inferred_types):
                 new_type = types.get_lowest_common_ancestor(self.current_method.param_vars[i].inferred_types)
@@ -182,6 +186,7 @@ class TypeInferrer(object):
             param_name = function.param_names[i]
             local_var = expr_scope.find_variable(param_name)
             local_var.type = param_type
+            # Check if we could infer the param type in the body
             if isinstance(param_type, types.AutoType) and local_var.is_parameter and local_var.inferred_types:
                 try:
                     new_type = types.get_most_specialized_type(local_var.inferred_types, var_name=param_name)
@@ -192,6 +197,7 @@ class TypeInferrer(object):
                 if not isinstance(new_type, types.AutoType):
                     self.had_changed = True
                 local_var.set_type_and_clear_inference_types_list(new_type)
+            # Check if we could infer the param type in a call
             if isinstance(function.param_types[i], types.AutoType) and function.param_vars[i].inferred_types:
                 new_type = types.get_lowest_common_ancestor(function.param_vars[i].inferred_types)
                 function.param_types[i] = new_type
