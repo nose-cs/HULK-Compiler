@@ -240,3 +240,30 @@ class TestHulkLoops(unittest.TestCase):
                    ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors))
+
+    def test_inference(self):
+        inp = ('''
+                function f(x) => x;
+                {
+                    f(5);
+                    let x: Object = 5 in f(x);
+                }
+                ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))
+
+    def test_inference__(self):
+        inp = ('''
+                   type Person(firstname, lastname) {
+                        firstname = firstname;
+                        lastname = lastname;
+                    
+                        name() => self.firstname @@ self.lastname;
+                        hash() : Number {
+                            5;
+                        }
+                    }
+                    new Person("Juan", "Perez");
+                   ''')
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))

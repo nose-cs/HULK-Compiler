@@ -33,19 +33,19 @@ class TestHulkLoops(unittest.TestCase):
     #             ''')
     #     ast, errors, context, scope = run_code(inp, True)
     #     self.assertEqual(1, len(errors))
-    #
-    # def test_lca_types(self):
-    #     inp = ('''
-    #             function x() => if (true) 1 else 2;
-    #             function y() => if (true) new A() elif(true) new B() else new C();
-    #             type A {}
-    #             type B inherits A {}
-    #             type C inherits B {}
-    #             5;
-    #             ''')
-    #     # return type of x must be A
-    #     ast, errors, context, scope = run_code(inp, True)
-    #     self.assertEqual(0, len(errors))
+
+    def test_lca_types(self):
+        inp = ('''
+                function x() => if (true) 1 else 2;
+                function y() => if (true) new A() elif(true) new B() else new C();
+                type A {}
+                type B inherits A {}
+                type C inherits B {}
+                5;
+                ''')
+        # return type of x must be A
+        ast, errors, context, scope = run_code(inp, True)
+        self.assertEqual(0, len(errors))
 
     def test_lca_protocols(self):
         inp = ('''
@@ -108,7 +108,7 @@ class TestHulkLoops(unittest.TestCase):
                 let x = [9], y = range(1, 10) in x(x, y, x).length;
         ''')
         ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(2, len(errors))
+        self.assertEqual(1, len(errors))
 
     def test_most_spec_types(self):
         inp = ('''

@@ -30,6 +30,7 @@ class Method:
         self.node = node
         self.param_names = param_names
         self.param_types = params_types
+        self.param_vars = []
         self.return_type = return_type
 
     def __str__(self):
@@ -141,6 +142,7 @@ class Type:
         self.node = node
         self.params_names = []
         self.params_types = []
+        self.param_vars = []
         self.attributes: List[Attribute] = []
         self.methods: List[Method] = []
         self.parent = None
@@ -191,8 +193,8 @@ class Type:
         If the type doesn't specify them, sets a copy of the params of the lowest ancestor that does it.
         """
         params_names, params_types = self.get_params()
-        self.params_names = [param_name for param_name in params_names]
-        self.params_types = [param_type for param_type in params_types]
+        self.params_names = params_names
+        self.params_types = params_types
 
     def get_params(self):
         if (self.params_names is None or self.params_types is None) and self.parent is not None:
@@ -248,6 +250,9 @@ class Type:
 
     def __str__(self):
         output = f'type {self.name}'
+        params = '' if not self.params_names else ','.join(
+            [f"{param_name} {param_type.name}" for param_name, param_type in zip(self.params_names, self.params_types)])
+        output += params
         parent = '' if self.parent is None else f' inherits {self.parent.name}'
         output += parent
         output += ' {'

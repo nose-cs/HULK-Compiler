@@ -120,7 +120,7 @@ class TestHulkAll(unittest.TestCase):
             
               '''
         ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(1, len(errors))
+        self.assertEqual(0, len(errors))
 
     def testLeastCommonSubsequence1(self):
         inp = '''
